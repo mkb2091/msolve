@@ -23,11 +23,11 @@ pub fn naked_n(sudoku: &mut [u16; 81]) -> bool {
                 for house in [rows, columns, boxes].iter() {
                     for pos in house.iter() {
                         if sudoku[*pos as usize] & consts::SUDOKU_VALUES_TOTAL == value {
-                            changed = true;
                             for pos2 in house.iter() {
-                                if pos2 != pos  && (sudoku[*pos2 as usize] & value != 0){
+                                if pos2 != pos && (sudoku[*pos2 as usize] & value != 0) {
                                     sudoku[*pos2 as usize] = (sudoku[*pos2 as usize] ^ (value))
                                         | consts::SUDOKU_TECHNIQUES_TOTAL;
+                                    changed = true;
                                 }
                             }
                         }
@@ -44,12 +44,15 @@ pub fn naked_n(sudoku: &mut [u16; 81]) -> bool {
                                 if pos2 != pos
                                     && sudoku[*pos2 as usize] & consts::SUDOKU_VALUES_TOTAL == value
                                 {
-                                    changed = true;
                                     for pos3 in house.iter() {
-                                        if pos3 != pos && pos3 != pos2 && (sudoku[*pos3 as usize] & value != 0) {
+                                        if pos3 != pos
+                                            && pos3 != pos2
+                                            && (sudoku[*pos3 as usize] & value != 0)
+                                        {
                                             sudoku[*pos3 as usize] = (sudoku[*pos3 as usize]
                                                 ^ (value))
                                                 | consts::SUDOKU_TECHNIQUES_TOTAL;
+                                            changed = true;
                                         }
                                     }
                                 }
