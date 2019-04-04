@@ -9,48 +9,50 @@ pub fn naked_n(sudoku: &mut [u16; 81]) -> bool {
             if consts::OPTION_COUNT_CACHE[value as usize] == 1 {
                 changed = true;
                 let (rows, columns, boxes) = consts::PRECOMPUTED_INDEXES[square];
-                for ((row, column), cbox) in rows.iter().zip(columns.iter()).zip(boxes.iter()) {
-                    if sudoku[*row as usize] & value != 0 {
-                        sudoku[*row as usize] =
-                            (sudoku[*row as usize] ^ (value)) | consts::SUDOKU_TECHNIQUES_TOTAL;
-                    }
-                    if sudoku[*column as usize] & value != 0 {
-                        sudoku[*column as usize] =
-                            (sudoku[*column as usize] ^ (value)) | consts::SUDOKU_TECHNIQUES_TOTAL;
-                    }
-                    if sudoku[*cbox as usize] & value != 0 {
-                        sudoku[*cbox as usize] =
-                            (sudoku[*cbox as usize] ^ (value)) | consts::SUDOKU_TECHNIQUES_TOTAL;
+                for house in [rows, columns, boxes].iter() {
+                    for pos in house.iter() {
+                        if sudoku[*pos as usize] & value != 0 {
+                            sudoku[*pos as usize] =
+                                (sudoku[*pos as usize] ^ (value)) | consts::SUDOKU_TECHNIQUES_TOTAL;
+                        }
                     }
                 }
             // Naked Pairs
             } else if consts::OPTION_COUNT_CACHE[value as usize] == 2 {
                 let (rows, columns, boxes) = consts::PRECOMPUTED_INDEXES[square];
-                for ((row, column), cbox) in rows.iter().zip(columns.iter()).zip(boxes.iter()) {
-                    if sudoku[*row as usize] & consts::SUDOKU_VALUES_TOTAL == value {
-                        changed = true;
-                        for row2 in rows.iter() {
-                            if row2 != row {
-                                sudoku[*row2 as usize] = (sudoku[*row2 as usize] ^ (value))
-                                    | consts::SUDOKU_TECHNIQUES_TOTAL;
+                for house in [rows, columns, boxes].iter() {
+                    for pos in house.iter() {
+                        if sudoku[*pos as usize] & consts::SUDOKU_VALUES_TOTAL == value {
+                            changed = true;
+                            for pos2 in house.iter() {
+                                if pos2 != pos  && (sudoku[*pos2 as usize] & value != 0){
+                                    sudoku[*pos2 as usize] = (sudoku[*pos2 as usize] ^ (value))
+                                        | consts::SUDOKU_TECHNIQUES_TOTAL;
+                                }
                             }
                         }
                     }
-                    if sudoku[*column as usize] & consts::SUDOKU_VALUES_TOTAL == value {
-                        changed = true;
-                        for column2 in columns.iter() {
-                            if column2 != row {
-                                sudoku[*column2 as usize] = (sudoku[*column2 as usize] ^ (value))
-                                    | consts::SUDOKU_TECHNIQUES_TOTAL;
-                            }
-                        }
-                    }
-                    if sudoku[*cbox as usize] & consts::SUDOKU_VALUES_TOTAL == value {
-                        changed = true;
-                        for cbox2 in boxes.iter() {
-                            if cbox2 != row {
-                                sudoku[*cbox2 as usize] = (sudoku[*cbox2 as usize] ^ (value))
-                                    | consts::SUDOKU_TECHNIQUES_TOTAL;
+                }
+            // Naked Triples
+            // Currently only works for 3 identical cells
+            } else if consts::OPTION_COUNT_CACHE[value as usize] == 3 {
+                let (rows, columns, boxes) = consts::PRECOMPUTED_INDEXES[square];
+                for house in [rows, columns, boxes].iter() {
+                    for pos in house.iter() {
+                        if sudoku[*pos as usize] & consts::SUDOKU_VALUES_TOTAL == value {
+                            for pos2 in house.iter() {
+                                if pos2 != pos
+                                    && sudoku[*pos2 as usize] & consts::SUDOKU_VALUES_TOTAL == value
+                                {
+                                    changed = true;
+                                    for pos3 in house.iter() {
+                                        if pos3 != pos && pos3 != pos2 && (sudoku[*pos3 as usize] & value != 0) {
+                                            sudoku[*pos3 as usize] = (sudoku[*pos3 as usize]
+                                                ^ (value))
+                                                | consts::SUDOKU_TECHNIQUES_TOTAL;
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
