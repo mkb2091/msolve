@@ -5,10 +5,10 @@ pub fn naked_n(sudoku: &mut [u16; 81]) -> bool {
     for square in 0..81 {
         let value = sudoku[square] & consts::SUDOKU_VALUES_TOTAL;
         if sudoku[square] & 512 == 512 {
+            let (rows, columns, boxes) = consts::PRECOMPUTED_INDEXES[square];
             // Naked singles
             if consts::OPTION_COUNT_CACHE[value as usize] == 1 {
                 changed = true;
-                let (rows, columns, boxes) = consts::PRECOMPUTED_INDEXES[square];
                 for house in [rows, columns, boxes].iter() {
                     for pos in house.iter() {
                         if sudoku[*pos as usize] & value != 0 {
@@ -19,9 +19,8 @@ pub fn naked_n(sudoku: &mut [u16; 81]) -> bool {
                 }
             // Naked Pairs
             } else if consts::OPTION_COUNT_CACHE[value as usize] == 2 {
-                let (rows, columns, boxes) = consts::PRECOMPUTED_INDEXES[square];
                 for house in [rows, columns, boxes].iter() {
-                    for pos in house.iter() {
+                    for pos in house[..7].iter() {
                         if sudoku[*pos as usize] & consts::SUDOKU_VALUES_TOTAL == value {
                             for pos2 in house.iter() {
                                 if pos2 != pos && (sudoku[*pos2 as usize] & value != 0) {
@@ -30,17 +29,17 @@ pub fn naked_n(sudoku: &mut [u16; 81]) -> bool {
                                     changed = true;
                                 }
                             }
+                            break;
                         }
                     }
                 }
             // Naked Triples
             // Currently only works for 3 identical cells
             } else if consts::OPTION_COUNT_CACHE[value as usize] == 3 {
-                let (rows, columns, boxes) = consts::PRECOMPUTED_INDEXES[square];
                 for house in [rows, columns, boxes].iter() {
-                    for pos in house.iter() {
+                    for (i1, pos) in house[..6].iter().enumerate() {
                         if sudoku[*pos as usize] & consts::SUDOKU_VALUES_TOTAL == value {
-                            for pos2 in house.iter() {
+                            for pos2 in house[i1..7].iter() {
                                 if pos2 != pos
                                     && sudoku[*pos2 as usize] & consts::SUDOKU_VALUES_TOTAL == value
                                 {
@@ -55,8 +54,10 @@ pub fn naked_n(sudoku: &mut [u16; 81]) -> bool {
                                             changed = true;
                                         }
                                     }
+                                    break;
                                 }
                             }
+                            break;
                         }
                     }
                 }
