@@ -45,13 +45,26 @@ pub fn apply_number(sudoku: &mut [u16; 81], square: usize) {
     sudoku[column_start] = (sudoku[column_start] & not_value)
         | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[column_start] & value) / value));
 
-    let (_, _, boxes) = consts::PRECOMPUTED_INDEXES[square];
-    for cbox in boxes.iter() {
-        if sudoku[*cbox as usize] & value != 0 {
-            sudoku[*cbox as usize] =
-                (sudoku[*cbox as usize] ^ (value)) | consts::SUDOKU_TECHNIQUES_TOTAL;
-        }
-    }
+    let box_start = square / 3 % 3 * 3 + square / 27 * 27;
+    sudoku[box_start + 20] = (sudoku[box_start + 20] & not_value)
+        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[box_start + 20] & value) / value));
+    sudoku[box_start + 19] = (sudoku[box_start + 19] & not_value)
+        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[box_start + 19] & value) / value));
+    sudoku[box_start + 18] = (sudoku[box_start + 18] & not_value)
+        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[box_start + 18] & value) / value));
+    sudoku[box_start + 11] = (sudoku[box_start + 11] & not_value)
+        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[box_start + 11] & value) / value));
+    sudoku[box_start + 10] = (sudoku[box_start + 10] & not_value)
+        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[box_start + 10] & value) / value));
+    sudoku[box_start + 9] = (sudoku[box_start + 9] & not_value)
+        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[box_start + 9] & value) / value));
+    sudoku[box_start + 2] = (sudoku[box_start + 2] & not_value)
+        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[box_start + 2] & value) / value));
+    sudoku[box_start + 1] = (sudoku[box_start + 1] & not_value)
+        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[box_start + 1] & value) / value));
+    sudoku[box_start] = (sudoku[box_start] & not_value)
+        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[box_start] & value) / value));
+
     sudoku[square] = value | other_techniques;
 }
 
