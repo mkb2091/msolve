@@ -6,63 +6,63 @@ pub fn apply_number(sudoku: &mut [u16; 81], square: usize) {
     let not_value = consts::SUDOKU_MAX - value;
     let row_start = square / 9 * 9;
     sudoku[row_start + 8] = (sudoku[row_start + 8] & not_value)
-        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[row_start + 8] & value) / value));
+        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[row_start + 8] & value == value) as u16));
     sudoku[row_start + 7] = (sudoku[row_start + 7] & not_value)
-        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[row_start + 7] & value) / value));
+        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[row_start + 7] & value == value) as u16));
     sudoku[row_start + 6] = (sudoku[row_start + 6] & not_value)
-        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[row_start + 6] & value) / value));
+        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[row_start + 6] & value == value) as u16));
     sudoku[row_start + 5] = (sudoku[row_start + 5] & not_value)
-        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[row_start + 5] & value) / value));
+        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[row_start + 5] & value == value) as u16));
     sudoku[row_start + 4] = (sudoku[row_start + 4] & not_value)
-        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[row_start + 4] & value) / value));
+        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[row_start + 4] & value == value) as u16));
     sudoku[row_start + 3] = (sudoku[row_start + 3] & not_value)
-        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[row_start + 3] & value) / value));
+        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[row_start + 3] & value == value) as u16));
     sudoku[row_start + 2] = (sudoku[row_start + 2] & not_value)
-        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[row_start + 2] & value) / value));
+        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[row_start + 2] & value == value) as u16));
     sudoku[row_start + 1] = (sudoku[row_start + 1] & not_value)
-        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[row_start + 1] & value) / value));
+        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[row_start + 1] & value == value) as u16));
     sudoku[row_start] = (sudoku[row_start] & not_value)
-        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[row_start] & value) / value));
+        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[row_start] & value == value) as u16));
 
     let column_start = square % 9;
     sudoku[column_start + 72] = (sudoku[column_start + 72] & not_value)
-        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[column_start + 72] & value) / value));
+        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[column_start + 72] & value == value) as u16));
     sudoku[column_start + 63] = (sudoku[column_start + 63] & not_value)
-        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[column_start + 63] & value) / value));
+        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[column_start + 63] & value == value) as u16));
     sudoku[column_start + 54] = (sudoku[column_start + 54] & not_value)
-        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[column_start + 54] & value) / value));
+        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[column_start + 54] & value == value) as u16));
     sudoku[column_start + 45] = (sudoku[column_start + 45] & not_value)
-        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[column_start + 45] & value) / value));
+        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[column_start + 45] & value == value) as u16));
     sudoku[column_start + 36] = (sudoku[column_start + 36] & not_value)
-        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[column_start + 36] & value) / value));
+        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[column_start + 36] & value == value) as u16));
     sudoku[column_start + 27] = (sudoku[column_start + 27] & not_value)
-        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[column_start + 27] & value) / value));
+        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[column_start + 27] & value == value) as u16));
     sudoku[column_start + 18] = (sudoku[column_start + 18] & not_value)
-        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[column_start + 18] & value) / value));
+        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[column_start + 18] & value == value) as u16));
     sudoku[column_start + 9] = (sudoku[column_start + 9] & not_value)
-        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[column_start + 9] & value) / value));
+        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[column_start + 9] & value == value) as u16));
     sudoku[column_start] = (sudoku[column_start] & not_value)
-        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[column_start] & value) / value));
+        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[column_start] & value == value) as u16));
 
     let box_start = square / 3 % 3 * 3 + square / 27 * 27;
     sudoku[box_start + 20] = (sudoku[box_start + 20] & not_value)
-        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[box_start + 20] & value) / value));
+        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[box_start + 20] & value == value) as u16));
     sudoku[box_start + 19] = (sudoku[box_start + 19] & not_value)
-        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[box_start + 19] & value) / value));
+        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[box_start + 19] & value == value) as u16));
     sudoku[box_start + 18] = (sudoku[box_start + 18] & not_value)
-        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[box_start + 18] & value) / value));
+        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[box_start + 18] & value == value) as u16));
     sudoku[box_start + 11] = (sudoku[box_start + 11] & not_value)
-        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[box_start + 11] & value) / value));
+        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[box_start + 11] & value == value) as u16));
     sudoku[box_start + 10] = (sudoku[box_start + 10] & not_value)
-        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[box_start + 10] & value) / value));
+        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[box_start + 10] & value == value) as u16));
     sudoku[box_start + 9] = (sudoku[box_start + 9] & not_value)
-        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[box_start + 9] & value) / value));
+        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[box_start + 9] & value == value) as u16));
     sudoku[box_start + 2] = (sudoku[box_start + 2] & not_value)
-        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[box_start + 2] & value) / value));
+        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[box_start + 2] & value == value) as u16));
     sudoku[box_start + 1] = (sudoku[box_start + 1] & not_value)
-        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[box_start + 1] & value) / value));
+        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[box_start + 1] & value == value) as u16));
     sudoku[box_start] = (sudoku[box_start] & not_value)
-        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[box_start] & value) / value));
+        | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[box_start] & value == value) as u16));
 
     sudoku[square] = value | consts::SQUARE_DONE;
 }
