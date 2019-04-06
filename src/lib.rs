@@ -26,17 +26,40 @@ impl MSolve {
             }
         }
     }
-    pub fn apply_techniques(&mut self) {
+    pub fn apply_techniques(&mut self) -> bool {
         let mut changed = true;
         while changed {
             changed = false;
-            if techniques::naked_n(&mut self.options) {
-                changed = true;
-            }
-            if techniques::hidden_singles(&mut self.options) {
-                changed = true;
+            for square in 0..81 {
+                let length = consts::OPTION_COUNT_CACHE
+                    [(self.options[square] & consts::SUDOKU_VALUES_TOTAL) as usize];
+                if self.options[square] >= consts::SQUARE_DONE {
+                    if length == 0 {
+                        return false;
+                    }
+                } else {
+                    if self.options[square] & 1024 == 1024 {
+                        changed = true;
+                        if !techniques::hidden_singles(&mut self.options, square) {
+                            return false;
+                        }
+                    }
+                    if self.options[square] & 512 == 512 {
+                        changed = true;
+                        match length {
+                            0 => return false,
+                            1 => techniques::apply_number(&mut self.options, square),
+                            2 => techniques::naked_pair(&mut self.options, square),
+                            3 => techniques::naked_triple(&mut self.options, square),
+                            _ => {
+                                self.options[square] -= 512;
+                            }
+                        }
+                    }
+                }
             }
         }
+        true
     }
     pub fn next(&mut self) {}
     pub fn to_array(&self) -> [u8; 81] {

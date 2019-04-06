@@ -3,7 +3,6 @@ use crate::consts;
 pub fn apply_number(sudoku: &mut [u16; 81], square: usize) {
     assert!(square < 81);
     let value = sudoku[square] & consts::SUDOKU_VALUES_TOTAL;
-    let other_techniques = sudoku[square] & (consts::SUDOKU_TECHNIQUES_TOTAL);
     let not_value = consts::SUDOKU_MAX - value;
     let row_start = square / 9 * 9;
     sudoku[row_start + 8] = (sudoku[row_start + 8] & not_value)
@@ -65,160 +64,171 @@ pub fn apply_number(sudoku: &mut [u16; 81], square: usize) {
     sudoku[box_start] = (sudoku[box_start] & not_value)
         | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[box_start] & value) / value));
 
-    sudoku[square] = value | other_techniques;
+    sudoku[square] = value | consts::SQUARE_DONE;
+}
+
+pub fn naked_pair(sudoku: &mut [u16; 81], square: usize) {
+    let value = sudoku[square] & consts::SUDOKU_VALUES_TOTAL;
+    let (rows, columns, boxes) = consts::PRECOMPUTED_INDEXES[square];
+    let square = square as u8;
+    let not_value = consts::SUDOKU_MAX - value;
+    for (house_id, house) in [rows, columns, boxes].iter().enumerate() {
+        for second in house.iter() {
+            if sudoku[*second as usize] & consts::SUDOKU_VALUES_TOTAL == value {
+                for pos in house.iter() {
+                    if *pos != square && pos != second && sudoku[*pos as usize] & value != 0 {
+                        sudoku[*pos as usize] &= not_value;
+                    }
+                }
+                if house_id < 2 {
+                    if boxes.contains(&second) {
+                        for pos in boxes.iter() {
+                            if *pos != square && pos != second && sudoku[*pos as usize] & value != 0
+                            {
+                                sudoku[*pos as usize] &= not_value;
+                            }
+                        }
+                    }
+                } else if rows.contains(&second) {
+                    for pos in rows.iter() {
+                        if *pos != square && pos != second && sudoku[*pos as usize] & value != 0 {
+                            sudoku[*pos as usize] &= not_value;
+                        }
+                    }
+                } else if columns.contains(&second) {
+                    for pos in columns.iter() {
+                        if *pos != square && pos != second && sudoku[*pos as usize] & value != 0 {
+                            sudoku[*pos as usize] &= not_value;
+                        }
+                    }
+                }
+                break;
+            }
+        }
+    }
+    sudoku[square as usize] &= consts::SUDOKU_MAX - 512;
+}
+
+pub fn naked_triple(sudoku: &mut [u16; 81], square: usize) {
+    let value = sudoku[square] & consts::SUDOKU_VALUES_TOTAL;
+    let (rows, columns, boxes) = consts::PRECOMPUTED_INDEXES[square];
+    let square = square as u8;
+    let not_value = consts::SUDOKU_MAX - value;
+    for house in [rows, columns, boxes].iter() {
+        for (i1, pos) in house[..7].iter().enumerate() {
+            if sudoku[*pos as usize] & consts::SUDOKU_VALUES_TOTAL == value {
+                for pos2 in house[i1..].iter() {
+                    if pos2 != pos && sudoku[*pos2 as usize] & consts::SUDOKU_VALUES_TOTAL == value
+                    {
+                        for pos3 in house.iter() {
+                            if pos3 != pos && pos3 != pos2 && (sudoku[*pos3 as usize] & value != 0)
+                            {
+                                sudoku[*pos3 as usize] &= not_value;
+                            }
+                        }
+                        break;
+                    }
+                }
+                break;
+            }
+        }
+    }
+    sudoku[square as usize] &= consts::SUDOKU_MAX - 512;
 }
 
 #[inline(never)]
-pub fn naked_n(sudoku: &mut [u16; 81]) -> bool {
-    let mut changed: bool = false;
-    for square in 0..81 {
-        if sudoku[square] & 512 == 512 {
-            let value = sudoku[square] & consts::SUDOKU_VALUES_TOTAL;
-            let (rows, columns, boxes) = consts::PRECOMPUTED_INDEXES[square];
-            // Naked singles
-            if consts::OPTION_COUNT_CACHE[value as usize] == 1 {
-                apply_number(sudoku, square);
-                changed = true;
-            // Naked Pairs
-            } else if consts::OPTION_COUNT_CACHE[value as usize] == 2 {
-                for house in [rows, columns, boxes].iter() {
-                    for pos in house[..7].iter() {
-                        if sudoku[*pos as usize] & consts::SUDOKU_VALUES_TOTAL == value {
-                            for pos2 in house.iter() {
-                                if pos2 != pos && (sudoku[*pos2 as usize] & value != 0) {
-                                    sudoku[*pos2 as usize] = (sudoku[*pos2 as usize] ^ (value))
-                                        | consts::SUDOKU_TECHNIQUES_TOTAL;
-                                    changed = true;
-                                }
-                            }
-                            break;
-                        }
-                    }
+pub fn hidden_singles(sudoku: &mut [u16; 81], square: usize) -> bool {
+    let mut changed = false;
+    let mut value = sudoku[square] & consts::SUDOKU_VALUES_TOTAL;
+    let (rows, columns, boxes) = consts::PRECOMPUTED_INDEXES[square];
+    let row_total: u16 = consts::SUDOKU_VALUES_TOTAL
+        - ((sudoku[rows[7] as usize]
+            | sudoku[rows[6] as usize]
+            | sudoku[rows[5] as usize]
+            | sudoku[rows[4] as usize]
+            | sudoku[rows[3] as usize]
+            | sudoku[rows[2] as usize]
+            | sudoku[rows[1] as usize]
+            | sudoku[rows[0] as usize])
+            & consts::SUDOKU_VALUES_TOTAL);
+    match consts::OPTION_COUNT_CACHE[row_total as usize] {
+        0 => {}
+        1 => {
+            if value & row_total != 0 {
+                if row_total != value {
+                    value &= row_total;
+                    changed = true;
                 }
-            // Naked Triples
-            // Currently only works for 3 identical cells
-            } else if consts::OPTION_COUNT_CACHE[value as usize] == 3 {
-                for house in [rows, columns, boxes].iter() {
-                    for (i1, pos) in house[..6].iter().enumerate() {
-                        if sudoku[*pos as usize] & consts::SUDOKU_VALUES_TOTAL == value {
-                            for pos2 in house[i1..7].iter() {
-                                if pos2 != pos
-                                    && sudoku[*pos2 as usize] & consts::SUDOKU_VALUES_TOTAL == value
-                                {
-                                    for pos3 in house.iter() {
-                                        if pos3 != pos
-                                            && pos3 != pos2
-                                            && (sudoku[*pos3 as usize] & value != 0)
-                                        {
-                                            sudoku[*pos3 as usize] = (sudoku[*pos3 as usize]
-                                                ^ (value))
-                                                | consts::SUDOKU_TECHNIQUES_TOTAL;
-                                            changed = true;
-                                        }
-                                    }
-                                    break;
-                                }
-                            }
-                            break;
-                        }
-                    }
-                }
-            }
-            sudoku[square] -= 512;
-        }
-    }
-    changed
-}
-
-pub fn hidden_singles(sudoku: &mut [u16; 81]) -> bool {
-    let mut changed: bool = false;
-    for square in 0..81 {
-        if sudoku[square] & 1024 == 1024 {
-            let mut value = sudoku[square] & consts::SUDOKU_VALUES_TOTAL;
-            let (rows, columns, boxes) = consts::PRECOMPUTED_INDEXES[square];
-            let row_total: u16 = consts::SUDOKU_VALUES_TOTAL
-                - ((sudoku[rows[7] as usize]
-                    | sudoku[rows[6] as usize]
-                    | sudoku[rows[5] as usize]
-                    | sudoku[rows[4] as usize]
-                    | sudoku[rows[3] as usize]
-                    | sudoku[rows[2] as usize]
-                    | sudoku[rows[1] as usize]
-                    | sudoku[rows[0] as usize])
-                    & consts::SUDOKU_VALUES_TOTAL);
-            match consts::OPTION_COUNT_CACHE[row_total as usize] {
-                0 => {}
-                1 => {
-                    if value & row_total != 0 {
-                        value &= row_total;
-                        changed = true;
-                    } else {
-                        sudoku[square] = 0;
-                        return false;
-                    }
-                }
-                _ => {
-                    sudoku[square] = 0;
-                    return false;
-                }
-            }
-            let column_total: u16 = consts::SUDOKU_VALUES_TOTAL
-                - ((sudoku[columns[7] as usize]
-                    | sudoku[columns[6] as usize]
-                    | sudoku[columns[5] as usize]
-                    | sudoku[columns[4] as usize]
-                    | sudoku[columns[3] as usize]
-                    | sudoku[columns[2] as usize]
-                    | sudoku[columns[1] as usize]
-                    | sudoku[columns[0] as usize])
-                    & consts::SUDOKU_VALUES_TOTAL);
-            match consts::OPTION_COUNT_CACHE[column_total as usize] {
-                0 => {}
-                1 => {
-                    if value & column_total != 0 {
-                        value &= column_total;
-                        changed = true;
-                    } else {
-                        sudoku[square] = 0;
-                        return false;
-                    }
-                }
-                _ => {
-                    sudoku[square] = 0;
-                    return false;
-                }
-            }
-            let box_total: u16 = consts::SUDOKU_VALUES_TOTAL
-                - ((sudoku[boxes[7] as usize]
-                    | sudoku[boxes[6] as usize]
-                    | sudoku[boxes[5] as usize]
-                    | sudoku[boxes[4] as usize]
-                    | sudoku[boxes[3] as usize]
-                    | sudoku[boxes[2] as usize]
-                    | sudoku[boxes[1] as usize]
-                    | sudoku[boxes[0] as usize])
-                    & consts::SUDOKU_VALUES_TOTAL);
-            match consts::OPTION_COUNT_CACHE[box_total as usize] {
-                0 => {}
-                1 => {
-                    if value & box_total != 0 {
-                        value &= box_total;
-                        changed = true;
-                    } else {
-                        sudoku[square] = 0;
-                        return false;
-                    }
-                }
-                _ => {
-                    sudoku[square] = 0;
-                    return false;
-                }
-            }
-            if changed {
-                sudoku[square] =
-                    value | ((sudoku[square] & consts::SUDOKU_TECHNIQUES_TOTAL) - 1024);
+            } else {
+                sudoku[square] = 0;
+                return false;
             }
         }
+        _ => {
+            sudoku[square] = 0;
+            return false;
+        }
     }
-    changed
+    let column_total: u16 = consts::SUDOKU_VALUES_TOTAL
+        - ((sudoku[columns[7] as usize]
+            | sudoku[columns[6] as usize]
+            | sudoku[columns[5] as usize]
+            | sudoku[columns[4] as usize]
+            | sudoku[columns[3] as usize]
+            | sudoku[columns[2] as usize]
+            | sudoku[columns[1] as usize]
+            | sudoku[columns[0] as usize])
+            & consts::SUDOKU_VALUES_TOTAL);
+    match consts::OPTION_COUNT_CACHE[column_total as usize] {
+        0 => {}
+        1 => {
+            if value & column_total != 0 {
+                if column_total != value {
+                    value &= column_total;
+                    changed = true;
+                }
+            } else {
+                sudoku[square] = 0;
+                return false;
+            }
+        }
+        _ => {
+            sudoku[square] = 0;
+            return false;
+        }
+    }
+    let box_total: u16 = consts::SUDOKU_VALUES_TOTAL
+        - ((sudoku[boxes[7] as usize]
+            | sudoku[boxes[6] as usize]
+            | sudoku[boxes[5] as usize]
+            | sudoku[boxes[4] as usize]
+            | sudoku[boxes[3] as usize]
+            | sudoku[boxes[2] as usize]
+            | sudoku[boxes[1] as usize]
+            | sudoku[boxes[0] as usize])
+            & consts::SUDOKU_VALUES_TOTAL);
+    match consts::OPTION_COUNT_CACHE[box_total as usize] {
+        0 => {}
+        1 => {
+            if value & box_total != 0 {
+                if box_total != value {
+                    value &= box_total;
+                    changed = true;
+                }
+            } else {
+                sudoku[square] = 0;
+                return false;
+            }
+        }
+        _ => {
+            sudoku[square] = 0;
+            return false;
+        }
+    }
+    if changed {
+        sudoku[square] = value | (consts::SUDOKU_TECHNIQUES_TOTAL - 1024);
+    } else {
+        sudoku[square] &= consts::SUDOKU_MAX - 1024;
+    }
+    true
 }
