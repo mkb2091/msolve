@@ -80,6 +80,7 @@ pub fn naked_pair(sudoku: &mut [u16; 81], square: usize) {
             for pos in house.iter() {
                 if *pos != square && pos != second && sudoku[*pos as usize] & value != 0 {
                     sudoku[*pos as usize] &= not_value;
+                    sudoku[*pos as usize] |= consts::SUDOKU_TECHNIQUES_TOTAL;
                 }
             }
             if house_id < 2 {
@@ -87,6 +88,7 @@ pub fn naked_pair(sudoku: &mut [u16; 81], square: usize) {
                     for pos in boxes.iter() {
                         if *pos != square && pos != second && sudoku[*pos as usize] & value != 0 {
                             sudoku[*pos as usize] &= not_value;
+                            sudoku[*pos as usize] |= consts::SUDOKU_TECHNIQUES_TOTAL;
                         }
                     }
                 }
@@ -94,12 +96,14 @@ pub fn naked_pair(sudoku: &mut [u16; 81], square: usize) {
                 for pos in rows.iter() {
                     if *pos != square && pos != second && sudoku[*pos as usize] & value != 0 {
                         sudoku[*pos as usize] &= not_value;
+                        sudoku[*pos as usize] |= consts::SUDOKU_TECHNIQUES_TOTAL;
                     }
                 }
             } else if columns.contains(&second) {
                 for pos in columns.iter() {
                     if *pos != square && pos != second && sudoku[*pos as usize] & value != 0 {
                         sudoku[*pos as usize] &= not_value;
+                        sudoku[*pos as usize] |= consts::SUDOKU_TECHNIQUES_TOTAL;
                     }
                 }
             }
@@ -125,6 +129,7 @@ pub fn naked_triple(sudoku: &mut [u16; 81], square: usize) {
                 for pos3 in house.iter() {
                     if pos3 != pos && pos3 != pos2 && (sudoku[*pos3 as usize] & value != 0) {
                         sudoku[*pos3 as usize] &= not_value;
+                        sudoku[*pos3 as usize] |= consts::SUDOKU_TECHNIQUES_TOTAL;
                     }
                 }
             }
