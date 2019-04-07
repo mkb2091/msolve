@@ -160,12 +160,10 @@ pub fn hidden_singles(sudoku: &mut [u16; 81], square: usize) -> bool {
                     changed = true;
                 }
             } else {
-                sudoku[square] = 0;
                 return false;
             }
         }
         _ => {
-            sudoku[square] = 0;
             return false;
         }
     }
@@ -188,12 +186,10 @@ pub fn hidden_singles(sudoku: &mut [u16; 81], square: usize) -> bool {
                     changed = true;
                 }
             } else {
-                sudoku[square] = 0;
                 return false;
             }
         }
         _ => {
-            sudoku[square] = 0;
             return false;
         }
     }
@@ -216,12 +212,10 @@ pub fn hidden_singles(sudoku: &mut [u16; 81], square: usize) -> bool {
                     changed = true;
                 }
             } else {
-                sudoku[square] = 0;
                 return false;
             }
         }
         _ => {
-            sudoku[square] = 0;
             return false;
         }
     }
