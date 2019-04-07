@@ -83,6 +83,7 @@ pub fn naked_pair(sudoku: &mut [u16; 81], square: usize) {
                     sudoku[*pos as usize] |= consts::SUDOKU_TECHNIQUES_TOTAL;
                 }
             }
+            sudoku[*second as usize] &= consts::SUDOKU_MAX - 512;
         }
     }
     sudoku[square as usize] &= consts::SUDOKU_MAX - 512;
@@ -109,7 +110,9 @@ pub fn naked_triple(sudoku: &mut [u16; 81], square: usize) {
                         sudoku[*pos3 as usize] |= consts::SUDOKU_TECHNIQUES_TOTAL;
                     }
                 }
+                sudoku[*pos2 as usize] &= consts::SUDOKU_MAX - 512;
             }
+            sudoku[*pos as usize] &= consts::SUDOKU_MAX - 512;
         }
     }
     sudoku[square as usize] &= consts::SUDOKU_MAX - 512;
