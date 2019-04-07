@@ -140,27 +140,45 @@ pub fn naked_triple(sudoku: &mut [u16; 81], square: usize) {
 
 #[inline(never)]
 pub fn hidden_singles(sudoku: &mut [u16; 81], square: usize) -> bool {
-    let mut changed = false;
     let mut value = sudoku[square] & consts::SUDOKU_VALUES_TOTAL;
-    let (rows, columns, boxes) = consts::PRECOMPUTED_INDEXES[square];
-    let row_total: u16 = consts::SUDOKU_VALUES_TOTAL
-        - ((sudoku[rows[7] as usize]
-            | sudoku[rows[6] as usize]
-            | sudoku[rows[5] as usize]
-            | sudoku[rows[4] as usize]
-            | sudoku[rows[3] as usize]
-            | sudoku[rows[2] as usize]
-            | sudoku[rows[1] as usize]
-            | sudoku[rows[0] as usize])
+    sudoku[square] = 0;
+    let row_start = square / 9 * 9;
+    let column_start = square % 9;
+    let box_start = square / 3 % 3 * 3 + square / 27 * 27;
+    let needed = consts::SUDOKU_VALUES_TOTAL
+        - ((sudoku[row_start + 8]
+            | sudoku[row_start + 7]
+            | sudoku[row_start + 6]
+            | sudoku[row_start + 5]
+            | sudoku[row_start + 4]
+            | sudoku[row_start + 3]
+            | sudoku[row_start + 2]
+            | sudoku[row_start + 1]
+            | sudoku[row_start])
+            & (sudoku[column_start + 72]
+                | sudoku[column_start + 63]
+                | sudoku[column_start + 54]
+                | sudoku[column_start + 45]
+                | sudoku[column_start + 36]
+                | sudoku[column_start + 27]
+                | sudoku[column_start + 18]
+                | sudoku[column_start + 9]
+                | sudoku[column_start])
+            & (sudoku[box_start + 20]
+                | sudoku[box_start + 19]
+                | sudoku[box_start + 18]
+                | sudoku[box_start + 11]
+                | sudoku[box_start + 10]
+                | sudoku[box_start + 9]
+                | sudoku[box_start + 2]
+                | sudoku[box_start + 1]
+                | sudoku[box_start])
             & consts::SUDOKU_VALUES_TOTAL);
-    match consts::OPTION_COUNT_CACHE[row_total as usize] {
+    match consts::OPTION_COUNT_CACHE[needed as usize] {
         0 => {}
         1 => {
-            if value & row_total != 0 {
-                if row_total != value {
-                    value &= row_total;
-                    changed = true;
-                }
+            if value & needed != 0 {
+                value &= needed;
             } else {
                 return false;
             }
@@ -169,62 +187,6 @@ pub fn hidden_singles(sudoku: &mut [u16; 81], square: usize) -> bool {
             return false;
         }
     }
-    let column_total: u16 = consts::SUDOKU_VALUES_TOTAL
-        - ((sudoku[columns[7] as usize]
-            | sudoku[columns[6] as usize]
-            | sudoku[columns[5] as usize]
-            | sudoku[columns[4] as usize]
-            | sudoku[columns[3] as usize]
-            | sudoku[columns[2] as usize]
-            | sudoku[columns[1] as usize]
-            | sudoku[columns[0] as usize])
-            & consts::SUDOKU_VALUES_TOTAL);
-    match consts::OPTION_COUNT_CACHE[column_total as usize] {
-        0 => {}
-        1 => {
-            if value & column_total != 0 {
-                if column_total != value {
-                    value &= column_total;
-                    changed = true;
-                }
-            } else {
-                return false;
-            }
-        }
-        _ => {
-            return false;
-        }
-    }
-    let box_total: u16 = consts::SUDOKU_VALUES_TOTAL
-        - ((sudoku[boxes[7] as usize]
-            | sudoku[boxes[6] as usize]
-            | sudoku[boxes[5] as usize]
-            | sudoku[boxes[4] as usize]
-            | sudoku[boxes[3] as usize]
-            | sudoku[boxes[2] as usize]
-            | sudoku[boxes[1] as usize]
-            | sudoku[boxes[0] as usize])
-            & consts::SUDOKU_VALUES_TOTAL);
-    match consts::OPTION_COUNT_CACHE[box_total as usize] {
-        0 => {}
-        1 => {
-            if value & box_total != 0 {
-                if box_total != value {
-                    value &= box_total;
-                    changed = true;
-                }
-            } else {
-                return false;
-            }
-        }
-        _ => {
-            return false;
-        }
-    }
-    if changed {
-        sudoku[square] = value | (consts::SUDOKU_TECHNIQUES_TOTAL - 1024);
-    } else {
-        sudoku[square] &= consts::SUDOKU_MAX - 1024;
-    }
+    sudoku[square] = value | (consts::SUDOKU_TECHNIQUES_TOTAL - 1024);
     true
 }
