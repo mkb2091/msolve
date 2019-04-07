@@ -72,7 +72,7 @@ pub fn naked_pair(sudoku: &mut [u16; 81], square: usize) {
     let (rows, columns, boxes) = consts::PRECOMPUTED_INDEXES[square];
     let square = square as u8;
     let not_value = consts::SUDOKU_MAX - value;
-    for (house_id, house) in [rows, columns, boxes].iter().enumerate() {
+    for (is_box, house) in &[(false, rows), (false, columns), (true, boxes)] {
         if let Some(second) = house
             .iter()
             .find(|&second| sudoku[*second as usize] & consts::SUDOKU_VALUES_TOTAL == value)
@@ -83,7 +83,7 @@ pub fn naked_pair(sudoku: &mut [u16; 81], square: usize) {
                     sudoku[*pos as usize] |= consts::SUDOKU_TECHNIQUES_TOTAL;
                 }
             }
-            if house_id < 2 {
+            if !is_box {
                 if boxes.contains(&second) {
                     for pos in boxes.iter() {
                         if *pos != square && pos != second && sudoku[*pos as usize] & value != 0 {
