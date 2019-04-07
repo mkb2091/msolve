@@ -73,36 +73,35 @@ pub fn naked_pair(sudoku: &mut [u16; 81], square: usize) {
     let square = square as u8;
     let not_value = consts::SUDOKU_MAX - value;
     for (house_id, house) in [rows, columns, boxes].iter().enumerate() {
-        for second in house.iter() {
-            if sudoku[*second as usize] & consts::SUDOKU_VALUES_TOTAL == value {
-                for pos in house.iter() {
+        if let Some(second) = house
+            .iter()
+            .find(|&second| sudoku[*second as usize] & consts::SUDOKU_VALUES_TOTAL == value)
+        {
+            for pos in house.iter() {
+                if *pos != square && pos != second && sudoku[*pos as usize] & value != 0 {
+                    sudoku[*pos as usize] &= not_value;
+                }
+            }
+            if house_id < 2 {
+                if boxes.contains(&second) {
+                    for pos in boxes.iter() {
+                        if *pos != square && pos != second && sudoku[*pos as usize] & value != 0 {
+                            sudoku[*pos as usize] &= not_value;
+                        }
+                    }
+                }
+            } else if rows.contains(&second) {
+                for pos in rows.iter() {
                     if *pos != square && pos != second && sudoku[*pos as usize] & value != 0 {
                         sudoku[*pos as usize] &= not_value;
                     }
                 }
-                if house_id < 2 {
-                    if boxes.contains(&second) {
-                        for pos in boxes.iter() {
-                            if *pos != square && pos != second && sudoku[*pos as usize] & value != 0
-                            {
-                                sudoku[*pos as usize] &= not_value;
-                            }
-                        }
-                    }
-                } else if rows.contains(&second) {
-                    for pos in rows.iter() {
-                        if *pos != square && pos != second && sudoku[*pos as usize] & value != 0 {
-                            sudoku[*pos as usize] &= not_value;
-                        }
-                    }
-                } else if columns.contains(&second) {
-                    for pos in columns.iter() {
-                        if *pos != square && pos != second && sudoku[*pos as usize] & value != 0 {
-                            sudoku[*pos as usize] &= not_value;
-                        }
+            } else if columns.contains(&second) {
+                for pos in columns.iter() {
+                    if *pos != square && pos != second && sudoku[*pos as usize] & value != 0 {
+                        sudoku[*pos as usize] &= not_value;
                     }
                 }
-                break;
             }
         }
     }
@@ -115,21 +114,19 @@ pub fn naked_triple(sudoku: &mut [u16; 81], square: usize) {
     let square = square as u8;
     let not_value = consts::SUDOKU_MAX - value;
     for house in [rows, columns, boxes].iter() {
-        for (i1, pos) in house[..7].iter().enumerate() {
-            if sudoku[*pos as usize] & consts::SUDOKU_VALUES_TOTAL == value {
-                for pos2 in house[i1..].iter() {
-                    if pos2 != pos && sudoku[*pos2 as usize] & consts::SUDOKU_VALUES_TOTAL == value
-                    {
-                        for pos3 in house.iter() {
-                            if pos3 != pos && pos3 != pos2 && (sudoku[*pos3 as usize] & value != 0)
-                            {
-                                sudoku[*pos3 as usize] &= not_value;
-                            }
-                        }
-                        break;
+        if let Some((i1, pos)) = house[..7]
+            .iter()
+            .enumerate()
+            .find(|(_, &pos)| sudoku[pos as usize] & consts::SUDOKU_VALUES_TOTAL == value)
+        {
+            if let Some(pos2) = house[i1..].iter().find(|&pos2| {
+                pos2 != pos && sudoku[*pos2 as usize] & consts::SUDOKU_VALUES_TOTAL == value
+            }) {
+                for pos3 in house.iter() {
+                    if pos3 != pos && pos3 != pos2 && (sudoku[*pos3 as usize] & value != 0) {
+                        sudoku[*pos3 as usize] &= not_value;
                     }
                 }
-                break;
             }
         }
     }
