@@ -72,7 +72,7 @@ pub fn naked_pair(sudoku: &mut [u16; 81], square: usize) {
     let (rows, columns, boxes) = consts::PRECOMPUTED_INDEXES[square];
     let square = square as u8;
     let not_value = consts::SUDOKU_MAX + consts::SQUARE_DONE - value;
-    for (is_box, house) in &[(false, rows), (false, columns), (true, boxes)] {
+    for house in &[rows, columns, boxes] {
         if let Some(second) = house
             .iter()
             .find(|&second| sudoku[*second as usize] & consts::SUDOKU_VALUES_TOTAL == value)
@@ -81,30 +81,6 @@ pub fn naked_pair(sudoku: &mut [u16; 81], square: usize) {
                 if *pos != square && pos != second && sudoku[*pos as usize] & value != 0 {
                     sudoku[*pos as usize] &= not_value;
                     sudoku[*pos as usize] |= consts::SUDOKU_TECHNIQUES_TOTAL;
-                }
-            }
-            if !is_box {
-                if boxes.contains(&second) {
-                    for pos in boxes.iter() {
-                        if *pos != square && pos != second && sudoku[*pos as usize] & value != 0 {
-                            sudoku[*pos as usize] &= not_value;
-                            sudoku[*pos as usize] |= consts::SUDOKU_TECHNIQUES_TOTAL;
-                        }
-                    }
-                }
-            } else if rows.contains(&second) {
-                for pos in rows.iter() {
-                    if *pos != square && pos != second && sudoku[*pos as usize] & value != 0 {
-                        sudoku[*pos as usize] &= not_value;
-                        sudoku[*pos as usize] |= consts::SUDOKU_TECHNIQUES_TOTAL;
-                    }
-                }
-            } else if columns.contains(&second) {
-                for pos in columns.iter() {
-                    if *pos != square && pos != second && sudoku[*pos as usize] & value != 0 {
-                        sudoku[*pos as usize] &= not_value;
-                        sudoku[*pos as usize] |= consts::SUDOKU_TECHNIQUES_TOTAL;
-                    }
                 }
             }
         }
