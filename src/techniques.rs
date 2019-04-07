@@ -99,9 +99,10 @@ pub fn naked_triple(sudoku: &mut [u16; 81], square: usize) {
             .enumerate()
             .find(|(_, &pos)| sudoku[pos as usize] & consts::SUDOKU_VALUES_TOTAL == value)
         {
-            if let Some(pos2) = house[i1..].iter().find(|&pos2| {
-                pos2 != pos && sudoku[*pos2 as usize] & consts::SUDOKU_VALUES_TOTAL == value
-            }) {
+            if let Some(pos2) = house[i1 + 1..]
+                .iter()
+                .find(|&pos2| sudoku[*pos2 as usize] & consts::SUDOKU_VALUES_TOTAL == value)
+            {
                 for pos3 in house.iter() {
                     if pos3 != pos && pos3 != pos2 && (sudoku[*pos3 as usize] & value != 0) {
                         sudoku[*pos3 as usize] &= not_value;
