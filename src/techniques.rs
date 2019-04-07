@@ -140,7 +140,7 @@ pub fn naked_triple(sudoku: &mut [u16; 81], square: usize) {
 
 #[inline(never)]
 pub fn hidden_singles(sudoku: &mut [u16; 81], square: usize) -> bool {
-    let mut value = sudoku[square] & consts::SUDOKU_VALUES_TOTAL;
+    let value = sudoku[square];
     sudoku[square] = 0;
     let row_start = square / 9 * 9;
     let column_start = square % 9;
@@ -175,18 +175,18 @@ pub fn hidden_singles(sudoku: &mut [u16; 81], square: usize) -> bool {
                 | sudoku[box_start])
             & consts::SUDOKU_VALUES_TOTAL);
     match consts::OPTION_COUNT_CACHE[needed as usize] {
-        0 => {}
+        0 => {
+            sudoku[square] = value & (consts::SUDOKU_MAX - 1024);
+            true
+        }
         1 => {
             if value & needed != 0 {
-                value &= needed;
+                sudoku[square] = (value & needed) | (consts::SUDOKU_TECHNIQUES_TOTAL - 1024);
+                true
             } else {
-                return false;
+                false
             }
         }
-        _ => {
-            return false;
-        }
+        _ => false,
     }
-    sudoku[square] = value | (consts::SUDOKU_TECHNIQUES_TOTAL - 1024);
-    true
 }
