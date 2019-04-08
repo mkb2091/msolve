@@ -1,7 +1,7 @@
 #![no_std]
 
 mod consts;
-mod techniques;
+pub mod techniques;
 #[cfg(test)]
 mod tests {
     #[test]
@@ -9,7 +9,7 @@ mod tests {
         assert_eq!(2 + 2, 4);
     }
 }
-
+#[derive(Clone, Copy)]
 pub struct MSolve {
     options: [u16; 81],
 }
