@@ -28,6 +28,13 @@ fn criterion_benchmark(c: &mut Criterion) {
         0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 5, 0, 0, 4, 0, 0, 0, 0, 3, 0, 0,
     ]);
     let mut solver = msolve::MSolve::new();
+    c.bench_function("easy_8802", move |b| {
+        b.iter(|| {
+            solver.set_sudoku(easy_8802);
+            solver.apply_techniques();
+            criterion::black_box(solver.to_array())
+        })
+    });
     c.bench_function("World's Hardest Sudoku", move |b| {
         b.iter(|| {
             solver.set_sudoku(worlds_hardest_sudoku);
@@ -38,13 +45,6 @@ fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("hardbrute_sudoku", move |b| {
         b.iter(|| {
             solver.set_sudoku(hardbrute_sudoku);
-            solver.apply_techniques();
-            criterion::black_box(solver.to_array())
-        })
-    });
-    c.bench_function("easy_8802", move |b| {
-        b.iter(|| {
-            solver.set_sudoku(easy_8802);
             solver.apply_techniques();
             criterion::black_box(solver.to_array())
         })
