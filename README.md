@@ -1,4 +1,5 @@
 # msolve
+![Travis CI](https://api.travis-ci.org/mkb2091/msolve.svg?branch=master)
 
 A WIP sudoku solving library
 
