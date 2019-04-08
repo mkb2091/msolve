@@ -20,10 +20,13 @@ impl MSolve {
     }
     pub fn set_sudoku(&mut self, sudoku: [u8; 81]) {
         self.options = [consts::SUDOKU_MAX; 81];
-        for (d, s) in self.options.iter_mut().zip(sudoku.iter()) {
-            if *s != 0 {
-                *d = consts::SUDOKU_VALUES[(*s - 1) as usize] | consts::SUDOKU_TECHNIQUES_TOTAL;
-            }
+        for (d, s) in self
+            .options
+            .iter_mut()
+            .zip(sudoku.iter())
+            .filter(|(_, &s)| s != 0)
+        {
+            *d = consts::SUDOKU_VALUES[(*s - 1) as usize] | 512;
         }
     }
     pub fn apply_techniques(&mut self) -> bool {
