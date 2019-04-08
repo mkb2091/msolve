@@ -10,6 +10,8 @@ fn no_errors(sudoku: [u8; 81], solution: [u8; 81]) -> Result<usize, bool> {
         if result[i] == 0 {
             if sudoku[i] != 0 {
                 return Err(false);
+            } else if 2_u16.pow((solution[i] - 1).into()) & solver.options[i] == 0 {
+                return Err(false);
             }
         } else if result[i] != solution[i] {
             return Err(false);
