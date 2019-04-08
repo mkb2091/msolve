@@ -31,13 +31,7 @@ impl MSolve {
         while changed {
             changed = false;
             for square in 0..81 {
-                let length = consts::OPTION_COUNT_CACHE
-                    [(self.options[square] & consts::SUDOKU_VALUES_TOTAL) as usize];
-                if self.options[square] >= consts::SQUARE_DONE {
-                    if length == 0 {
-                        return false;
-                    }
-                } else {
+                if self.options[square] < consts::SQUARE_DONE {
                     if self.options[square] & 1024 == 1024 {
                         changed = true;
                         if !techniques::hidden_singles(&mut self.options, square) {
@@ -46,7 +40,9 @@ impl MSolve {
                     }
                     if self.options[square] & 512 == 512 {
                         changed = true;
-                        match length {
+                        match consts::OPTION_COUNT_CACHE
+                            [(self.options[square] & consts::SUDOKU_VALUES_TOTAL) as usize]
+                        {
                             0 => return false,
                             1 => techniques::apply_number(&mut self.options, square),
                             2 => techniques::naked_pair(&mut self.options, square),
