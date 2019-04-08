@@ -4,7 +4,8 @@ pub fn apply_number(sudoku: &mut [u16; 81], square: usize) {
     assert!(square < 81);
     let value = sudoku[square] & consts::SUDOKU_VALUES_TOTAL;
     let not_value = consts::SUDOKU_MAX + consts::SQUARE_DONE - value;
-    let row_start = square / 9 * 9;
+    let column_start = square % 9;
+    let row_start = square - column_start;
     sudoku[row_start + 8] = (sudoku[row_start + 8] & not_value)
         | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[row_start + 8] & value == value) as u16));
     sudoku[row_start + 7] = (sudoku[row_start + 7] & not_value)
@@ -24,7 +25,6 @@ pub fn apply_number(sudoku: &mut [u16; 81], square: usize) {
     sudoku[row_start] = (sudoku[row_start] & not_value)
         | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[row_start] & value == value) as u16));
 
-    let column_start = square % 9;
     sudoku[column_start + 72] = (sudoku[column_start + 72] & not_value)
         | (consts::SUDOKU_TECHNIQUES_TOTAL * ((sudoku[column_start + 72] & value == value) as u16));
     sudoku[column_start + 63] = (sudoku[column_start + 63] & not_value)
