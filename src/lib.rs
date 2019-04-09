@@ -57,9 +57,7 @@ impl MSolve {
                 if !techniques::hidden_singles(&mut self.options, square) {
                     return false;
                 }
-                changed |= match consts::OPTION_COUNT_CACHE
-                    [(self.options[square] & consts::SUDOKU_VALUES_TOTAL) as usize]
-                {
+                changed |= match consts::OPTION_COUNT_CACHE[self.options[square] as usize] {
                     0 => return false,
                     1 => techniques::apply_number(&mut self.options, square),
                     2 => techniques::naked_pair(&mut self.options, square),
@@ -83,7 +81,7 @@ impl MSolve {
     pub fn to_array(&self) -> [u8; 81] {
         let mut array: [u8; 81] = [0; 81];
         for (square, value) in self.options.iter().enumerate() {
-            let processed = value & consts::SUDOKU_VALUES_TOTAL;
+            let processed = value & consts::SUDOKU_MAX;
             if consts::OPTION_COUNT_CACHE[processed as usize] == 1 {
                 for (i, v) in consts::SUDOKU_VALUES.iter().enumerate() {
                     if processed == *v {
