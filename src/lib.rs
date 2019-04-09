@@ -70,7 +70,7 @@ impl MSolve {
                         2 => techniques::naked_pair(&mut self.options, square),
                         3 => techniques::naked_triple(&mut self.options, square),
                         _ => {
-                            self.options[square] -= 512;
+                            self.options[square] &= consts::SUDOKU_MAX - 512;
                         }
                     }
                 }
