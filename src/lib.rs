@@ -31,14 +31,6 @@ impl MSolve {
     }
     pub fn set_sudoku(&mut self, sudoku: [u8; 81]) {
         self.options = [consts::SUDOKU_MAX; 81];
-        for (d, s) in self
-            .options
-            .iter_mut()
-            .zip(sudoku.iter())
-            .filter(|(_, &s)| s != 0)
-        {
-            *d = consts::SUDOKU_VALUES[(*s - 1) as usize];
-        }
         self.pos = 81;
         self.to_explore = [
             0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,
@@ -46,6 +38,18 @@ impl MSolve {
             46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67,
             68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80,
         ];
+        let mut pos = 0;
+        for (d, (i, s)) in self
+            .options
+            .iter_mut()
+            .zip(sudoku.iter().enumerate())
+            .filter(|(_, (_, &s))| s != 0)
+        {
+            *d = consts::SUDOKU_VALUES[(*s - 1) as usize];
+            self.to_explore[i] = self.to_explore[pos];
+            self.to_explore[pos] = i as u8;
+            pos += 1;
+        }
     }
     pub fn apply_techniques(&mut self) -> bool {
         let mut changed = true;
