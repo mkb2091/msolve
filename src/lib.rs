@@ -1,7 +1,7 @@
 #![no_std]
 
 mod consts;
-pub mod techniques;
+mod techniques;
 #[cfg(test)]
 mod tests {
     #[test]
@@ -11,7 +11,7 @@ mod tests {
 }
 #[derive(Clone, Copy)]
 pub struct MSolve {
-    pub options: [u16; 81],
+    options: [u16; 81],
     to_explore: [u8; 81],
     pos: usize,
 }
