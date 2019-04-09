@@ -4,7 +4,7 @@ use crate::consts;
 pub fn apply_number(sudoku: &mut [u16; 81], square: usize) -> bool {
     assert!(square < 81);
     let value = sudoku[square];
-    let not_value = consts::SUDOKU_MAX + consts::SQUARE_DONE - value;
+    let not_value = consts::SUDOKU_MAX - value;
     let column_start = square % 9;
     let row_start = square - column_start;
     let box_start = square / 3 % 3 * 3 + square / 27 * 27;
@@ -46,7 +46,7 @@ pub fn naked_pair(sudoku: &mut [u16; 81], square: usize) -> bool {
     let value = sudoku[square];
     let (rows, columns, boxes) = consts::PRECOMPUTED_INDEXES[square];
     let square = square as u8;
-    let not_value = consts::SUDOKU_MAX + consts::SQUARE_DONE - value;
+    let not_value = consts::SUDOKU_MAX - value;
     let mut changed = false;
     for house in &[rows, columns, boxes] {
         if let Some(second) = house
@@ -67,7 +67,7 @@ pub fn naked_pair(sudoku: &mut [u16; 81], square: usize) -> bool {
 pub fn naked_triple(sudoku: &mut [u16; 81], square: usize) -> bool {
     let value = sudoku[square];
     let (rows, columns, boxes) = consts::PRECOMPUTED_INDEXES[square];
-    let not_value = consts::SUDOKU_MAX + consts::SQUARE_DONE - value;
+    let not_value = consts::SUDOKU_MAX - value;
     let mut changed = false;
     for house in [rows, columns, boxes].iter() {
         if let Some((i1, pos)) = house[..7]
