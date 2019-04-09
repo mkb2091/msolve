@@ -1,7 +1,6 @@
 pub const SUDOKU_VALUES: [u16; 9] = [1, 2, 4, 8, 16, 32, 64, 128, 256];
-pub const SUDOKU_TECHNIQUES_TOTAL: u16 = 512 + 1024;
 pub const SUDOKU_VALUES_TOTAL: u16 = 511;
-pub const SUDOKU_MAX: u16 = SUDOKU_VALUES_TOTAL + SUDOKU_TECHNIQUES_TOTAL;
+pub const SUDOKU_MAX: u16 = SUDOKU_VALUES_TOTAL;
 pub const SQUARE_DONE: u16 = 32768;
 pub const OPTION_COUNT_CACHE: [u8; 512] = [
     0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,

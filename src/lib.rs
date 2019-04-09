@@ -37,7 +37,7 @@ impl MSolve {
             .zip(sudoku.iter())
             .filter(|(_, &s)| s != 0)
         {
-            *d = consts::SUDOKU_VALUES[(*s - 1) as usize] | 512;
+            *d = consts::SUDOKU_VALUES[(*s - 1) as usize];
         }
         self.pos = 81;
         self.to_explore = [
@@ -54,26 +54,18 @@ impl MSolve {
             let mut x = 0;
             while x < self.pos {
                 let square = self.to_explore[x] as usize;
-                if self.options[square] & 1024 == 1024 {
-                    changed = true;
-                    if !techniques::hidden_singles(&mut self.options, square) {
-                        return false;
-                    }
+                if !techniques::hidden_singles(&mut self.options, square) {
+                    return false;
                 }
-                if self.options[square] & 512 == 512 {
-                    changed = true;
-                    match consts::OPTION_COUNT_CACHE
-                        [(self.options[square] & consts::SUDOKU_VALUES_TOTAL) as usize]
-                    {
-                        0 => return false,
-                        1 => techniques::apply_number(&mut self.options, square),
-                        2 => techniques::naked_pair(&mut self.options, square),
-                        3 => techniques::naked_triple(&mut self.options, square),
-                        _ => {
-                            self.options[square] &= consts::SUDOKU_MAX - 512;
-                        }
-                    }
-                }
+                changed |= match consts::OPTION_COUNT_CACHE
+                    [(self.options[square] & consts::SUDOKU_VALUES_TOTAL) as usize]
+                {
+                    0 => return false,
+                    1 => techniques::apply_number(&mut self.options, square),
+                    2 => techniques::naked_pair(&mut self.options, square),
+                    3 => techniques::naked_triple(&mut self.options, square),
+                    _ => false,
+                };
                 if self.options[square] >= consts::SQUARE_DONE {
                     self.pos -= 1;
                     if self.pos != x {
