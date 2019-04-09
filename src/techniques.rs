@@ -1,11 +1,41 @@
 use crate::consts;
 
-pub fn apply_number(sudoku: &mut [u16; 81], square: usize) {
+#[inline(never)]
+pub fn apply_number(sudoku: &mut [u16; 81], square: usize) -> bool {
     assert!(square < 81);
     let value = sudoku[square] & consts::SUDOKU_VALUES_TOTAL;
     let not_value = consts::SUDOKU_MAX + consts::SQUARE_DONE - value;
     let column_start = square % 9;
     let row_start = square - column_start;
+    let box_start = square / 3 % 3 * 3 + square / 27 * 27;
+    sudoku[square] = 0;
+    let changed = sudoku[row_start + 8] & value == value
+        || sudoku[row_start + 7] & value == value
+        || sudoku[row_start + 6] & value == value
+        || sudoku[row_start + 5] & value == value
+        || sudoku[row_start + 4] & value == value
+        || sudoku[row_start + 3] & value == value
+        || sudoku[row_start + 2] & value == value
+        || sudoku[row_start + 1] & value == value
+        || sudoku[row_start] & value == value
+        || sudoku[column_start + 72] & value == value
+        || sudoku[column_start + 63] & value == value
+        || sudoku[column_start + 54] & value == value
+        || sudoku[column_start + 45] & value == value
+        || sudoku[column_start + 36] & value == value
+        || sudoku[column_start + 27] & value == value
+        || sudoku[column_start + 18] & value == value
+        || sudoku[column_start + 9] & value == value
+        || sudoku[column_start] & value == value
+        || sudoku[box_start + 20] & value == value
+        || sudoku[box_start + 19] & value == value
+        || sudoku[box_start + 18] & value == value
+        || sudoku[box_start + 11] & value == value
+        || sudoku[box_start + 10] & value == value
+        || sudoku[box_start + 9] & value == value
+        || sudoku[box_start + 2] & value == value
+        || sudoku[box_start + 1] & value == value
+        || sudoku[box_start] & value == value;
     sudoku[row_start + 8] &= not_value;
     sudoku[row_start + 7] &= not_value;
     sudoku[row_start + 6] &= not_value;
@@ -26,7 +56,6 @@ pub fn apply_number(sudoku: &mut [u16; 81], square: usize) {
     sudoku[column_start + 9] &= not_value;
     sudoku[column_start] &= not_value;
 
-    let box_start = square / 3 % 3 * 3 + square / 27 * 27;
     sudoku[box_start + 20] &= not_value;
     sudoku[box_start + 19] &= not_value;
     sudoku[box_start + 18] &= not_value;
@@ -36,17 +65,16 @@ pub fn apply_number(sudoku: &mut [u16; 81], square: usize) {
     sudoku[box_start + 2] &= not_value;
     sudoku[box_start + 1] &= not_value;
     sudoku[box_start] &= not_value;
-    for i in 0..81 {
-        sudoku[i] |= consts::SUDOKU_TECHNIQUES_TOTAL;
-    }
     sudoku[square] = value | consts::SQUARE_DONE;
+    changed
 }
 
-pub fn naked_pair(sudoku: &mut [u16; 81], square: usize) {
+pub fn naked_pair(sudoku: &mut [u16; 81], square: usize) -> bool {
     let value = sudoku[square] & consts::SUDOKU_VALUES_TOTAL;
     let (rows, columns, boxes) = consts::PRECOMPUTED_INDEXES[square];
     let square = square as u8;
     let not_value = consts::SUDOKU_MAX + consts::SQUARE_DONE - value;
+    let mut changed = false;
     for house in &[rows, columns, boxes] {
         if let Some(second) = house
             .iter()
@@ -55,20 +83,19 @@ pub fn naked_pair(sudoku: &mut [u16; 81], square: usize) {
             for pos in house.iter() {
                 if *pos != square && pos != second && sudoku[*pos as usize] & value != 0 {
                     sudoku[*pos as usize] &= not_value;
-                    sudoku[*pos as usize] |= consts::SUDOKU_TECHNIQUES_TOTAL;
+                    changed = true;
                 }
             }
-            sudoku[*second as usize] &= consts::SUDOKU_MAX - 512;
         }
     }
-    sudoku[square as usize] &= consts::SUDOKU_MAX - 512;
+    changed
 }
 
-pub fn naked_triple(sudoku: &mut [u16; 81], square: usize) {
+pub fn naked_triple(sudoku: &mut [u16; 81], square: usize) -> bool {
     let value = sudoku[square] & consts::SUDOKU_VALUES_TOTAL;
     let (rows, columns, boxes) = consts::PRECOMPUTED_INDEXES[square];
-    let square = square as u8;
     let not_value = consts::SUDOKU_MAX + consts::SQUARE_DONE - value;
+    let mut changed = false;
     for house in [rows, columns, boxes].iter() {
         if let Some((i1, pos)) = house[..7]
             .iter()
@@ -82,15 +109,13 @@ pub fn naked_triple(sudoku: &mut [u16; 81], square: usize) {
                 for pos3 in house.iter() {
                     if pos3 != pos && pos3 != pos2 && (sudoku[*pos3 as usize] & value != 0) {
                         sudoku[*pos3 as usize] &= not_value;
-                        sudoku[*pos3 as usize] |= consts::SUDOKU_TECHNIQUES_TOTAL;
+                        changed = true;
                     }
                 }
-                sudoku[*pos2 as usize] &= consts::SUDOKU_MAX - 512;
             }
-            sudoku[*pos as usize] &= consts::SUDOKU_MAX - 512;
         }
     }
-    sudoku[square as usize] &= consts::SUDOKU_MAX - 512;
+    changed
 }
 
 #[inline(never)]
@@ -131,12 +156,12 @@ pub fn hidden_singles(sudoku: &mut [u16; 81], square: usize) -> bool {
             & consts::SUDOKU_VALUES_TOTAL);
     match consts::OPTION_COUNT_CACHE[needed as usize] {
         0 => {
-            sudoku[square] = value & (consts::SUDOKU_MAX - 1024);
+            sudoku[square] = value;
             true
         }
         1 => {
             if value & needed != 0 {
-                sudoku[square] = (value & needed) | (consts::SUDOKU_TECHNIQUES_TOTAL - 1024);
+                sudoku[square] = value & needed;
                 true
             } else {
                 false
