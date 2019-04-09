@@ -8,7 +8,6 @@ pub fn apply_number(sudoku: &mut [u16; 81], square: usize) -> bool {
     let column_start = square % 9;
     let row_start = square - column_start;
     let box_start = square / 3 % 3 * 3 + square / 27 * 27;
-    sudoku[square] = 0;
     sudoku[row_start + 8] &= not_value;
     sudoku[row_start + 7] &= not_value;
     sudoku[row_start + 6] &= not_value;
