@@ -13,5 +13,6 @@ matrix:
   fast_finish: true
 cache: cargo
 script:
+  - rustup component add clippy
   - cargo clippy --all-targets --all-features -- -D warnings
   - cargo test --verbose
