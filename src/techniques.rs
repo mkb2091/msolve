@@ -2,7 +2,6 @@ use crate::consts;
 
 #[inline(never)]
 pub fn apply_number(sudoku: &mut [u16; 81], square: usize) -> bool {
-    assert!(square < 81);
     let value = sudoku[square];
     let not_value = consts::SUDOKU_MAX - value;
     let column_start = square % 9;
@@ -37,10 +36,11 @@ pub fn apply_number(sudoku: &mut [u16; 81], square: usize) -> bool {
     sudoku[box_start + 2] &= not_value;
     sudoku[box_start + 1] &= not_value;
     sudoku[box_start] &= not_value;
-    sudoku[square] = value | consts::SQUARE_DONE;
+    sudoku[square] = value;
     true
 }
 
+#[inline(never)]
 pub fn naked_pair(sudoku: &mut [u16; 81], square: usize) -> bool {
     let value = sudoku[square];
     let (rows, columns, boxes) = consts::PRECOMPUTED_INDEXES[square];
@@ -53,7 +53,7 @@ pub fn naked_pair(sudoku: &mut [u16; 81], square: usize) -> bool {
             .find(|&second| sudoku[*second as usize] == value)
         {
             for pos in house.iter() {
-                if *pos != square && pos != second && sudoku[*pos as usize] & value != 0 {
+                if pos != second && sudoku[*pos as usize] & value != 0 {
                     sudoku[*pos as usize] &= not_value;
                     changed = true;
                 }
@@ -63,6 +63,7 @@ pub fn naked_pair(sudoku: &mut [u16; 81], square: usize) -> bool {
     changed
 }
 
+#[inline(never)]
 pub fn naked_triple(sudoku: &mut [u16; 81], square: usize) -> bool {
     let value = sudoku[square];
     let (rows, columns, boxes) = consts::PRECOMPUTED_INDEXES[square];
