@@ -1,4 +1,4 @@
-#![no_std]
+//#![no_std]
 
 mod consts;
 mod techniques;
@@ -61,22 +61,23 @@ impl MSolve {
                 if !techniques::hidden_singles(&mut self.options, square) {
                     return false;
                 }
+                x += 1;
                 changed |= match consts::OPTION_COUNT_CACHE[self.options[square] as usize] {
                     0 => return false,
-                    1 => techniques::apply_number(&mut self.options, square),
+                    1 => {
+                        let changed = techniques::apply_number(&mut self.options, square);
+                        x -= 1;
+                        self.pos -= 1;
+                        if self.pos != x {
+                            self.to_explore[x] = self.to_explore[self.pos];
+                            self.to_explore[self.pos] = square as u8;
+                        }
+                        changed
+                    }
                     2 => techniques::naked_pair(&mut self.options, square),
                     3 => techniques::naked_triple(&mut self.options, square),
                     _ => false,
                 };
-                if self.options[square] >= consts::SQUARE_DONE {
-                    self.pos -= 1;
-                    if self.pos != x {
-                        self.to_explore[x] = self.to_explore[self.pos];
-                        self.to_explore[self.pos] = square as u8;
-                    }
-                } else {
-                    x += 1;
-                }
             }
         }
         true
