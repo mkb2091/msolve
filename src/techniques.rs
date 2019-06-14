@@ -125,8 +125,7 @@ pub fn hidden_singles(sudoku: &mut [u16; 81], square: usize) -> bool {
                 | sudoku[box_start + 9]
                 | sudoku[box_start + 2]
                 | sudoku[box_start + 1]
-                | sudoku[box_start])
-            & consts::SUDOKU_MAX);
+                | sudoku[box_start]));
     match consts::OPTION_COUNT_CACHE[needed as usize] {
         0 => {
             sudoku[square] = value;
