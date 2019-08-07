@@ -1,6 +1,5 @@
-//#![no_std]
-
 mod consts;
+mod structures;
 mod techniques;
 #[cfg(test)]
 mod tests {
@@ -9,83 +8,85 @@ mod tests {
         assert_eq!(2 + 2, 4);
     }
 }
+
 #[derive(Clone, Copy)]
 pub struct MSolve {
-    options: [u16; 81],
-    to_explore: [u8; 81],
-    pos: usize,
+    pub options: structures::Sudoku,
+    to_explore: structures::SudokuUnsolvedSquares,
 }
 
 impl MSolve {
     pub fn new() -> MSolve {
         MSolve {
-            options: [0; 81],
-            to_explore: [
-                0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
-                23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43,
-                44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64,
-                65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80,
-            ],
-            pos: 0,
+            options: structures::Sudoku::new(),
+            to_explore: structures::SudokuUnsolvedSquares::new(),
         }
     }
-    pub fn set_sudoku(&mut self, sudoku: [u8; 81]) {
-        self.options = [consts::SUDOKU_MAX; 81];
-        self.pos = 81;
-        self.to_explore = [
-            0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,
-            24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45,
-            46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67,
-            68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80,
-        ];
-        let mut pos = 0;
-        for (d, (i, s)) in self
-            .options
-            .iter_mut()
-            .zip(sudoku.iter().enumerate())
-            .filter(|(_, (_, &s))| s != 0)
-        {
-            *d = consts::SUDOKU_VALUES[(*s - 1) as usize];
-            self.to_explore[i] = self.to_explore[pos];
-            self.to_explore[pos] = i as u8;
-            pos += 1;
-        }
+    pub fn set_sudoku(&mut self, sudoku: &[u8; 81]) {
+        self.options = structures::Sudoku::from_array(sudoku);
+        self.to_explore = structures::SudokuUnsolvedSquares::new();
     }
-    pub fn apply_techniques(&mut self) -> bool {
-        let mut changed = true;
-        while changed {
-            changed = false;
-            let mut x = 0;
-            while x < self.pos {
-                let square = self.to_explore[x] as usize;
-                if !techniques::hidden_singles(&mut self.options, square) {
+
+    pub fn process(&mut self, routes: &mut Vec<MSolve>) -> bool {
+        let mut values: Vec<u8> = Vec::with_capacity(9);
+        loop {
+            let mut min_options = 20;
+            let mut min_square = 0;
+            self.to_explore.to_front();
+            while let Ok(square) = self.to_explore.next() {
+                if !techniques::hidden_singles(&mut self.options, square as usize) {
                     return false;
                 }
-                x += 1;
-                changed |= match consts::OPTION_COUNT_CACHE[self.options[square] as usize] {
-                    0 => return false,
-                    1 => {
-                        let changed = techniques::apply_number(&mut self.options, square);
-                        x -= 1;
-                        self.pos -= 1;
-                        if self.pos != x {
-                            self.to_explore[x] = self.to_explore[self.pos];
-                            self.to_explore[self.pos] = square as u8;
+                let option_count =
+                    consts::OPTION_COUNT_CACHE[self.options.options[square as usize] as usize];
+                if option_count < min_options {
+                    match option_count {
+                        0 => return false,
+                        1 => {
+                            techniques::apply_number(&mut self.options, square as usize);
+                            self.to_explore.remove();
                         }
-                        changed
+                        _ => {
+                            min_options = option_count;
+                            min_square = square;
+                            self.to_explore.mark_for_removal();
+                        }
                     }
-                    2 => techniques::naked_pair(&mut self.options, square),
-                    3 => techniques::naked_triple(&mut self.options, square),
-                    _ => false,
-                };
+                }
+            }
+            if min_options != 20 {
+                values.clear();
+                let options = self.options.options[min_square as usize];
+                for (i, item) in consts::SUDOKU_VALUES.iter().enumerate() {
+                    if options & *item != 0 {
+                        values.push(i as u8 + 1);
+                    }
+                }
+                if values.is_empty() {
+                    return false;
+                }
+                self.to_explore.remove_marked();
+                let item = values.pop().unwrap();
+                for value in values.iter() {
+                    let mut clone = self.clone();
+                    clone.options.options[min_square as usize] =
+                        consts::SUDOKU_VALUES[*value as usize - 1];
+                    techniques::apply_number(&mut clone.options, min_square as usize);
+                    routes.push(clone);
+                }
+                self.options.options[min_square as usize] =
+                    consts::SUDOKU_VALUES[item as usize - 1];
+                techniques::apply_number(&mut self.options, min_square as usize);
+            } else {
+                return true;
             }
         }
-        true
     }
     pub fn next(&mut self) {}
     pub fn to_array(&self) -> [u8; 81] {
         let mut array: [u8; 81] = [0; 81];
         for (square, processed) in self
+            .options
             .options
             .iter()
             .enumerate()
@@ -108,4 +109,20 @@ impl Default for MSolve {
     fn default() -> Self {
         Self::new()
     }
+}
+
+#[inline(never)]
+pub fn solve(sudoku: &[u8; 81]) -> [u8; 81] {
+    let mut solver = MSolve::new();
+    solver.set_sudoku(&sudoku);
+    let mut routes: Vec<MSolve> = vec![solver];
+    routes.reserve(32);
+    while !routes.is_empty() {
+        let mut route = routes.pop().unwrap();
+        let result = route.process(&mut routes);
+        if result {
+            return route.to_array();
+        }
+    }
+    panic!("Empty routes, but still unsolved");
 }
