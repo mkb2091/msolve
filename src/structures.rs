@@ -11,7 +11,12 @@ pub struct SudokuUnsolvedSquares {
 impl SudokuUnsolvedSquares {
     pub fn new() -> SudokuUnsolvedSquares {
         SudokuUnsolvedSquares {
-            squares: [77, 58, 21, 35, 25, 80, 61, 4, 76, 9, 54, 41, 63, 30, 13, 55, 20, 24, 27, 64, 0, 72, 40, 69, 29, 16, 56, 68, 18, 39, 74, 43, 66, 70, 7, 33, 52, 73, 11, 47, 38, 34, 26, 17, 31, 79, 59, 37, 50, 3, 48, 12, 67, 19, 14, 57, 1, 53, 36, 2, 51, 78, 28, 6, 10, 22, 46, 60, 8, 32, 71, 15, 5, 42, 45, 49, 62, 44, 65, 75, 23],
+            squares: [
+                77, 58, 21, 35, 25, 80, 61, 4, 76, 9, 54, 41, 63, 30, 13, 55, 20, 24, 27, 64, 0,
+                72, 40, 69, 29, 16, 56, 68, 18, 39, 74, 43, 66, 70, 7, 33, 52, 73, 11, 47, 38, 34,
+                26, 17, 31, 79, 59, 37, 50, 3, 48, 12, 67, 19, 14, 57, 1, 53, 36, 2, 51, 78, 28, 6,
+                10, 22, 46, 60, 8, 32, 71, 15, 5, 42, 45, 49, 62, 44, 65, 75, 23,
+            ],
             end: 81,
             pos: 0,
             marked: 0,
@@ -39,7 +44,7 @@ impl SudokuUnsolvedSquares {
         assert!(self.pos <= self.end);
         self.squares.swap(self.pos, self.end);
     }
-    pub fn to_front(&mut self) {
+    pub fn start_iteration(&mut self) {
         self.pos = 0;
     }
 }
@@ -81,5 +86,11 @@ impl Sudoku {
             }
         }
         array
+    }
+}
+
+impl Default for Sudoku {
+    fn default() -> Self {
+        Self::new()
     }
 }
