@@ -32,7 +32,7 @@ impl MSolve {
         loop {
             let mut min_options = 20;
             let mut min_square = 0;
-            self.to_explore.to_front();
+            self.to_explore.start_iteration();
             while let Ok(square) = self.to_explore.next() {
                 if !techniques::hidden_singles(&mut self.options, square as usize) {
                     return false;
@@ -68,7 +68,7 @@ impl MSolve {
                 self.to_explore.remove_marked();
                 let item = values.pop().unwrap();
                 for value in values.iter() {
-                    let mut clone = self.clone();
+                    let mut clone = *self;
                     clone.options.options[min_square as usize] =
                         consts::SUDOKU_VALUES[*value as usize - 1];
                     techniques::apply_number(&mut clone.options, min_square as usize);
