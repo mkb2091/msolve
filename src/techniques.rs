@@ -41,56 +41,6 @@ pub fn apply_number(sudoku: &mut structures::Sudoku, square: usize) {
 }
 
 #[inline(never)]
-pub fn naked_pair(sudoku: &mut [u16; 81], square: usize) -> bool {
-    let value = sudoku[square];
-    let (rows, columns, boxes) = consts::PRECOMPUTED_INDEXES[square];
-    let not_value = consts::SUDOKU_MAX - value;
-    let mut changed = false;
-    for house in &[rows, columns, boxes] {
-        if let Some(second) = house
-            .iter()
-            .find(|&second| sudoku[*second as usize] == value)
-        {
-            for pos in house.iter() {
-                if pos != second && sudoku[*pos as usize] & value != 0 {
-                    sudoku[*pos as usize] &= not_value;
-                    changed = true;
-                }
-            }
-        }
-    }
-    changed
-}
-
-#[inline(never)]
-pub fn naked_triple(sudoku: &mut [u16; 81], square: usize) -> bool {
-    let value = sudoku[square];
-    let (rows, columns, boxes) = consts::PRECOMPUTED_INDEXES[square];
-    let not_value = consts::SUDOKU_MAX - value;
-    let mut changed = false;
-    for house in [rows, columns, boxes].iter() {
-        if let Some((i1, pos)) = house[..7]
-            .iter()
-            .enumerate()
-            .find(|(_, &pos)| sudoku[pos as usize] == value)
-        {
-            if let Some(pos2) = house[i1 + 1..]
-                .iter()
-                .find(|&pos2| sudoku[*pos2 as usize] == value)
-            {
-                for pos3 in house.iter() {
-                    if pos3 != pos && pos3 != pos2 && (sudoku[*pos3 as usize] & value != 0) {
-                        sudoku[*pos3 as usize] &= not_value;
-                        changed = true;
-                    }
-                }
-            }
-        }
-    }
-    changed
-}
-
-#[inline(never)]
 pub fn hidden_singles(sudoku: &mut structures::Sudoku, square: usize) -> bool {
     let value = sudoku.options[square];
     sudoku.options[square] = 0;
@@ -140,39 +90,4 @@ pub fn hidden_singles(sudoku: &mut structures::Sudoku, square: usize) -> bool {
         }
         _ => false,
     }
-}
-
-#[inline(never)]
-pub fn hidden_doubles(sudoku: &mut [u16; 81], square: usize) -> bool {
-    let mut value = sudoku[square];
-    let (rows, columns, boxes) = consts::PRECOMPUTED_INDEXES[square];
-    let mut changed = false;
-    for house in [rows, columns, boxes].iter() {
-        for second in house.iter() {
-            let value2 = sudoku[*second as usize];
-            if consts::OPTION_COUNT_CACHE[(value & value2) as usize] >= 2 {
-                sudoku[*second as usize] = 0;
-                let combined = value & value2;
-                let needed = consts::SUDOKU_MAX
-                    - (sudoku[house[7] as usize]
-                        | sudoku[house[6] as usize]
-                        | sudoku[house[5] as usize]
-                        | sudoku[house[4] as usize]
-                        | sudoku[house[3] as usize]
-                        | sudoku[house[2] as usize]
-                        | sudoku[house[1] as usize]
-                        | sudoku[house[0] as usize]);
-                if consts::OPTION_COUNT_CACHE[needed as usize] == 2 && (combined & needed == needed)
-                {
-                    changed = true;
-                    sudoku[*second as usize] = needed;
-                    value = needed;
-                } else {
-                    sudoku[*second as usize] = value2;
-                }
-            }
-        }
-    }
-    sudoku[square] = value;
-    changed
 }
