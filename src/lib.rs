@@ -1,13 +1,6 @@
 mod consts;
-mod structures;
-mod techniques;
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
-}
+pub mod structures;
+pub mod techniques;
 
 #[derive(Clone, Copy)]
 pub struct MSolve {
@@ -117,11 +110,14 @@ pub fn solve(sudoku: &[u8; 81]) -> [u8; 81] {
     solver.set_sudoku(&sudoku);
     let mut routes: Vec<MSolve> = vec![solver];
     routes.reserve(32);
-    while !routes.is_empty() {
-        let mut route = routes.pop().unwrap();
-        let result = route.process(&mut routes);
-        if result {
-            return route.to_array();
+    loop {
+        if let Some(mut route) = routes.pop() {
+            let result = route.process(&mut routes);
+            if result {
+                return route.to_array();
+            }
+        } else {
+            break;
         }
     }
     panic!("Empty routes, but still unsolved");
