@@ -75,7 +75,6 @@ impl Sudoku {
             .iter()
             .enumerate()
             .map(|(square, &value)| (square, value & consts::SUDOKU_MAX))
-            .filter(|(_, processed)| consts::OPTION_COUNT_CACHE[*processed as usize] == 1)
         {
             if let Some((i, _)) = consts::SUDOKU_VALUES
                 .iter()
