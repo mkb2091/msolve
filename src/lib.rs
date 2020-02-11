@@ -26,7 +26,7 @@ impl MSolve {
             let mut min_options = 20;
             let mut min_square = 0;
             self.to_explore.start_iteration();
-            while let Ok(square) = self.to_explore.next() {
+            while let Some(square) = self.to_explore.next() {
                 if !techniques::hidden_singles(&mut self.options, square as usize) {
                     return false;
                 }
@@ -75,7 +75,6 @@ impl MSolve {
             }
         }
     }
-    pub fn next(&mut self) {}
     pub fn to_array(&self) -> [u8; 81] {
         let mut array: [u8; 81] = [0; 81];
         for (square, processed) in self
@@ -110,14 +109,10 @@ pub fn solve(sudoku: &[u8; 81]) -> [u8; 81] {
     solver.set_sudoku(&sudoku);
     let mut routes: Vec<MSolve> = vec![solver];
     routes.reserve(32);
-    loop {
-        if let Some(mut route) = routes.pop() {
-            let result = route.process(&mut routes);
-            if result {
-                return route.to_array();
-            }
-        } else {
-            break;
+    while let Some(mut route) = routes.pop() {
+        let result = route.process(&mut routes);
+        if result {
+            return route.to_array();
         }
     }
     panic!("Empty routes, but still unsolved");
