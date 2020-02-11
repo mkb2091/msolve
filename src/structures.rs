@@ -8,6 +8,24 @@ pub struct SudokuUnsolvedSquares {
     marked: usize,
 }
 
+impl Default for SudokuUnsolvedSquares {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Iterator for SudokuUnsolvedSquares {
+    type Item = u8;
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.pos < self.end {
+            self.pos += 1;
+            Some(self.squares[self.pos - 1])
+        } else {
+            None
+        }
+    }
+}
+
 impl SudokuUnsolvedSquares {
     pub fn new() -> SudokuUnsolvedSquares {
         SudokuUnsolvedSquares {
@@ -20,14 +38,6 @@ impl SudokuUnsolvedSquares {
             end: 81,
             pos: 0,
             marked: 0,
-        }
-    }
-    pub fn next(&mut self) -> Result<u8, ()> {
-        if self.pos < self.end {
-            self.pos += 1;
-            Ok(self.squares[self.pos - 1])
-        } else {
-            Err(())
         }
     }
     pub fn mark_for_removal(&mut self) {
