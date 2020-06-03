@@ -17,7 +17,6 @@ impl MSolve {
     }
     pub fn set_sudoku(&mut self, sudoku: &[u8; 81]) {
         self.options = structures::Sudoku::from_array(sudoku);
-        self.to_explore = structures::SudokuUnsolvedSquares::new();
     }
 
     pub fn process(&mut self, routes: &mut Vec<MSolve>) -> bool {
