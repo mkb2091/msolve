@@ -1,9 +1,5 @@
-use msolve;
-
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[test]
     fn worlds_hardest_test() {
         let sudoku: [u8; 81] = [
