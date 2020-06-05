@@ -3,8 +3,6 @@ extern crate criterion;
 
 use criterion::Criterion;
 
-use msolve;
-
 fn criterion_benchmark(c: &mut Criterion) {
     let worlds_hardest_sudoku: [u8; 81] = criterion::black_box([
         8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 6, 0, 0, 0, 0, 0, 0, 7, 0, 0, 9, 0, 2, 0, 0, 0, 5, 0,
