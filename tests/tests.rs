@@ -12,7 +12,11 @@ mod tests {
             4, 2, 3, 7, 8, 9, 6, 3, 6, 9, 8, 4, 5, 7, 2, 1, 2, 8, 7, 1, 6, 9, 5, 3, 4, 5, 2, 1, 9,
             7, 4, 3, 6, 8, 4, 3, 8, 5, 2, 6, 9, 1, 7, 7, 9, 6, 3, 1, 8, 4, 5, 2,
         ];
-        assert_eq!(solution.to_vec(), msolve::solve(&sudoku).to_vec());
+        let solver = msolve::Solver::new();
+        assert_eq!(
+            solution.to_vec(),
+            solver.solve_array(&sudoku).unwrap().to_vec()
+        );
     }
 
     #[test]
@@ -27,7 +31,11 @@ mod tests {
             8, 5, 3, 7, 6, 9, 4, 6, 3, 4, 8, 9, 2, 1, 5, 7, 7, 9, 5, 4, 6, 1, 8, 3, 2, 5, 1, 9, 2,
             8, 6, 4, 7, 3, 4, 7, 2, 3, 1, 9, 5, 6, 8, 8, 6, 3, 7, 4, 5, 2, 1, 9,
         ];
-        assert_eq!(solution.to_vec(), msolve::solve(&sudoku).to_vec());
+        let solver = msolve::Solver::new();
+        assert_eq!(
+            solution.to_vec(),
+            solver.solve_array(&sudoku).unwrap().to_vec()
+        );
     }
     #[test]
     fn random17_test() {
@@ -41,7 +49,11 @@ mod tests {
             3, 1, 7, 8, 5, 9, 6, 8, 1, 6, 5, 4, 9, 7, 2, 3, 7, 5, 9, 6, 2, 3, 4, 1, 8, 3, 7, 5, 2,
             8, 1, 9, 6, 4, 9, 8, 2, 3, 6, 4, 1, 5, 7, 6, 4, 1, 9, 5, 7, 3, 8, 2,
         ];
-        assert_eq!(solution.to_vec(), msolve::solve(&sudoku).to_vec());
+        let solver = msolve::Solver::new();
+        assert_eq!(
+            solution.to_vec(),
+            solver.solve_array(&sudoku).unwrap().to_vec()
+        );
     }
     #[test]
     fn easy_8802_test() {
@@ -55,6 +67,10 @@ mod tests {
             5, 8, 3, 9, 1, 6, 4, 4, 1, 8, 2, 5, 6, 7, 9, 3, 3, 6, 9, 1, 7, 4, 5, 2, 8, 5, 3, 6, 9,
             4, 8, 2, 7, 1, 7, 9, 1, 3, 2, 5, 4, 8, 6, 8, 4, 2, 7, 6, 1, 3, 5, 9,
         ];
-        assert_eq!(solution.to_vec(), msolve::solve(&sudoku).to_vec());
+        let solver = msolve::Solver::new();
+        assert_eq!(
+            solution.to_vec(),
+            solver.solve_array(&sudoku).unwrap().to_vec()
+        );
     }
 }
