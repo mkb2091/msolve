@@ -8,6 +8,7 @@ edition = "2018"
 
 [dev-dependencies]
 criterion = "0.3"
+sudoku = "0.7.0"
 
 [[bench]]
 name = "benchmarks"
