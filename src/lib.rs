@@ -182,6 +182,7 @@ impl Solver {
             let mut still_valid = true;
             let mut temp = std::u128::MAX - solved_squares;
             let mut min: (usize, u32) = (0, std::u32::MAX);
+            let mut changed = false;
             while still_valid {
                 if changed_squares != 0 {
                     while changed_squares != 0 {
@@ -199,11 +200,20 @@ impl Solver {
                             break;
                         }
                     }
-                    temp = std::u128::MAX - solved_squares;
+                    //temp = std::u128::MAX - solved_squares;
+                    temp &= std::u128::MAX - solved_squares;
                     min = (0, std::u32::MAX);
+                    changed = true;
                 }
-                let square = get_last_digit(&mut temp);
+                let mut square = get_last_digit(&mut temp);
                 if square >= 81 {
+                    if changed {
+                        changed = false;
+                        temp = std::u128::MAX - solved_squares;
+                        min = (0, std::u32::MAX);
+                        square = get_last_digit(&mut temp);
+                    }
+                    if square >= 81 {
                     // Iterated though all squares without finding a value to change
                     debug_assert!(min.1 != std::u32::MAX);
                     let value = route[min.0];
@@ -214,7 +224,7 @@ impl Solver {
                             routes.push((new, changed_squares | (1 << min.0), solved_squares));
                         }
                     }
-                    break;
+                    break;}
                 }
                 if let Ok(changed) = hidden_singles(&mut route, square as usize) {
                     if changed {
