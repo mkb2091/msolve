@@ -184,6 +184,66 @@ impl Solver {
         }
     }
 
+    fn handle_route(
+        &self,
+        mut route: Sudoku,
+        mut changed_squares: u128,
+        mut solved_squares: u128,
+        routes: &mut Vec<(Sudoku, u128, u128)>,
+    ) -> Result<Sudoku, ()> {
+        let mut temp = std::u128::MAX - solved_squares;
+        let mut min: (usize, u32) = (0, std::u32::MAX);
+        loop {
+            if changed_squares != 0 {
+                while changed_squares != 0 {
+                    let square = get_last_digit(&mut changed_squares);
+                    if route[square].is_power_of_two() {
+                        if solved_squares.count_ones() == 80 {
+                            return Ok(route);
+                        }
+                        apply_number(&mut route, square as usize);
+                        solved_squares |= 1 << square;
+                        changed_squares |= self.changed_squares_from_apply[square];
+                        changed_squares &= std::u128::MAX - solved_squares;
+                    } else if route[square] == 0 {
+                        return Err(());
+                    }
+                }
+                temp = std::u128::MAX - solved_squares;
+                min = (0, std::u32::MAX);
+            }
+            let square = get_last_digit(&mut temp);
+            if square >= 81 {
+                // Iterated though all squares without finding a value to change
+                debug_assert!(min.1 != std::u32::MAX);
+                let value = route[min.0];
+                for i in 0..9 {
+                    if value & (1 << i) != 0 {
+                        let mut new = route;
+                        new[min.0] = 1 << i;
+                        routes.push((new, changed_squares | (1 << min.0), solved_squares));
+                    }
+                }
+                return Err(());
+            }
+            if route[square] == 0 {
+                return Err(());
+            }
+            if let Ok(changed) = hidden_singles(&mut route, square as usize) {
+                if changed {
+                    changed_squares |= 1 << square;
+                } else {
+                    let possible_values = route[square].count_ones();
+                    if possible_values < min.1 {
+                        min = (square, possible_values);
+                    }
+                }
+            } else {
+                return Err(());
+            }
+        }
+    }
+
     pub fn solve(&self, sudoku: Sudoku) -> Option<Sudoku> {
         let mut sudoku = sudoku;
         let mut changed_squares = 0;
@@ -198,56 +258,11 @@ impl Solver {
         }
         let mut routes: Vec<(Sudoku, u128, u128)> = vec![(sudoku, changed_squares, solved_squares)];
         // (Sudoku, changed squares bitset, solved_squared)
-        while let Some((mut route, mut changed_squares, mut solved_squares)) = routes.pop() {
-            let mut still_valid = true;
-            let mut temp = std::u128::MAX - solved_squares;
-            let mut min: (usize, u32) = (0, std::u32::MAX);
-            while still_valid {
-                if changed_squares != 0 {
-                    while changed_squares != 0 {
-                        let square = get_last_digit(&mut changed_squares);
-                        if route[square].is_power_of_two() {
-                            if solved_squares.count_ones() == 80 {
-                                return Some(route);
-                            }
-                            apply_number(&mut route, square as usize);
-                            solved_squares |= 1 << square;
-                            changed_squares |= self.changed_squares_from_apply[square];
-                            changed_squares &= std::u128::MAX - solved_squares;
-                        } else if route[square] == 0 {
-                            still_valid = false;
-                            break;
-                        }
-                    }
-                    temp = std::u128::MAX - solved_squares;
-                    min = (0, std::u32::MAX);
-                }
-                let mut square = get_last_digit(&mut temp);
-                if square >= 81 {
-                    // Iterated though all squares without finding a value to change
-                    debug_assert!(min.1 != std::u32::MAX);
-                    let value = route[min.0];
-                    for i in 0..9 {
-                        if value & (1 << i) != 0 {
-                            let mut new = route;
-                            new[min.0] = 1 << i;
-                            routes.push((new, changed_squares | (1 << min.0), solved_squares));
-                        }
-                    }
-                    break;
-                }
-                if let Ok(changed) = hidden_singles(&mut route, square as usize) {
-                    if changed {
-                        changed_squares |= 1 << square;
-                    } else {
-                        let possible_values = route[square].count_ones();
-                        if possible_values < min.1 {
-                            min = (square, possible_values);
-                        }
-                    }
-                } else {
-                    still_valid = false;
-                }
+        while let Some((route, changed_squares, solved_squares)) = routes.pop() {
+            if let Ok(result) =
+                self.handle_route(route, changed_squares, solved_squares, &mut routes)
+            {
+                return Some(result);
             }
         }
 
