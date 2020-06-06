@@ -56,34 +56,39 @@ pub fn hidden_singles(sudoku: &mut Sudoku, square: usize) -> Result<bool, ()> {
     let row_start = square / 9 * 9;
     let column_start = square % 9;
     let box_start = square / 3 % 3 * 3 + square / 27 * 27;
+    assert!(row_start + 8 < 81);
+    assert!(column_start + 72 < 81);
+    assert!(box_start + 20 < 81);
     let needed = SUDOKU_MAX
-        - ((sudoku[row_start + 8]
-            | sudoku[row_start + 7]
-            | sudoku[row_start + 6]
-            | sudoku[row_start + 5]
-            | sudoku[row_start + 4]
-            | sudoku[row_start + 3]
-            | sudoku[row_start + 2]
-            | sudoku[row_start + 1]
-            | sudoku[row_start])
-            & (sudoku[column_start + 72]
-                | sudoku[column_start + 63]
-                | sudoku[column_start + 54]
-                | sudoku[column_start + 45]
-                | sudoku[column_start + 36]
-                | sudoku[column_start + 27]
-                | sudoku[column_start + 18]
-                | sudoku[column_start + 9]
-                | sudoku[column_start])
-            & (sudoku[box_start + 20]
-                | sudoku[box_start + 19]
-                | sudoku[box_start + 18]
-                | sudoku[box_start + 11]
-                | sudoku[box_start + 10]
-                | sudoku[box_start + 9]
-                | sudoku[box_start + 2]
-                | sudoku[box_start + 1]
-                | sudoku[box_start]));
+        - unsafe {
+            (*sudoku.get_unchecked(row_start + 8)
+                | *sudoku.get_unchecked(row_start + 7)
+                | *sudoku.get_unchecked(row_start + 6)
+                | *sudoku.get_unchecked(row_start + 5)
+                | *sudoku.get_unchecked(row_start + 4)
+                | *sudoku.get_unchecked(row_start + 3)
+                | *sudoku.get_unchecked(row_start + 2)
+                | *sudoku.get_unchecked(row_start + 1)
+                | *sudoku.get_unchecked(row_start))
+                & (*sudoku.get_unchecked(column_start + 72)
+                    | *sudoku.get_unchecked(column_start + 63)
+                    | *sudoku.get_unchecked(column_start + 54)
+                    | *sudoku.get_unchecked(column_start + 45)
+                    | *sudoku.get_unchecked(column_start + 36)
+                    | *sudoku.get_unchecked(column_start + 27)
+                    | *sudoku.get_unchecked(column_start + 18)
+                    | *sudoku.get_unchecked(column_start + 9)
+                    | *sudoku.get_unchecked(column_start))
+                & (*sudoku.get_unchecked(box_start + 20)
+                    | *sudoku.get_unchecked(box_start + 19)
+                    | *sudoku.get_unchecked(box_start + 18)
+                    | *sudoku.get_unchecked(box_start + 11)
+                    | *sudoku.get_unchecked(box_start + 10)
+                    | *sudoku.get_unchecked(box_start + 9)
+                    | *sudoku.get_unchecked(box_start + 2)
+                    | *sudoku.get_unchecked(box_start + 1)
+                    | *sudoku.get_unchecked(box_start))
+        };
     if needed == 0 {
         sudoku[square] = value;
         Ok(false) // Don't yet know enough information to determine which value it must be
