@@ -4,7 +4,7 @@ pub const SUDOKU_MAX: u16 = 512 - 1;
 /**
 Represents a sudoku grid, with each square representing which possible numbers it could be
 */
-type Sudoku = [u16; 81];
+pub type Sudoku = [u16; 81];
 
 /**
 To be called when there is only one possible number
@@ -109,6 +109,26 @@ pub fn to_sudoku(sudoku: &[u8; 81]) -> Sudoku {
     options
 }
 
+pub fn str_to_sudoku(sudoku_str: &str) -> Sudoku {
+    let mut sudoku = [0; 81];
+    for (square, char) in sudoku.iter_mut().zip(sudoku_str.chars()) {
+        *square = match char {
+            '0' => 0,
+            '1' => 1,
+            '2' => 2,
+            '3' => 3,
+            '4' => 4,
+            '5' => 5,
+            '6' => 6,
+            '7' => 7,
+            '8' => 8,
+            '9' => 9,
+            _ => 0,
+        };
+    }
+    to_sudoku(&sudoku)
+}
+
 pub fn from_sudoku(sudoku: &Sudoku) -> [u8; 81] {
     let mut array: [u8; 81] = [0; 81];
     for (square, processed) in sudoku
@@ -182,7 +202,6 @@ impl Solver {
             let mut still_valid = true;
             let mut temp = std::u128::MAX - solved_squares;
             let mut min: (usize, u32) = (0, std::u32::MAX);
-            let mut changed = false;
             while still_valid {
                 if changed_squares != 0 {
                     while changed_squares != 0 {
@@ -200,20 +219,11 @@ impl Solver {
                             break;
                         }
                     }
-                    //temp = std::u128::MAX - solved_squares;
-                    temp &= std::u128::MAX - solved_squares;
+                    temp = std::u128::MAX - solved_squares;
                     min = (0, std::u32::MAX);
-                    changed = true;
                 }
                 let mut square = get_last_digit(&mut temp);
                 if square >= 81 {
-                    if changed {
-                        changed = false;
-                        temp = std::u128::MAX - solved_squares;
-                        min = (0, std::u32::MAX);
-                        square = get_last_digit(&mut temp);
-                    }
-                    if square >= 81 {
                     // Iterated though all squares without finding a value to change
                     debug_assert!(min.1 != std::u32::MAX);
                     let value = route[min.0];
@@ -224,7 +234,7 @@ impl Solver {
                             routes.push((new, changed_squares | (1 << min.0), solved_squares));
                         }
                     }
-                    break;}
+                    break;
                 }
                 if let Ok(changed) = hidden_singles(&mut route, square as usize) {
                     if changed {
