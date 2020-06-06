@@ -61,33 +61,17 @@ pub fn hidden_singles(sudoku: &mut Sudoku, square: usize) -> Result<bool, ()> {
     assert!(box_start + 20 < 81);
     let needed = SUDOKU_MAX
         - unsafe {
-            (*sudoku.get_unchecked(row_start + 8)
-                | *sudoku.get_unchecked(row_start + 7)
-                | *sudoku.get_unchecked(row_start + 6)
-                | *sudoku.get_unchecked(row_start + 5)
-                | *sudoku.get_unchecked(row_start + 4)
-                | *sudoku.get_unchecked(row_start + 3)
-                | *sudoku.get_unchecked(row_start + 2)
-                | *sudoku.get_unchecked(row_start + 1)
-                | *sudoku.get_unchecked(row_start))
-                & (*sudoku.get_unchecked(column_start + 72)
-                    | *sudoku.get_unchecked(column_start + 63)
-                    | *sudoku.get_unchecked(column_start + 54)
-                    | *sudoku.get_unchecked(column_start + 45)
-                    | *sudoku.get_unchecked(column_start + 36)
-                    | *sudoku.get_unchecked(column_start + 27)
-                    | *sudoku.get_unchecked(column_start + 18)
-                    | *sudoku.get_unchecked(column_start + 9)
-                    | *sudoku.get_unchecked(column_start))
-                & (*sudoku.get_unchecked(box_start + 20)
-                    | *sudoku.get_unchecked(box_start + 19)
-                    | *sudoku.get_unchecked(box_start + 18)
-                    | *sudoku.get_unchecked(box_start + 11)
-                    | *sudoku.get_unchecked(box_start + 10)
-                    | *sudoku.get_unchecked(box_start + 9)
-                    | *sudoku.get_unchecked(box_start + 2)
-                    | *sudoku.get_unchecked(box_start + 1)
-                    | *sudoku.get_unchecked(box_start))
+            let temp = [20, 19, 18, 11, 10, 9, 2, 1, 0].iter().enumerate().fold(
+                (0, 0, 0),
+                |acc, (i, box_offset)| {
+                    (
+                        acc.0 | *sudoku.get_unchecked(row_start + i),
+                        acc.1 | *sudoku.get_unchecked(column_start + i * 9),
+                        acc.2 | *sudoku.get_unchecked(box_start + box_offset),
+                    )
+                },
+            );
+            temp.0 & temp.1 & temp.2
         };
     if needed == 0 {
         sudoku[square] = value;
