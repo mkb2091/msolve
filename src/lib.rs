@@ -99,7 +99,7 @@ pub fn hidden_singles(sudoku: &mut Sudoku, square: usize) -> Result<bool, ()> {
     }
 }
 
-pub fn to_sudoku(sudoku: &[u8; 81]) -> Sudoku {
+fn to_sudoku(sudoku: &[u8; 81]) -> Sudoku {
     let mut options: [u16; 81] = [SUDOKU_MAX; 81];
     for (i, item) in sudoku.iter().enumerate() {
         if *item != 0 {
@@ -109,7 +109,7 @@ pub fn to_sudoku(sudoku: &[u8; 81]) -> Sudoku {
     options
 }
 
-pub fn str_to_sudoku(sudoku_str: &str) -> Sudoku {
+fn str_to_sudoku(sudoku_str: &str) -> Sudoku {
     let mut sudoku = [0; 81];
     for (square, char) in sudoku.iter_mut().zip(sudoku_str.chars()) {
         *square = match char {
@@ -129,7 +129,7 @@ pub fn str_to_sudoku(sudoku_str: &str) -> Sudoku {
     to_sudoku(&sudoku)
 }
 
-pub fn from_sudoku(sudoku: &Sudoku) -> [u8; 81] {
+fn from_sudoku(sudoku: &Sudoku) -> [u8; 81] {
     let mut array: [u8; 81] = [0; 81];
     for (square, processed) in sudoku
         .iter()
@@ -276,6 +276,13 @@ impl Solver {
     }
     pub fn solve_array(&self, sudoku: &[u8; 81]) -> Option<[u8; 81]> {
         if let Some(solution) = self.solve(to_sudoku(sudoku)) {
+            Some(from_sudoku(&solution))
+        } else {
+            None
+        }
+    }
+    pub fn solve_string(&self, sudoku: &str) -> Option<[u8; 81]> {
+        if let Some(solution) = self.solve(str_to_sudoku(sudoku)) {
             Some(from_sudoku(&solution))
         } else {
             None

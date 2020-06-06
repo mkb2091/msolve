@@ -1,6 +1,66 @@
 #[cfg(test)]
 mod tests {
     #[test]
+    fn top2365() {
+        use std::io::BufRead;
+        let solver = msolve::Solver::new();
+        let file_in = std::fs::File::open("bench_sudokus/top2365").expect("Failed to open file");
+        let mut buf = std::io::BufReader::new(file_in);
+        let mut line = String::with_capacity(81);
+        while buf.read_line(&mut line).unwrap() > 0 {
+            if let Ok(sudoku) = sudoku::Sudoku::from_str_line(&line) {
+                if let Some(solution) = sudoku.solve_unique() {
+                    assert_eq!(
+                        solution.to_bytes().to_vec(),
+                        solver.solve_string(&line).unwrap().to_vec()
+                    );
+                } else if let Some(solution) = solver.solve_string(&line) {
+                    println!("Sudoku: {}", sudoku);
+                    println!(
+                        "My Solution: {}",
+                        solution
+                            .iter()
+                            .map(|value| value.to_string())
+                            .collect::<String>()
+                    );
+                } else {
+                    println!("Neither could solve sudoku: {}", sudoku);
+                }
+            }
+            line.clear();
+        }
+    }
+    #[test]
+    fn sudoku17_list() {
+        use std::io::BufRead;
+        let solver = msolve::Solver::new();
+        let file_in = std::fs::File::open("bench_sudokus/sudoku17").expect("Failed to open file");
+        let mut buf = std::io::BufReader::new(file_in);
+        let mut line = String::with_capacity(81);
+        while buf.read_line(&mut line).unwrap() > 0 {
+            if let Ok(sudoku) = sudoku::Sudoku::from_str_line(&line) {
+                if let Some(solution) = sudoku.solve_unique() {
+                    assert_eq!(
+                        solution.to_bytes().to_vec(),
+                        solver.solve_string(&line).unwrap().to_vec()
+                    );
+                } else if let Some(solution) = solver.solve_string(&line) {
+                    println!("Sudoku: {}", sudoku);
+                    println!(
+                        "My Solution: {}",
+                        solution
+                            .iter()
+                            .map(|value| value.to_string())
+                            .collect::<String>()
+                    );
+                } else {
+                    println!("Neither could solve sudoku: {}", sudoku);
+                }
+            }
+            line.clear();
+        }
+    }
+    #[test]
     fn worlds_hardest_test() {
         let sudoku: [u8; 81] = [
             8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 6, 0, 0, 0, 0, 0, 0, 7, 0, 0, 9, 0, 2, 0, 0, 0, 5,
