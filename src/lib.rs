@@ -68,30 +68,22 @@ pub fn hidden_singles(sudoku: &mut Sudoku, square: usize) -> Result<bool, ()> {
 
 fn to_sudoku(sudoku: &[u8; 81]) -> Sudoku {
     let mut options: [u16; 81] = [SUDOKU_MAX; 81];
-    for (i, item) in sudoku.iter().enumerate() {
-        if *item != 0 {
-            options[i] = 1 << (item - 1);
-        }
+    for (item, pointer) in sudoku
+        .iter()
+        .zip(options.iter_mut())
+        .filter(|(item, _)| **item != 0)
+    {
+        *pointer = 1 << (item - 1);
     }
     options
 }
 
 fn str_to_sudoku(sudoku_str: &str) -> Sudoku {
     let mut sudoku = [0; 81];
-    for (square, char) in sudoku.iter_mut().zip(sudoku_str.chars()) {
-        *square = match char {
-            '0' => 0,
-            '1' => 1,
-            '2' => 2,
-            '3' => 3,
-            '4' => 4,
-            '5' => 5,
-            '6' => 6,
-            '7' => 7,
-            '8' => 8,
-            '9' => 9,
-            _ => 0,
-        };
+    for (square, character) in sudoku.iter_mut().zip(sudoku_str.chars()) {
+        if let Some(int) = character.to_digit(10) {
+            *square = int as u8;
+        }
     }
     to_sudoku(&sudoku)
 }
@@ -101,11 +93,9 @@ fn from_sudoku(sudoku: &Sudoku) -> [u8; 81] {
     for (square, processed) in sudoku
         .iter()
         .enumerate()
-        .map(|(square, &value)| (square, value & SUDOKU_MAX))
+        .filter(|(_, &value)| value.is_power_of_two())
     {
-        if processed.is_power_of_two() {
-            array[square] = processed.trailing_zeros() as u8 + 1;
-        }
+        array[square] = processed.trailing_zeros() as u8 + 1;
     }
     array
 }
