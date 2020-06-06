@@ -123,6 +123,13 @@ pub fn from_sudoku(sudoku: &Sudoku) -> [u8; 81] {
     array
 }
 
+#[inline(always)]
+fn get_last_digit(x: &mut u128) -> usize {
+    let value = x.trailing_zeros();
+    *x -= 1 << value;
+    value as usize
+}
+
 #[derive(Clone, Copy)]
 pub struct Solver {
     changed_squares_from_apply: [u128; 81],
@@ -178,8 +185,7 @@ impl Solver {
             while still_valid {
                 if changed_squares != 0 {
                     while changed_squares != 0 {
-                        let square = changed_squares.trailing_zeros() as usize;
-                        changed_squares -= 1 << square;
+                        let square = get_last_digit(&mut changed_squares);
                         if route[square].is_power_of_two() {
                             if solved_squares.count_ones() == 80 {
                                 return Some(route);
@@ -196,8 +202,7 @@ impl Solver {
                     temp = std::u128::MAX - solved_squares;
                     min = (0, std::u32::MAX);
                 }
-                let square = temp.trailing_zeros() as usize;
-                temp -= 1 << square;
+                let square = get_last_digit(&mut temp);
                 if square >= 81 {
                     // Iterated though all squares without finding a value to change
                     debug_assert!(min.1 != std::u32::MAX);
