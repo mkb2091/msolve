@@ -15,35 +15,13 @@ pub fn apply_number(sudoku: &mut Sudoku, square: usize) {
     let column_start = square % 9;
     let row_start = square - column_start;
     let box_start = square / 3 % 3 * 3 + square / 27 * 27;
-    sudoku[row_start + 8] &= not_value;
-    sudoku[row_start + 7] &= not_value;
-    sudoku[row_start + 6] &= not_value;
-    sudoku[row_start + 5] &= not_value;
-    sudoku[row_start + 4] &= not_value;
-    sudoku[row_start + 3] &= not_value;
-    sudoku[row_start + 2] &= not_value;
-    sudoku[row_start + 1] &= not_value;
-    sudoku[row_start] &= not_value;
-
-    sudoku[column_start + 72] &= not_value;
-    sudoku[column_start + 63] &= not_value;
-    sudoku[column_start + 54] &= not_value;
-    sudoku[column_start + 45] &= not_value;
-    sudoku[column_start + 36] &= not_value;
-    sudoku[column_start + 27] &= not_value;
-    sudoku[column_start + 18] &= not_value;
-    sudoku[column_start + 9] &= not_value;
-    sudoku[column_start] &= not_value;
-
-    sudoku[box_start + 20] &= not_value;
-    sudoku[box_start + 19] &= not_value;
-    sudoku[box_start + 18] &= not_value;
-    sudoku[box_start + 11] &= not_value;
-    sudoku[box_start + 10] &= not_value;
-    sudoku[box_start + 9] &= not_value;
-    sudoku[box_start + 2] &= not_value;
-    sudoku[box_start + 1] &= not_value;
-    sudoku[box_start] &= not_value;
+    unsafe {
+        for (i, box_offset) in [20, 19, 18, 11, 10, 9, 2, 1, 0].iter().enumerate() {
+            *sudoku.get_unchecked_mut(row_start + i) &= not_value;
+            *sudoku.get_unchecked_mut(column_start + i * 9) &= not_value;
+            *sudoku.get_unchecked_mut(box_start + box_offset) &= not_value;
+        }
+    }
     sudoku[square] = value;
 }
 
