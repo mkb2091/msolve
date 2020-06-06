@@ -103,8 +103,8 @@ fn from_sudoku(sudoku: &Sudoku) -> [u8; 81] {
         .enumerate()
         .map(|(square, &value)| (square, value & SUDOKU_MAX))
     {
-        if let Some((i, _)) = (0..).map(|x| (x, 1 << x)).find(|(_, v)| processed == *v) {
-            array[square] = i as u8 + 1;
+        if processed.is_power_of_two() {
+            array[square] = processed.trailing_zeros() as u8 + 1;
         }
     }
     array
