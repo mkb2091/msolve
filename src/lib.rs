@@ -212,34 +212,40 @@ impl Solver {
                 temp = std::u128::MAX - solved_squares;
                 min = (0, std::u32::MAX);
             }
-            let square = get_last_digit(&mut temp);
-            if square >= 81 {
-                // Iterated though all squares without finding a value to change
-                debug_assert!(min.1 != std::u32::MAX);
-                let value = route[min.0];
-                for i in 0..9 {
-                    if value & (1 << i) != 0 {
-                        let mut new = route;
-                        new[min.0] = 1 << i;
-                        routes.push((new, changed_squares | (1 << min.0), solved_squares));
+            while temp != 0 {
+                let square = get_last_digit(&mut temp);
+                if square >= 81 {
+                    // Iterated though all squares without finding a value to change
+                    debug_assert!(min.1 != std::u32::MAX);
+                    let value = route[min.0];
+                    for i in 0..9 {
+                        if value & (1 << i) != 0 {
+                            let mut new = route;
+                            new[min.0] = 1 << i;
+                            routes.push((new, changed_squares | (1 << min.0), solved_squares));
+                        }
                     }
+                    return Err(());
                 }
-                return Err(());
-            }
-            if route[square] == 0 {
-                return Err(());
-            }
-            if let Ok(changed) = hidden_singles(&mut route, square as usize) {
-                if changed {
-                    changed_squares |= 1 << square;
+                if route[square] == 0 {
+                    return Err(());
+                }
+                if let Ok(changed) = hidden_singles(&mut route, square as usize) {
+                    if changed {
+                        //changed_squares |= 1 << square;
+                        apply_number(&mut route, square as usize);
+                        solved_squares |= 1 << square;
+                        changed_squares |= self.changed_squares_from_apply[square];
+                        changed_squares &= std::u128::MAX - solved_squares;
+                    } else {
+                        let possible_values = route[square].count_ones();
+                        if possible_values < min.1 {
+                            min = (square, possible_values);
+                        }
+                    }
                 } else {
-                    let possible_values = route[square].count_ones();
-                    if possible_values < min.1 {
-                        min = (square, possible_values);
-                    }
+                    return Err(());
                 }
-            } else {
-                return Err(());
             }
         }
     }
