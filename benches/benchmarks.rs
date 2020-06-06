@@ -13,7 +13,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     let mut top2365_sudoku = Vec::<String>::new();
     let mut line = String::with_capacity(81);
     while buf.read_line(&mut line).unwrap() > 0 {
-        if let Ok(sudoku) = sudoku::Sudoku::from_str_line(&line) {
+        if let Ok(_) = sudoku::Sudoku::from_str_line(&line) { // Removes invalid/multiple solution sudokus
             top2365_msolve.push(line.clone());
             top2365_sudoku.push(line.clone());
         }
@@ -26,7 +26,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     let mut sudoku17_sudoku = Vec::<String>::new();
     let mut line = String::with_capacity(81);
     while buf.read_line(&mut line).unwrap() > 0 {
-        if let Ok(sudoku) = sudoku::Sudoku::from_str_line(&line) {
+        if let Ok(_) = sudoku::Sudoku::from_str_line(&line) { // Removes invalid/multiple solution sudokus
             sudoku17_msolve.push(line.clone());
             sudoku17_sudoku.push(line.clone());
         }
@@ -58,7 +58,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     let solver = msolve::Solver::new();
     c.bench_function("top2365_msolve", move |b| {
         b.iter(|| {
-            criterion::black_box(&solver.solve(msolve::str_to_sudoku(&top2365_msolve[i])));
+            criterion::black_box(&solver.solve_string(&top2365_msolve[i]));
             i += 1;
             i %= top2365_msolve.len();
         })
@@ -76,7 +76,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     });
     c.bench_function("sudoku17_msolve", move |b| {
         b.iter(|| {
-            criterion::black_box(&solver.solve(msolve::str_to_sudoku(&sudoku17_msolve[i])));
+            criterion::black_box(&solver.solve_string(&sudoku17_msolve[i]));
             i += 1;
             i %= sudoku17_msolve.len();
         })
