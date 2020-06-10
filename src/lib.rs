@@ -149,7 +149,8 @@ impl Solver {
         }
     }
 
-    fn pointing_pairs(&self, sudoku: &mut Sudoku) {
+    fn pointing_pairs(&self, sudoku: &mut Sudoku) -> bool {
+        let mut sudoku_check = SUDOKU_MAX;
         for &box_start in [0, 3, 6, 27, 30, 33, 54, 57, 60].iter() {
             let row_start = box_start / 9 * 9;
             let column_start = box_start % 9;
@@ -164,9 +165,9 @@ impl Solver {
                 sudoku[box_start + 19],
                 sudoku[box_start + 20],
             ];
-            let row1 = sudoku[box_start] | sudoku[box_start + 1] | sudoku[box_start + 2];
-            let row2 = sudoku[box_start + 9] | sudoku[box_start + 10] | sudoku[box_start + 11];
-            let row3 = sudoku[box_start + 18] | sudoku[box_start + 19] | sudoku[box_start + 20];
+            let row1 = box_old[0] | box_old[1] | box_old[2];
+            let row2 = box_old[3] | box_old[4] | box_old[5];
+            let row3 = box_old[6] | box_old[7] | box_old[8];
             let only_row1 = row1 & (SUDOKU_MAX - (row2 | row3));
             let only_row2 = row2 & (SUDOKU_MAX - (row1 | row3));
             let only_row3 = row3 & (SUDOKU_MAX - (row1 | row2));
@@ -177,9 +178,9 @@ impl Solver {
                     sudoku[row_start + row_number * 9 + i] &= row;
                 }
             }
-            let column1 = sudoku[box_start] | sudoku[box_start + 9] | sudoku[box_start + 18];
-            let column2 = sudoku[box_start + 1] | sudoku[box_start + 10] | sudoku[box_start + 19];
-            let column3 = sudoku[box_start + 2] | sudoku[box_start + 11] | sudoku[box_start + 20];
+            let column1 = box_old[0] | box_old[3] | box_old[6];
+            let column2 = box_old[1] | box_old[4] | box_old[7];
+            let column3 = box_old[2] | box_old[5] | box_old[8];
             let only_column1 = column1 & (SUDOKU_MAX - (column2 | column3));
             let only_column2 = column2 & (SUDOKU_MAX - (column1 | column3));
             let only_column3 = column3 & (SUDOKU_MAX - (column1 | column2));
@@ -199,7 +200,9 @@ impl Solver {
             sudoku[box_start + 18] = box_old[6];
             sudoku[box_start + 19] = box_old[7];
             sudoku[box_start + 20] = box_old[8];
+            sudoku_check &= column1 | column2 | column3;
         }
+        sudoku_check == SUDOKU_MAX
     }
 
     fn handle_route(
@@ -209,49 +212,25 @@ impl Solver {
         mut solved_squares: u128,
         routes: &mut Vec<(Sudoku, u128, u128)>,
     ) -> Result<Sudoku, ()> {
-        let mut temp = std::u128::MAX - solved_squares;
-        let mut min: (usize, u32) = (0, std::u32::MAX);
+        if solved_squares.count_ones() == 81 {
+            return Ok(route);
+        }
         loop {
-            if changed_squares != 0 {
-                while changed_squares != 0 {
-                    let square = get_last_digit(&mut changed_squares);
-                    if route[square].is_power_of_two() {
-                        if solved_squares.count_ones() == 80 {
-                            return Ok(route);
-                        }
-                        apply_number(&mut route, square as usize);
-                        solved_squares |= 1 << square;
-                        changed_squares |= self.changed_squares_from_apply[square];
-                        changed_squares &= std::u128::MAX - solved_squares;
-                    } else if route[square] == 0 {
-                        return Err(());
-                    }
-                }
-                temp = std::u128::MAX - solved_squares;
-                min = (0, std::u32::MAX);
-            }
+            let mut min: (usize, u32) = (0, std::u32::MAX);
+            let mut temp = std::u128::MAX - solved_squares;
             while temp != 0 {
                 let square = get_last_digit(&mut temp);
                 if square >= 81 {
-                    // Iterated though all squares without finding a value to change
-                    debug_assert!(min.1 != std::u32::MAX);
-                    let value = route[min.0];
-                    self.pointing_pairs(&mut route);
-                    for i in 0..9 {
-                        if value & (1 << i) != 0 {
-                            let mut new = route;
-                            new[min.0] = 1 << i;
-                            routes.push((new, changed_squares | (1 << min.0), solved_squares));
-                        }
-                    }
-                    return Err(());
+                    break;
                 }
                 if route[square] == 0 {
                     return Err(());
                 }
                 if let Ok(changed) = hidden_singles(&mut route, square as usize) {
-                    if changed {
-                        //changed_squares |= 1 << square;
+                    if changed || route[square].is_power_of_two() {
+                        if solved_squares.count_ones() == 80 {
+                            return Ok(route);
+                        }
                         apply_number(&mut route, square as usize);
                         solved_squares |= 1 << square;
                         changed_squares |= self.changed_squares_from_apply[square];
@@ -265,12 +244,32 @@ impl Solver {
                 } else {
                     return Err(());
                 }
+                changed_squares &= std::u128::MAX - (1 << square);
+            }
+
+            if changed_squares == 0 || min.1 < 3 {
+                debug_assert!(min.1 != std::u32::MAX);
+                let mut value = route[min.0];
+                if !self.pointing_pairs(&mut route) {
+                    return Err(());
+                }
+                solved_squares |= 1 << min.0;
+                changed_squares |= self.changed_squares_from_apply[min.0];
+                changed_squares &= std::u128::MAX - solved_squares;
+                while value != 0 {
+                    let i = value.trailing_zeros();
+                    value -= 1 << i;
+                    let mut new = route;
+                    new[min.0] = 1 << i;
+                    apply_number(&mut new, min.0);
+                    routes.push((new, changed_squares, solved_squares));
+                }
+                return Err(());
             }
         }
     }
 
-    pub fn solve(&self, sudoku: Sudoku) -> Option<Sudoku> {
-        let mut sudoku = sudoku;
+    pub fn solve(&self, mut sudoku: Sudoku) -> Option<Sudoku> {
         let mut changed_squares = 0;
         let mut solved_squares = 0;
         for square in 0..81 {
