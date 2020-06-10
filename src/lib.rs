@@ -110,34 +110,95 @@ fn get_last_digit(x: &mut u128) -> usize {
 #[derive(Clone, Copy)]
 pub struct Solver {
     changed_squares_from_apply: [u128; 81],
+    changed_squares: [(u128, u128, u128); 81],
 }
 
 impl Solver {
     pub fn new() -> Solver {
         let mut changed_squares_from_apply = [0; 81];
+        let mut changed_squares = [(0, 0, 0); 81];
         for i in 0..81 {
-            let mut square: u128 = 0;
+            let mut row: u128 = 0;
+            let mut column: u128 = 0;
+            let mut small_box: u128 = 0;
             let column_start = i % 9;
             let row_start = i - column_start;
             let box_start = i / 3 % 3 * 3 + i / 27 * 27;
             for x in 0..9 {
-                square |= 1 << (row_start + x);
-                square |= 1 << (column_start + 9 * x);
+                row |= 1 << (row_start + x);
+                column |= 1 << (column_start + 9 * x);
             }
-            square |= 1 << (box_start);
-            square |= 1 << (box_start + 1);
-            square |= 1 << (box_start + 2);
-            square |= 1 << (box_start + 9);
-            square |= 1 << (box_start + 10);
-            square |= 1 << (box_start + 11);
-            square |= 1 << (box_start + 18);
-            square |= 1 << (box_start + 19);
-            square |= 1 << (box_start + 20);
-            square &= std::u128::MAX - (1 << i);
-            changed_squares_from_apply[i] = square;
+            small_box |= 1 << (box_start);
+            small_box |= 1 << (box_start + 1);
+            small_box |= 1 << (box_start + 2);
+            small_box |= 1 << (box_start + 9);
+            small_box |= 1 << (box_start + 10);
+            small_box |= 1 << (box_start + 11);
+            small_box |= 1 << (box_start + 18);
+            small_box |= 1 << (box_start + 19);
+            small_box |= 1 << (box_start + 20);
+            row &= std::u128::MAX - (1 << i);
+            column &= std::u128::MAX - (1 << i);
+            small_box &= std::u128::MAX - (1 << i);
+            changed_squares_from_apply[i] = row | column | small_box;
+            changed_squares[i] = (row, column, small_box);
         }
         Solver {
             changed_squares_from_apply,
+            changed_squares,
+        }
+    }
+
+    fn pointing_pairs(&self, sudoku: &mut Sudoku) {
+        for &box_start in [0, 3, 6, 27, 30, 33, 54, 57, 60].iter() {
+            let row_start = box_start / 9 * 9;
+            let column_start = box_start % 9;
+            let box_old = [
+                sudoku[box_start],
+                sudoku[box_start + 1],
+                sudoku[box_start + 2],
+                sudoku[box_start + 9],
+                sudoku[box_start + 10],
+                sudoku[box_start + 11],
+                sudoku[box_start + 18],
+                sudoku[box_start + 19],
+                sudoku[box_start + 20],
+            ];
+            let row1 = sudoku[box_start] | sudoku[box_start + 1] | sudoku[box_start + 2];
+            let row2 = sudoku[box_start + 9] | sudoku[box_start + 10] | sudoku[box_start + 11];
+            let row3 = sudoku[box_start + 18] | sudoku[box_start + 19] | sudoku[box_start + 20];
+            let only_row1 = row1 & (SUDOKU_MAX - (row2 | row3));
+            let only_row2 = row2 & (SUDOKU_MAX - (row1 | row3));
+            let only_row3 = row3 & (SUDOKU_MAX - (row1 | row2));
+            let rows = [only_row1, only_row2, only_row3];
+            for row_number in 0..3 {
+                let row = SUDOKU_MAX - rows[row_number];
+                for i in 0..9 {
+                    sudoku[row_start + row_number * 9 + i] &= row;
+                }
+            }
+            let column1 = sudoku[box_start] | sudoku[box_start + 9] | sudoku[box_start + 18];
+            let column2 = sudoku[box_start + 1] | sudoku[box_start + 10] | sudoku[box_start + 19];
+            let column3 = sudoku[box_start + 2] | sudoku[box_start + 11] | sudoku[box_start + 20];
+            let only_column1 = column1 & (SUDOKU_MAX - (column2 | column3));
+            let only_column2 = column2 & (SUDOKU_MAX - (column1 | column3));
+            let only_column3 = column3 & (SUDOKU_MAX - (column1 | column2));
+            let columns = [only_column1, only_column2, only_column3];
+            for column_number in 0..3 {
+                let column = SUDOKU_MAX - columns[column_number];
+                for i in 0..9 {
+                    sudoku[column_start + column_number + i * 9] &= column;
+                }
+            }
+            sudoku[box_start] = box_old[0];
+            sudoku[box_start + 1] = box_old[1];
+            sudoku[box_start + 2] = box_old[2];
+            sudoku[box_start + 9] = box_old[3];
+            sudoku[box_start + 10] = box_old[4];
+            sudoku[box_start + 11] = box_old[5];
+            sudoku[box_start + 18] = box_old[6];
+            sudoku[box_start + 19] = box_old[7];
+            sudoku[box_start + 20] = box_old[8];
         }
     }
 
@@ -179,6 +240,7 @@ impl Solver {
                         if value & (1 << i) != 0 {
                             let mut new = route;
                             new[min.0] = 1 << i;
+                            self.pointing_pairs(&mut new);
                             routes.push((new, changed_squares | (1 << min.0), solved_squares));
                         }
                     }
