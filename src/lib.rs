@@ -236,11 +236,11 @@ impl Solver {
                     // Iterated though all squares without finding a value to change
                     debug_assert!(min.1 != std::u32::MAX);
                     let value = route[min.0];
+                    self.pointing_pairs(&mut route);
                     for i in 0..9 {
                         if value & (1 << i) != 0 {
                             let mut new = route;
                             new[min.0] = 1 << i;
-                            self.pointing_pairs(&mut new);
                             routes.push((new, changed_squares | (1 << min.0), solved_squares));
                         }
                     }
