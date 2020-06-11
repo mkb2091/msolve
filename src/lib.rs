@@ -292,6 +292,33 @@ impl Solver {
 
         None
     }
+    pub fn solve_unique(&self, mut sudoku: Sudoku) -> Option<Sudoku> {
+        let mut changed_squares = 0;
+        let mut solved_squares = 0;
+        for square in 0..81 {
+            if sudoku[square].is_power_of_two() {
+                solved_squares |= 1 << square;
+                apply_number(&mut sudoku, square as usize);
+                changed_squares |= self.changed_squares_from_apply[square];
+                changed_squares &= std::u128::MAX - solved_squares;
+            }
+        }
+        let mut solution = None;
+        let mut routes: Vec<(Sudoku, u128, u128)> = vec![(sudoku, changed_squares, solved_squares)];
+        // (Sudoku, changed squares bitset, solved_squared)
+        while let Some((route, changed_squares, solved_squares)) = routes.pop() {
+            if let Ok(result) =
+                self.handle_route(route, changed_squares, solved_squares, &mut routes)
+            {
+                if solution.is_some() {
+                    return None;
+                } else {
+                    solution = Some(result)
+                }
+            }
+        }
+        solution
+    }
     pub fn solve_array(&self, sudoku: &[u8; 81]) -> Option<[u8; 81]> {
         if let Some(solution) = self.solve(to_sudoku(sudoku)) {
             Some(from_sudoku(&solution))
@@ -301,6 +328,13 @@ impl Solver {
     }
     pub fn solve_string(&self, sudoku: &str) -> Option<[u8; 81]> {
         if let Some(solution) = self.solve(str_to_sudoku(sudoku)) {
+            Some(from_sudoku(&solution))
+        } else {
+            None
+        }
+    }
+    pub fn solve_string_unique(&self, sudoku: &str) -> Option<[u8; 81]> {
+        if let Some(solution) = self.solve_unique(str_to_sudoku(sudoku)) {
             Some(from_sudoku(&solution))
         } else {
             None
