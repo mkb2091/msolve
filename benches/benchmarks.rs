@@ -9,28 +9,22 @@ fn criterion_benchmark(c: &mut Criterion) {
     // top2365 is from http://magictour.free.fr/top2365
     let file_in = std::fs::File::open("bench_sudokus/top2365").expect("Failed to open file");
     let mut buf = std::io::BufReader::new(file_in);
-    let mut top2365_msolve = Vec::<String>::new();
-    let mut top2365_sudoku = Vec::<String>::new();
+    let mut top2365 = Vec::<String>::new();
     let mut line = String::with_capacity(81);
     while buf.read_line(&mut line).unwrap() > 0 {
         if sudoku::Sudoku::from_str_line(&line).is_ok() {
-            // Removes invalid/multiple solution sudokus
-            top2365_msolve.push(line.clone());
-            top2365_sudoku.push(line.clone());
+            top2365.push(line.clone());
         }
         line.clear();
     }
     // sudoku17 is from https://staffhome.ecm.uwa.edu.au/~00013890/sudoku17
     let file_in = std::fs::File::open("bench_sudokus/sudoku17").expect("Failed to open file");
     let mut buf = std::io::BufReader::new(file_in);
-    let mut sudoku17_msolve = Vec::<String>::new();
-    let mut sudoku17_sudoku = Vec::<String>::new();
+    let mut sudoku17 = Vec::<String>::new();
     let mut line = String::with_capacity(81);
     while buf.read_line(&mut line).unwrap() > 0 {
         if sudoku::Sudoku::from_str_line(&line).is_ok() {
-            // Removes invalid/multiple solution sudokus
-            sudoku17_msolve.push(line.clone());
-            sudoku17_sudoku.push(line.clone());
+            sudoku17.push(line.clone());
         }
         line.clear();
     }
@@ -58,40 +52,95 @@ fn criterion_benchmark(c: &mut Criterion) {
     ]);
     let mut i = 0;
     let solver = msolve::Solver::new();
-    c.bench_function("top2365_msolve", move |b| {
-        b.iter(|| {
-            criterion::black_box(&solver.solve_string(&top2365_msolve[i]));
-            i += 1;
-            i %= top2365_msolve.len();
-        })
-    });
-    c.bench_function("top2365_sudoku", move |b| {
+    {
+        let top2365_msolve = top2365.clone();
+        c.bench_function("top2365_msolve", move |b| {
+            b.iter(|| {
+                criterion::black_box(&solver.solve_string(&top2365_msolve[i]));
+                i += 1;
+                i %= top2365_msolve.len();
+            })
+        });
+    }
+    {
+        let top2365 = top2365.clone();
+        c.bench_function("top2365_sudoku", move |b| {
+            b.iter(|| {
+                criterion::black_box(
+                    &sudoku::Sudoku::from_str_line(&top2365[i])
+                        .unwrap()
+                        .solve_one(),
+                );
+                i += 1;
+                i %= top2365.len();
+            })
+        });
+    }
+    {
+        let top2365_msolve = top2365.clone();
+        c.bench_function("top2365_msolve_unique", move |b| {
+            b.iter(|| {
+                criterion::black_box(&solver.solve_string_unique(&top2365_msolve[i]));
+                i += 1;
+                i %= top2365_msolve.len();
+            })
+        });
+    }
+    c.bench_function("top2365_sudoku_unique", move |b| {
         b.iter(|| {
             criterion::black_box(
-                &sudoku::Sudoku::from_str_line(&top2365_sudoku[i])
+                &sudoku::Sudoku::from_str_line(&top2365[i])
                     .unwrap()
                     .solve_unique(),
             );
             i += 1;
-            i %= top2365_sudoku.len();
+            i %= top2365.len();
         })
     });
-    c.bench_function("sudoku17_msolve", move |b| {
-        b.iter(|| {
-            criterion::black_box(&solver.solve_string(&sudoku17_msolve[i]));
-            i += 1;
-            i %= sudoku17_msolve.len();
-        })
-    });
-    c.bench_function("sudoku17_sudoku", move |b| {
+    {
+        let sudoku17_msolve = sudoku17.clone();
+        c.bench_function("sudoku17_msolve", move |b| {
+            b.iter(|| {
+                criterion::black_box(&solver.solve_string(&sudoku17_msolve[i]));
+                i += 1;
+                i %= sudoku17_msolve.len();
+            })
+        });
+    }
+    {
+        let sudoku17 = sudoku17.clone();
+        c.bench_function("sudoku17_sudoku", move |b| {
+            b.iter(|| {
+                criterion::black_box(
+                    &sudoku::Sudoku::from_str_line(&sudoku17[i])
+                        .unwrap()
+                        .solve_one(),
+                );
+                i += 1;
+                i %= sudoku17.len();
+            })
+        });
+    }
+    {
+        let sudoku17_msolve = sudoku17.clone();
+        c.bench_function("sudoku17_msolve_unique", move |b| {
+            b.iter(|| {
+                criterion::black_box(&solver.solve_string_unique(&sudoku17_msolve[i]));
+                i += 1;
+                i %= sudoku17_msolve.len();
+            })
+        });
+    }
+
+    c.bench_function("sudoku17_sudoku_unique", move |b| {
         b.iter(|| {
             criterion::black_box(
-                &sudoku::Sudoku::from_str_line(&sudoku17_sudoku[i])
+                &sudoku::Sudoku::from_str_line(&sudoku17[i])
                     .unwrap()
-                    .solve_unique(),
+                    .solve_one(),
             );
             i += 1;
-            i %= sudoku17_sudoku.len();
+            i %= sudoku17.len();
         })
     });
     c.bench_function("easy_8802", move |b| {

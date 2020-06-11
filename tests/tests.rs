@@ -12,19 +12,10 @@ mod tests {
                 if let Some(solution) = sudoku.solve_unique() {
                     assert_eq!(
                         solution.to_bytes().to_vec(),
-                        solver.solve_string(&line).unwrap().to_vec()
-                    );
-                } else if let Some(solution) = solver.solve_string(&line) {
-                    println!("Sudoku: {}", sudoku);
-                    println!(
-                        "My Solution: {}",
-                        solution
-                            .iter()
-                            .map(|value| value.to_string())
-                            .collect::<String>()
+                        solver.solve_string_unique(&line).unwrap().to_vec()
                     );
                 } else {
-                    println!("Neither could solve sudoku: {}", sudoku);
+                    assert!(solver.solve_string_unique(&line).is_none());
                 }
             }
             line.clear();
@@ -42,19 +33,10 @@ mod tests {
                 if let Some(solution) = sudoku.solve_unique() {
                     assert_eq!(
                         solution.to_bytes().to_vec(),
-                        solver.solve_string(&line).unwrap().to_vec()
-                    );
-                } else if let Some(solution) = solver.solve_string(&line) {
-                    println!("Sudoku: {}", sudoku);
-                    println!(
-                        "My Solution: {}",
-                        solution
-                            .iter()
-                            .map(|value| value.to_string())
-                            .collect::<String>()
+                        solver.solve_string_unique(&line).unwrap().to_vec()
                     );
                 } else {
-                    println!("Neither could solve sudoku: {}", sudoku);
+                    assert!(solver.solve_string_unique(&line).is_none());
                 }
             }
             line.clear();
