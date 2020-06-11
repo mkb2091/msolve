@@ -226,6 +226,16 @@ impl Solver {
                 if route[square] == 0 {
                     return Err(());
                 }
+                if route[square].is_power_of_two() {
+                    if solved_squares.count_ones() == 80 {
+                        return Ok(route);
+                    }
+                    apply_number(&mut route, square as usize);
+                    solved_squares |= 1 << square;
+                    changed_squares |= self.changed_squares_from_apply[square];
+                    changed_squares &= std::u128::MAX - solved_squares;
+                    continue;
+                }
                 if let Ok(changed) = hidden_singles(&mut route, square as usize) {
                     if changed || route[square].is_power_of_two() {
                         if solved_squares.count_ones() == 80 {
