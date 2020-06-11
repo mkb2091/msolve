@@ -291,7 +291,6 @@ impl Solver {
             }
         }
         let mut routes: Vec<(Sudoku, u128, u128)> = vec![(sudoku, changed_squares, solved_squares)];
-        // (Sudoku, changed squares bitset, solved_squared)
         while let Some((route, changed_squares, solved_squares)) = routes.pop() {
             if let Ok(result) =
                 self.handle_route(route, changed_squares, solved_squares, &mut routes)
@@ -315,7 +314,6 @@ impl Solver {
         }
         let mut solution = None;
         let mut routes: Vec<(Sudoku, u128, u128)> = vec![(sudoku, changed_squares, solved_squares)];
-        // (Sudoku, changed squares bitset, solved_squared)
         while let Some((route, changed_squares, solved_squares)) = routes.pop() {
             if let Ok(result) =
                 self.handle_route(route, changed_squares, solved_squares, &mut routes)
