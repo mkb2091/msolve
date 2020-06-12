@@ -154,7 +154,8 @@ impl Solver {
         }
     }
 
-    fn pointing_pairs(&self, sudoku: &mut Sudoku) -> bool {
+    fn pointing_pairs(&self, sudoku_ref: &mut Sudoku) -> bool {
+        let mut sudoku = *sudoku_ref;
         let mut sudoku_check = SUDOKU_MAX;
         for &box_start in [0, 3, 6, 27, 30, 33, 54, 57, 60].iter() {
             let row_start = box_start / 9 * 9;
@@ -207,6 +208,7 @@ impl Solver {
             sudoku[box_start + 20] = box_old[8];
             sudoku_check &= column1 | column2 | column3;
         }
+        *sudoku_ref = sudoku;
         sudoku_check == SUDOKU_MAX
     }
 
