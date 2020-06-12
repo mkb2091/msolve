@@ -15,6 +15,16 @@ type SudokuBackTrackingVec = Vec<SudokuState>;
 /** Max 9 bit number */
 pub const SUDOKU_MAX: u16 = 512 - 1;
 
+/*
+After solving this many squares, do not use pointing pairs
+For top 2465, 33 is best
+For top 2465 unique, 35 is best
+For sudoku17, 41 is best
+For sudoku17 unique, 42 is best
+For empty_n, lower is better, though limited difference between values below 55
+*/
+const POINTING_PAIRS_CUTOFF: u32 = 40;
+
 /**
 To be called when there is only one possible number
 */
@@ -267,7 +277,9 @@ impl Solver {
             if changed_squares == 0 || min.1 < 3 {
                 debug_assert!(min.1 != std::u32::MAX);
                 let mut value = route[min.0];
-                if !self.pointing_pairs(&mut route) {
+                if solved_squares.count_ones() < POINTING_PAIRS_CUTOFF
+                    && !self.pointing_pairs(&mut route)
+                {
                     return Err(());
                 }
                 solved_squares |= 1 << min.0;
