@@ -279,7 +279,17 @@ impl Solver {
                     apply_number(&mut new, min.0);
                     routes.push((new, changed_squares, solved_squares));
                 }
-                return Err(());
+
+                if let Some(next) = routes.pop() {
+                    route = next.0;
+                    changed_squares = next.1;
+                    solved_squares = next.2;
+                    if solved_squares.count_ones() == 81 {
+                        return Ok(route);
+                    }
+                } else {
+                    return Err(());
+                }
             }
         }
     }
