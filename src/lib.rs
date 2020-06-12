@@ -63,13 +63,9 @@ pub fn hidden_singles(sudoku: &mut Sudoku, square: usize) -> Result<bool, ()> {
     if needed == 0 {
         sudoku[square] = value;
         Ok(false) // Don't yet know enough information to determine which value it must be
-    } else if needed.is_power_of_two() {
-        if value & needed != 0 {
-            sudoku[square] = value & needed;
-            Ok(needed != value) // It can be the value it is needed to be
-        } else {
-            Err(()) // It can't be the value it is needed to be, sudoku cannot be solved
-        }
+    } else if (value & needed).is_power_of_two() {
+        sudoku[square] = value & needed;
+        Ok(needed != value) // It can be the value it is needed to be
     } else {
         Err(()) // It has to be multiple different values, sudoku cannot be solved
     }
