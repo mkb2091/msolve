@@ -163,6 +163,11 @@ fn criterion_benchmark(c: &mut Criterion) {
             criterion::black_box(&solver.solve_array(&empty_sudoku));
         })
     });
+    c.bench_function("first 1000 solutions to empty_sudoku", move |b| {
+        b.iter(|| {
+            criterion::black_box(&solver.count_solutions(msolve::to_sudoku(&empty_sudoku), 1000));
+        })
+    });
     c.bench_function("random17_sudoku", move |b| {
         b.iter(|| {
             criterion::black_box(&solver.solve_array(&random17_sudoku));

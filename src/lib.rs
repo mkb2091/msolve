@@ -71,7 +71,7 @@ pub fn hidden_singles(sudoku: &mut Sudoku, square: usize) -> Result<bool, ()> {
     }
 }
 
-fn to_sudoku(sudoku: &[u8; 81]) -> Sudoku {
+pub fn to_sudoku(sudoku: &[u8; 81]) -> Sudoku {
     let mut options: [u16; 81] = [SUDOKU_MAX; 81];
     for (item, pointer) in sudoku
         .iter()
@@ -83,7 +83,7 @@ fn to_sudoku(sudoku: &[u8; 81]) -> Sudoku {
     options
 }
 
-fn str_to_sudoku(sudoku_str: &str) -> Sudoku {
+pub fn str_to_sudoku(sudoku_str: &str) -> Sudoku {
     let mut sudoku = [0; 81];
     for (square, character) in sudoku.iter_mut().zip(sudoku_str.chars()) {
         if let Some(int) = character.to_digit(10) {
@@ -93,7 +93,7 @@ fn str_to_sudoku(sudoku_str: &str) -> Sudoku {
     to_sudoku(&sudoku)
 }
 
-fn from_sudoku(sudoku: &Sudoku) -> [u8; 81] {
+pub fn from_sudoku(sudoku: &Sudoku) -> [u8; 81] {
     let mut array: [u8; 81] = [0; 81];
     for (square, processed) in sudoku
         .iter()
@@ -284,7 +284,13 @@ impl Solver {
         }
     }
 
-    pub fn solve(&self, mut sudoku: Sudoku) -> Option<Sudoku> {
+    #[inline(always)]
+    fn solve_n_internal(
+        &self,
+        mut sudoku: Sudoku,
+        n: usize,
+        store_results: bool,
+    ) -> (usize, Vec<Sudoku>) {
         let mut changed_squares = 0;
         let mut solved_squares = 0;
         for square in 0..81 {
@@ -300,46 +306,54 @@ impl Solver {
             smallvec::smallvec![(sudoku, changed_squares, solved_squares)];
         #[cfg(not(default))]
         let mut routes: Vec<(Sudoku, u128, u128)> = vec![(sudoku, changed_squares, solved_squares)];
-        while let Some((route, changed_squares, solved_squares)) = routes.pop() {
-            if let Ok(result) =
-                self.handle_route(route, changed_squares, solved_squares, &mut routes)
-            {
-                return Some(result);
-            }
-        }
 
-        None
-    }
-    pub fn solve_unique(&self, mut sudoku: Sudoku) -> Option<Sudoku> {
-        let mut changed_squares = 0;
-        let mut solved_squares = 0;
-        for square in 0..81 {
-            if sudoku[square].is_power_of_two() {
-                solved_squares |= 1 << square;
-                apply_number(&mut sudoku, square as usize);
-                changed_squares |= self.changed_squares_from_apply[square];
-                changed_squares &= std::u128::MAX - solved_squares;
-            }
-        }
-        let mut solution = None;
-        #[cfg(default)]
-        let mut routes: SudokuBackTrackingVec =
-            smallvec::smallvec![(sudoku, changed_squares, solved_squares)];
-        #[cfg(not(default))]
-        let mut routes: Vec<(Sudoku, u128, u128)> = vec![(sudoku, changed_squares, solved_squares)];
+        let mut solutions: Vec<Sudoku> = Vec::with_capacity(n * store_results as usize);
+        let mut solution_count = 0;
         while let Some((route, changed_squares, solved_squares)) = routes.pop() {
             if let Ok(result) =
                 self.handle_route(route, changed_squares, solved_squares, &mut routes)
             {
-                if solution.is_some() {
-                    return None;
+                if store_results {
+                    solutions.push(result);
+                    if solutions.len() >= n {
+                        return (solutions.len(), solutions);
+                    }
                 } else {
-                    solution = Some(result)
+                    solution_count += 1;
+                    if solution_count >= n {
+                        return (solution_count, Vec::new());
+                    }
                 }
             }
         }
-        solution
+        if store_results {
+            (solutions.len(), solutions)
+        } else {
+            (solution_count, Vec::new())
+        }
     }
+
+    pub fn solve(&self, sudoku: Sudoku) -> Option<Sudoku> {
+        let (_, results) = self.solve_n_internal(sudoku, 1, true);
+        debug_assert!(results.len() <= 1);
+        if results.len() == 1 {
+            Some(results[0])
+        } else {
+            None
+        }
+    }
+    pub fn solve_unique(&self, sudoku: Sudoku) -> Option<Sudoku> {
+        let (_, results) = self.solve_n_internal(sudoku, 2, true);
+        if results.len() == 1 {
+            Some(results[0])
+        } else {
+            None
+        }
+    }
+    pub fn count_solutions(&self, sudoku: Sudoku, max: usize) -> usize {
+        self.solve_n_internal(sudoku, max, false).0
+    }
+
     pub fn solve_array(&self, sudoku: &[u8; 81]) -> Option<[u8; 81]> {
         if let Some(solution) = self.solve(to_sudoku(sudoku)) {
             Some(from_sudoku(&solution))
