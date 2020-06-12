@@ -1,10 +1,19 @@
-/** Max 9 bit number */
-pub const SUDOKU_MAX: u16 = 512 - 1;
+#[cfg(default)]
+extern crate smallvec;
 
 /**
 Represents a sudoku grid, with each square representing which possible numbers it could be
 */
 pub type Sudoku = [u16; 81];
+
+type SudokuState = (Sudoku, u128, u128);
+#[cfg(default)]
+type SudokuBackTrackingVec = smallvec::SmallVec<[SudokuState; 10]>;
+#[cfg(not(default))]
+type SudokuBackTrackingVec = Vec<SudokuState>;
+
+/** Max 9 bit number */
+pub const SUDOKU_MAX: u16 = 512 - 1;
 
 /**
 To be called when there is only one possible number
@@ -210,7 +219,7 @@ impl Solver {
         mut route: Sudoku,
         mut changed_squares: u128,
         mut solved_squares: u128,
-        routes: &mut Vec<(Sudoku, u128, u128)>,
+        routes: &mut SudokuBackTrackingVec,
     ) -> Result<Sudoku, ()> {
         if solved_squares.count_ones() == 81 {
             return Ok(route);
@@ -290,6 +299,10 @@ impl Solver {
                 changed_squares &= std::u128::MAX - solved_squares;
             }
         }
+        #[cfg(default)]
+        let mut routes: SudokuBackTrackingVec =
+            smallvec::smallvec![(sudoku, changed_squares, solved_squares)];
+        #[cfg(not(default))]
         let mut routes: Vec<(Sudoku, u128, u128)> = vec![(sudoku, changed_squares, solved_squares)];
         while let Some((route, changed_squares, solved_squares)) = routes.pop() {
             if let Ok(result) =
@@ -313,6 +326,10 @@ impl Solver {
             }
         }
         let mut solution = None;
+        #[cfg(default)]
+        let mut routes: SudokuBackTrackingVec =
+            smallvec::smallvec![(sudoku, changed_squares, solved_squares)];
+        #[cfg(not(default))]
         let mut routes: Vec<(Sudoku, u128, u128)> = vec![(sudoku, changed_squares, solved_squares)];
         while let Some((route, changed_squares, solved_squares)) = routes.pop() {
             if let Ok(result) =
