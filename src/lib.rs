@@ -254,7 +254,8 @@ impl Solver {
                     continue;
                 }
                 if let Ok(changed) = hidden_singles(&mut route, square as usize) {
-                    if changed || route[square].is_power_of_two() {
+                    debug_assert_eq!(changed || route[square].is_power_of_two(), changed);
+                    if changed {
                         if solved_squares.count_ones() == 80 {
                             return Ok(route);
                         }
