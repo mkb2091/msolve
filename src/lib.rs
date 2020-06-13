@@ -94,13 +94,15 @@ pub fn to_sudoku(sudoku: &[u8; 81]) -> Sudoku {
 }
 
 pub fn str_to_sudoku(sudoku_str: &str) -> Sudoku {
-    let mut sudoku = [0; 81];
+    let mut sudoku: [u16; 81] = [SUDOKU_MAX; 81];
     for (square, character) in sudoku.iter_mut().zip(sudoku_str.chars()) {
         if let Some(int) = character.to_digit(10) {
-            *square = int as u8;
+            if int != 0 {
+                *square = 1 << (int - 1);
+            }
         }
     }
-    to_sudoku(&sudoku)
+    sudoku
 }
 
 pub fn from_sudoku(sudoku: &Sudoku) -> [u8; 81] {
