@@ -277,23 +277,21 @@ impl Solver {
             if changed_squares == 0 || min.1 < 3 {
                 debug_assert!(min.1 != std::u32::MAX);
                 let mut value = route[min.0];
-                if solved_squares.count_ones() < POINTING_PAIRS_CUTOFF
-                    && !self.pointing_pairs(&mut route)
+                if solved_squares.count_ones() >= POINTING_PAIRS_CUTOFF
+                    || self.pointing_pairs(&mut route)
                 {
-                    return Err(());
+                    solved_squares |= 1 << min.0;
+                    changed_squares |= self.changed_squares_from_apply[min.0];
+                    changed_squares &= std::u128::MAX - solved_squares;
+                    while value != 0 {
+                        let i = value.trailing_zeros();
+                        value -= 1 << i;
+                        let mut new = route;
+                        new[min.0] = 1 << i;
+                        apply_number(&mut new, min.0);
+                        routes.push((new, changed_squares, solved_squares));
+                    }
                 }
-                solved_squares |= 1 << min.0;
-                changed_squares |= self.changed_squares_from_apply[min.0];
-                changed_squares &= std::u128::MAX - solved_squares;
-                while value != 0 {
-                    let i = value.trailing_zeros();
-                    value -= 1 << i;
-                    let mut new = route;
-                    new[min.0] = 1 << i;
-                    apply_number(&mut new, min.0);
-                    routes.push((new, changed_squares, solved_squares));
-                }
-
                 if let Some(next) = routes.pop() {
                     route = next.0;
                     changed_squares = next.1;
