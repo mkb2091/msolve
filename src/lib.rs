@@ -275,7 +275,7 @@ impl Solver {
             }
 
             if changed_squares == 0 || min.1 < 3 {
-                debug_assert!(min.1 != std::u32::MAX);
+                debug_assert!(min.1 <= 9);
                 let mut value = route[min.0];
                 if solved_squares.count_ones() >= POINTING_PAIRS_CUTOFF
                     || self.pointing_pairs(&mut route)
