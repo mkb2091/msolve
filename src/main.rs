@@ -14,7 +14,8 @@ fn main() {
         }
         if let Some(solution) = msolve::solve(msolve::SudokuStruct::from(&buffer)) {
             let _ = output_handle.write_all(
-                &solution.to_array()
+                &solution
+                    .to_array()
                     .iter()
                     .map(|x| x.to_string().as_bytes()[0])
                     .collect::<Vec<u8>>(),
@@ -23,5 +24,4 @@ fn main() {
         }
         buffer.clear();
     }
-    
 }

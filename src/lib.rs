@@ -154,70 +154,57 @@ fn handle_route(
     if solved_squares.count_ones() == 81 {
         return Ok(route);
     }
-    loop {
-        let mut min: (usize, u32) = (0, std::u32::MAX);
-        let mut temp = std::u128::MAX - solved_squares;
-        let old = route;
-        while temp != 0 {
-            let square = get_last_digit(&mut temp);
-            if square >= 81 {
-                break;
+    let mut min: (usize, u32) = (0, std::u32::MAX);
+    let mut temp = std::u128::MAX - solved_squares;
+    let old = route;
+    while temp != 0 {
+        let square = get_last_digit(&mut temp);
+        if square >= 81 {
+            break;
+        }
+        if route[square] == 0 {
+            return Err(());
+        }
+        if route[square].is_power_of_two() {
+            if solved_squares.count_ones() == 80 {
+                return Ok(route);
             }
-            if route[square] == 0 {
-                return Err(());
-            }
-            if route[square].is_power_of_two() {
+            apply_number(&mut route, square as usize);
+            solved_squares |= 1 << square;
+            continue;
+        }
+        if let Ok(changed) = hidden_singles(&mut route, square as usize) {
+            debug_assert_eq!(changed || route[square].is_power_of_two(), changed);
+            if changed {
                 if solved_squares.count_ones() == 80 {
                     return Ok(route);
                 }
                 apply_number(&mut route, square as usize);
                 solved_squares |= 1 << square;
-                continue;
-            }
-            if let Ok(changed) = hidden_singles(&mut route, square as usize) {
-                debug_assert_eq!(changed || route[square].is_power_of_two(), changed);
-                if changed {
-                    if solved_squares.count_ones() == 80 {
-                        return Ok(route);
-                    }
-                    apply_number(&mut route, square as usize);
-                    solved_squares |= 1 << square;
-                } else {
-                    let possible_values = route[square].count_ones();
-                    if possible_values < min.1 {
-                        min = (square, possible_values);
-                    }
-                }
             } else {
-                return Err(());
-            }
-        }
-
-        if true {
-            debug_assert!(min.1 <= 9);
-            let mut value = route[min.0];
-            if solved_squares.count_ones() >= POINTING_PAIRS_CUTOFF || pointing_pairs(&mut route) {
-                solved_squares |= 1 << min.0;
-                while value != 0 {
-                    let i = value.trailing_zeros();
-                    value -= 1 << i;
-                    let mut new = route;
-                    new[min.0] = 1 << i;
-                    apply_number(&mut new, min.0);
-                    routes.push((new, solved_squares));
+                let possible_values = route[square].count_ones();
+                if possible_values < min.1 {
+                    min = (square, possible_values);
                 }
             }
-            if let Some(next) = routes.pop() {
-                route = next.0;
-                solved_squares = next.1;
-                if solved_squares.count_ones() == 81 {
-                    return Ok(route);
-                }
-            } else {
-                return Err(());
-            }
+        } else {
+            return Err(());
         }
     }
+    debug_assert!(min.1 <= 9);
+    let mut value = route[min.0];
+    if solved_squares.count_ones() >= POINTING_PAIRS_CUTOFF || pointing_pairs(&mut route) {
+        solved_squares |= 1 << min.0;
+        while value != 0 {
+            let i = value.trailing_zeros();
+            value -= 1 << i;
+            let mut new = route;
+            new[min.0] = 1 << i;
+            apply_number(&mut new, min.0);
+            routes.push((new, solved_squares));
+        }
+    }
+    Err(())
 }
 
 pub struct SolutionIterator {
@@ -226,7 +213,6 @@ pub struct SolutionIterator {
 
 impl SolutionIterator {
     fn new(mut sudoku: Sudoku) -> Self {
-        let mut changed_squares = 0;
         let mut solved_squares = 0;
         for square in 0..81 {
             if sudoku[square].is_power_of_two() {
