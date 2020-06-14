@@ -47,6 +47,7 @@ pub fn apply_number(sudoku: &mut Sudoku, square: usize) {
 /**
 Check what values the row, column and square it is in and compare them
 */
+#[inline(always)] //Force inlining results in ~8% improvement for top2365_unique and sudoku17_unique
 pub fn hidden_singles(sudoku: &mut Sudoku, square: usize) -> Result<bool, ()> {
     let value = sudoku[square];
     sudoku[square] = 0;
