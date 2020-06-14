@@ -156,7 +156,6 @@ fn handle_route(
     }
     let mut min: (usize, u32) = (0, std::u32::MAX);
     let mut temp = std::u128::MAX - solved_squares;
-    let old = route;
     while temp != 0 {
         let square = get_last_digit(&mut temp);
         if square >= 81 {

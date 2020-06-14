@@ -1,4 +1,5 @@
-mod lib;
+pub mod lib;
+pub use lib::*;
 use std::io::BufRead;
 use std::io::Write;
 
@@ -12,7 +13,7 @@ fn main() {
         if result == 0 {
             break;
         }
-        if let Some(solution) = msolve::SudokuStruct::from(&buffer).solve() {
+        if let Some(solution) = SudokuStruct::from(&buffer).solve() {
             let _ = output_handle.write_all(
                 &solution
                     .to_array()
