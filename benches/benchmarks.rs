@@ -143,7 +143,7 @@ fn criterion_benchmark(c: &mut Criterion) {
             criterion::black_box(
                 &sudoku::Sudoku::from_str_line(&sudoku17[i])
                     .unwrap()
-                    .solve_one(),
+                    .solve_unique()
             );
             i += 1;
             i %= sudoku17.len();
@@ -156,12 +156,16 @@ fn criterion_benchmark(c: &mut Criterion) {
     });
     c.bench_function("World's Hardest Sudoku", move |b| {
         b.iter(|| {
-            criterion::black_box(&msolve::solve(msolve::SudokuStruct::from(&worlds_hardest_sudoku)));
+            criterion::black_box(&msolve::solve(msolve::SudokuStruct::from(
+                &worlds_hardest_sudoku,
+            )));
         })
     });
     c.bench_function("hardbrute_sudoku", move |b| {
         b.iter(|| {
-            criterion::black_box(&msolve::solve(msolve::SudokuStruct::from(&hardbrute_sudoku)));
+            criterion::black_box(&msolve::solve(msolve::SudokuStruct::from(
+                &hardbrute_sudoku,
+            )));
         })
     });
     c.bench_function("empty_sudoku", move |b| {
@@ -171,9 +175,10 @@ fn criterion_benchmark(c: &mut Criterion) {
     });
     c.bench_function("first 1000 solutions to empty_sudoku", move |b| {
         b.iter(|| {
-            criterion::black_box(
-                &msolve::count_solutions(msolve::SudokuStruct::from(&empty_sudoku), 1000),
-            );
+            criterion::black_box(&msolve::count_solutions(
+                msolve::SudokuStruct::from(&empty_sudoku),
+                1000,
+            ));
         })
     });
     c.bench_function("random17_sudoku", move |b| {
