@@ -257,6 +257,26 @@ impl SudokuStruct {
         }
         array
     }
+    pub fn solve(self) -> Option<SudokuStruct> {
+        SolutionIterator::new(self.sudoku).next()
+    }
+
+    pub fn solve_unique(self) -> Option<SudokuStruct> {
+        let mut iterator = SolutionIterator::new(self.sudoku);
+        if let Some(result) = iterator.next() {
+            if iterator.next().is_some() {
+                None
+            } else {
+                Some(result)
+            }
+        } else {
+            None
+        }
+    }
+
+    pub fn count_solutions(self, n: usize) -> usize {
+        SolutionIterator::new(self.sudoku).take(n).count()
+    }
 }
 
 impl From<&[u8]> for SudokuStruct {
@@ -300,25 +320,4 @@ impl From<&String> for SudokuStruct {
     fn from(sudoku_str: &String) -> Self {
         Self::from(&sudoku_str[..])
     }
-}
-
-pub fn solve(sudoku: SudokuStruct) -> Option<SudokuStruct> {
-    SolutionIterator::new(sudoku.sudoku).next()
-}
-
-pub fn solve_unique(sudoku: SudokuStruct) -> Option<SudokuStruct> {
-    let mut iterator = SolutionIterator::new(sudoku.sudoku);
-    if let Some(result) = iterator.next() {
-        if iterator.next().is_some() {
-            None
-        } else {
-            Some(result)
-        }
-    } else {
-        None
-    }
-}
-
-pub fn count_solutions(sudoku: SudokuStruct, n: usize) -> usize {
-    SolutionIterator::new(sudoku.sudoku).take(n).count()
 }

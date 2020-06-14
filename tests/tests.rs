@@ -11,12 +11,13 @@ mod tests {
                 if let Some(solution) = sudoku.solve_unique() {
                     assert_eq!(
                         &solution.to_bytes()[..],
-                        &msolve::solve_unique(msolve::SudokuStruct::from(&line))
+                        &msolve::SudokuStruct::from(&line)
+                            .solve_unique()
                             .unwrap()
                             .to_array()[..]
                     );
                 } else {
-                    assert!(msolve::solve_unique(msolve::SudokuStruct::from(&line)).is_none());
+                    assert!(msolve::SudokuStruct::from(&line).solve_unique().is_none());
                 }
             }
             line.clear();
@@ -33,12 +34,13 @@ mod tests {
                 if let Some(solution) = sudoku.solve_unique() {
                     assert_eq!(
                         &solution.to_bytes()[..],
-                        &msolve::solve_unique(msolve::SudokuStruct::from(&line))
+                        &msolve::SudokuStruct::from(&line)
+                            .solve_unique()
                             .unwrap()
                             .to_array()[..]
                     );
                 } else {
-                    assert!(msolve::solve_unique(msolve::SudokuStruct::from(&line)).is_none());
+                    assert!(msolve::SudokuStruct::from(&line).solve_unique().is_none());
                 }
             }
             line.clear();
@@ -58,7 +60,8 @@ mod tests {
         ];
         assert_eq!(
             &solution[..],
-            &msolve::solve(msolve::SudokuStruct::from(&sudoku))
+            &msolve::SudokuStruct::from(&sudoku)
+                .solve()
                 .unwrap()
                 .to_array()[..]
         );
@@ -78,7 +81,8 @@ mod tests {
         ];
         assert_eq!(
             &solution[..],
-            &msolve::solve(msolve::SudokuStruct::from(&sudoku))
+            &msolve::SudokuStruct::from(&sudoku)
+                .solve()
                 .unwrap()
                 .to_array()[..]
         );
@@ -97,7 +101,8 @@ mod tests {
         ];
         assert_eq!(
             &solution[..],
-            &msolve::solve(msolve::SudokuStruct::from(&sudoku))
+            &msolve::SudokuStruct::from(&sudoku)
+                .solve()
                 .unwrap()
                 .to_array()[..]
         );
@@ -116,7 +121,8 @@ mod tests {
         ];
         assert_eq!(
             &solution[..],
-            &msolve::solve(msolve::SudokuStruct::from(&sudoku))
+            &msolve::SudokuStruct::from(&sudoku)
+                .solve()
                 .unwrap()
                 .to_array()[..]
         );
