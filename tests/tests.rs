@@ -3,7 +3,6 @@ mod tests {
     #[test]
     fn top2365() {
         use std::io::BufRead;
-        let solver = msolve::Solver::new();
         let file_in = std::fs::File::open("bench_sudokus/top2365").expect("Failed to open file");
         let mut buf = std::io::BufReader::new(file_in);
         let mut line = String::with_capacity(81);
@@ -11,11 +10,13 @@ mod tests {
             if let Ok(sudoku) = sudoku::Sudoku::from_str_line(&line) {
                 if let Some(solution) = sudoku.solve_unique() {
                     assert_eq!(
-                        solution.to_bytes().to_vec(),
-                        solver.solve_string_unique(&line).unwrap().to_vec()
+                        &solution.to_bytes()[..],
+                        &msolve::solve_unique(msolve::SudokuStruct::from(&line))
+                            .unwrap()
+                            .to_array()[..]
                     );
                 } else {
-                    assert!(solver.solve_string_unique(&line).is_none());
+                    assert!(msolve::solve_unique(msolve::SudokuStruct::from(&line)).is_none());
                 }
             }
             line.clear();
@@ -24,7 +25,6 @@ mod tests {
     #[test]
     fn sudoku17_list() {
         use std::io::BufRead;
-        let solver = msolve::Solver::new();
         let file_in = std::fs::File::open("bench_sudokus/sudoku17").expect("Failed to open file");
         let mut buf = std::io::BufReader::new(file_in);
         let mut line = String::with_capacity(81);
@@ -32,11 +32,13 @@ mod tests {
             if let Ok(sudoku) = sudoku::Sudoku::from_str_line(&line) {
                 if let Some(solution) = sudoku.solve_unique() {
                     assert_eq!(
-                        solution.to_bytes().to_vec(),
-                        solver.solve_string_unique(&line).unwrap().to_vec()
+                        &solution.to_bytes()[..],
+                        &msolve::solve_unique(msolve::SudokuStruct::from(&line))
+                            .unwrap()
+                            .to_array()[..]
                     );
                 } else {
-                    assert!(solver.solve_string_unique(&line).is_none());
+                    assert!(msolve::solve_unique(msolve::SudokuStruct::from(&line)).is_none());
                 }
             }
             line.clear();
@@ -54,10 +56,11 @@ mod tests {
             4, 2, 3, 7, 8, 9, 6, 3, 6, 9, 8, 4, 5, 7, 2, 1, 2, 8, 7, 1, 6, 9, 5, 3, 4, 5, 2, 1, 9,
             7, 4, 3, 6, 8, 4, 3, 8, 5, 2, 6, 9, 1, 7, 7, 9, 6, 3, 1, 8, 4, 5, 2,
         ];
-        let solver = msolve::Solver::new();
         assert_eq!(
-            solution.to_vec(),
-            solver.solve_array(&sudoku).unwrap().to_vec()
+            &solution[..],
+            &msolve::solve(msolve::SudokuStruct::from(&sudoku))
+                .unwrap()
+                .to_array()[..]
         );
     }
 
@@ -73,10 +76,11 @@ mod tests {
             8, 5, 3, 7, 6, 9, 4, 6, 3, 4, 8, 9, 2, 1, 5, 7, 7, 9, 5, 4, 6, 1, 8, 3, 2, 5, 1, 9, 2,
             8, 6, 4, 7, 3, 4, 7, 2, 3, 1, 9, 5, 6, 8, 8, 6, 3, 7, 4, 5, 2, 1, 9,
         ];
-        let solver = msolve::Solver::new();
         assert_eq!(
-            solution.to_vec(),
-            solver.solve_array(&sudoku).unwrap().to_vec()
+            &solution[..],
+            &msolve::solve(msolve::SudokuStruct::from(&sudoku))
+                .unwrap()
+                .to_array()[..]
         );
     }
     #[test]
@@ -91,10 +95,11 @@ mod tests {
             3, 1, 7, 8, 5, 9, 6, 8, 1, 6, 5, 4, 9, 7, 2, 3, 7, 5, 9, 6, 2, 3, 4, 1, 8, 3, 7, 5, 2,
             8, 1, 9, 6, 4, 9, 8, 2, 3, 6, 4, 1, 5, 7, 6, 4, 1, 9, 5, 7, 3, 8, 2,
         ];
-        let solver = msolve::Solver::new();
         assert_eq!(
-            solution.to_vec(),
-            solver.solve_array(&sudoku).unwrap().to_vec()
+            &solution[..],
+            &msolve::solve(msolve::SudokuStruct::from(&sudoku))
+                .unwrap()
+                .to_array()[..]
         );
     }
     #[test]
@@ -109,10 +114,11 @@ mod tests {
             5, 8, 3, 9, 1, 6, 4, 4, 1, 8, 2, 5, 6, 7, 9, 3, 3, 6, 9, 1, 7, 4, 5, 2, 8, 5, 3, 6, 9,
             4, 8, 2, 7, 1, 7, 9, 1, 3, 2, 5, 4, 8, 6, 8, 4, 2, 7, 6, 1, 3, 5, 9,
         ];
-        let solver = msolve::Solver::new();
         assert_eq!(
-            solution.to_vec(),
-            solver.solve_array(&sudoku).unwrap().to_vec()
+            &solution[..],
+            &msolve::solve(msolve::SudokuStruct::from(&sudoku))
+                .unwrap()
+                .to_array()[..]
         );
     }
 }
