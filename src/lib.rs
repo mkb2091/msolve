@@ -13,7 +13,7 @@ type SudokuBackTrackingVec = smallvec::SmallVec<[SudokuState; 10]>;
 type SudokuBackTrackingVec = Vec<SudokuState>;
 
 /** Max 9 bit number */
-pub const SUDOKU_MAX: u16 = 512 - 1;
+const SUDOKU_MAX: u16 = (1 << 9) - 1;
 
 /*
 After solving this many squares, do not use pointing pairs
@@ -156,7 +156,7 @@ fn handle_route(
     }
     let mut min: (usize, u32) = (0, std::u32::MAX);
     let mut temp = std::u128::MAX - solved_squares;
-    while temp != 0 {
+    loop {
         let square = get_last_digit(&mut temp);
         if square >= 81 {
             break;
