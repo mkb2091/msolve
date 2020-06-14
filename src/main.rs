@@ -12,7 +12,7 @@ fn main() {
         if result == 0 {
             break;
         }
-        if let Some(solution) = msolve::solve(msolve::SudokuStruct::from(&buffer)) {
+        if let Some(solution) = msolve::SudokuStruct::from(&buffer).solve() {
             let _ = output_handle.write_all(
                 &solution
                     .to_array()
