@@ -26,9 +26,9 @@ For empty_n, lower is better, though limited difference between values below 55
 const POINTING_PAIRS_CUTOFF: u32 = 40;
 
 /**
-To be called when there is only one possible number
+Remove the value of at the chosen square from the set of options of each cell in the sudoku
 */
-pub fn apply_number(sudoku: &mut Sudoku, square: usize) {
+fn apply_number(sudoku: &mut Sudoku, square: usize) {
     let value = sudoku[square];
     let not_value = SUDOKU_MAX - value;
     let column_start = square % 9;
@@ -81,6 +81,11 @@ fn hidden_singles(sudoku: &mut Sudoku, square: usize) -> Result<bool, ()> {
     }
 }
 
+/**
+Apply pointing pairs technique.
+For each box, determine which values can only be in a single intersection,
+and then remove them from the house the intersection is in
+*/
 fn pointing_pairs(sudoku_ref: &mut Sudoku) -> bool {
     let mut sudoku = *sudoku_ref;
     let mut sudoku_check = SUDOKU_MAX;
@@ -139,6 +144,9 @@ fn pointing_pairs(sudoku_ref: &mut Sudoku) -> bool {
     sudoku_check == SUDOKU_MAX
 }
 
+/**
+Remove and return the last set bit in a u128
+*/
 #[inline(always)]
 fn get_last_digit(x: &mut u128) -> usize {
     let value = x.trailing_zeros();
@@ -146,6 +154,12 @@ fn get_last_digit(x: &mut u128) -> usize {
     value as usize
 }
 
+/**
+Perform a single iteration solving
+Call hidden_singles for each unsolved cell, and call apply_number for each newly solved cell\
+Select unsolved cell with least possible values
+For each possible value, clone the sudoku state, set the cell to the value and add to the state list
+*/
 fn handle_route(
     mut route: Sudoku,
     mut solved_squares: u128,
@@ -211,6 +225,9 @@ pub struct SolutionIterator {
 }
 
 impl SolutionIterator {
+    /**
+    Initialise the solver
+    */
     fn new(mut sudoku: Sudoku) -> Self {
         let mut solved_squares = 0;
         for square in 0..81 {
@@ -229,6 +246,9 @@ impl SolutionIterator {
 
 impl Iterator for SolutionIterator {
     type Item = SudokuStruct;
+    /**
+    Get the next solution
+    */
     fn next(&mut self) -> Option<Self::Item> {
         while let Some((route, solved_squares)) = self.routes.pop() {
             if let Ok(result) = handle_route(route, solved_squares, &mut self.routes) {
@@ -244,6 +264,9 @@ pub struct SudokuStruct {
 }
 
 impl SudokuStruct {
+    /**
+    Convert the sudoku into a [u8; 81] containing the numerical form of each solved square
+    */
     pub fn to_array(&self) -> [u8; 81] {
         let mut array: [u8; 81] = [0; 81];
         for (square, processed) in self
@@ -256,20 +279,28 @@ impl SudokuStruct {
         }
         array
     }
+    /**
+    Get the first solution.
+    */
     pub fn solve(self) -> Option<SudokuStruct> {
         SolutionIterator::new(self.sudoku).next()
     }
 
+    /**
+    Returns the first solution if it is uniquely solvable, otherwise returns None
+    */
     pub fn solve_unique(self) -> Option<SudokuStruct> {
         let mut iterator = SolutionIterator::new(self.sudoku);
         if let Some(result) = iterator.next() {
             if iterator.next().is_none() {
-                return Some(result)
+                return Some(result);
             }
         }
         None
     }
-
+    /**
+    Counts the number of solutions, up to maximum of n
+    */
     pub fn count_solutions(self, n: usize) -> usize {
         SolutionIterator::new(self.sudoku).take(n).count()
     }
