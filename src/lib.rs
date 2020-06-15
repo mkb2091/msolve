@@ -263,14 +263,11 @@ impl SudokuStruct {
     pub fn solve_unique(self) -> Option<SudokuStruct> {
         let mut iterator = SolutionIterator::new(self.sudoku);
         if let Some(result) = iterator.next() {
-            if iterator.next().is_some() {
-                None
-            } else {
-                Some(result)
+            if iterator.next().is_none() {
+                return Some(result)
             }
-        } else {
-            None
         }
+        None
     }
 
     pub fn count_solutions(self, n: usize) -> usize {
