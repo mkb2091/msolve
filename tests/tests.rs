@@ -1,4 +1,10 @@
 #[cfg(test)]
+extern crate quickcheck;
+#[cfg(test)]
+#[macro_use(quickcheck)]
+extern crate quickcheck_macros;
+
+#[cfg(test)]
 mod tests {
     #[test]
     fn top2365() {
@@ -126,5 +132,23 @@ mod tests {
                 .unwrap()
                 .to_array()[..]
         );
+    }
+    #[test]
+    fn can_find_first_1000_solutions_to_empty() {
+        assert_eq!(
+            msolve::SudokuStruct::from([0; 81]).count_solutions(1000),
+            1000
+        );
+    }
+    #[quickcheck]
+    fn random_array(input: Vec<u32>) -> bool {
+        let input = input.iter().map(|x| *x as u8).collect::<Vec<u8>>();
+        &msolve::SudokuStruct::from(input).solve();
+        true
+    }
+    #[quickcheck]
+    fn random_string(input: String) -> bool {
+        &msolve::SudokuStruct::from(input).solve();
+        true
     }
 }
