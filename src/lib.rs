@@ -312,7 +312,7 @@ impl From<&[u8]> for SudokuStruct {
         for (item, pointer) in sudoku_array
             .iter()
             .zip(sudoku.iter_mut())
-            .filter(|(item, _)| **item != 0)
+            .filter(|(item, _)| **item != 0 && **item <= 9)
         {
             *pointer = 1 << (item - 1);
         }
@@ -324,7 +324,16 @@ impl From<&[u8; 81]> for SudokuStruct {
         Self::from(&sudoku_array[..])
     }
 }
-
+impl From<Vec<u8>> for SudokuStruct {
+    fn from(sudoku_array: Vec<u8>) -> Self {
+        Self::from(&sudoku_array[..])
+    }
+}
+impl From<&Vec<u8>> for SudokuStruct {
+    fn from(sudoku_array: &Vec<u8>) -> Self {
+        Self::from(&sudoku_array[..])
+    }
+}
 impl From<&str> for SudokuStruct {
     fn from(sudoku_str: &str) -> Self {
         let mut sudoku: [u16; 81] = [SUDOKU_MAX; 81];
