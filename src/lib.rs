@@ -324,6 +324,11 @@ impl From<&[u8; 81]> for SudokuStruct {
         Self::from(&sudoku_array[..])
     }
 }
+impl From<[u8; 81]> for SudokuStruct {
+    fn from(sudoku_array: [u8; 81]) -> Self {
+        Self::from(&sudoku_array[..])
+    }
+}
 impl From<Vec<u8>> for SudokuStruct {
     fn from(sudoku_array: Vec<u8>) -> Self {
         Self::from(&sudoku_array[..])
