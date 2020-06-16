@@ -143,12 +143,12 @@ mod tests {
     #[quickcheck]
     fn random_array(input: Vec<u32>) -> bool {
         let input = input.iter().map(|x| *x as u8).collect::<Vec<u8>>();
-        &msolve::SudokuStruct::from(input).solve();
+        msolve::SudokuStruct::from(input).solve();
         true
     }
     #[quickcheck]
     fn random_string(input: String) -> bool {
-        &msolve::SudokuStruct::from(input).solve();
+        msolve::SudokuStruct::from(input).solve();
         true
     }
 }
