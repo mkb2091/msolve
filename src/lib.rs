@@ -295,10 +295,8 @@ impl SolutionIterator {
                 apply_number(&mut sudoku, square as usize);
             }
         }
-        #[cfg(default)]
-        let routes: SudokuBackTrackingVec = smallvec::smallvec![(sudoku, solved_squares)];
-        #[cfg(not(default))]
-        let routes: SudokuBackTrackingVec = vec![(sudoku, solved_squares)];
+        let mut routes = SudokuBackTrackingVec::with_capacity(10);
+        routes.push((sudoku, solved_squares));
         SolutionIterator { routes }
     }
 }
