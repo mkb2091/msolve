@@ -363,39 +363,49 @@ impl SudokuStruct {
     }
 }
 
-impl From<&[u8]> for SudokuStruct {
-    fn from(sudoku_array: &[u8]) -> Self {
+use std::convert::TryInto;
+
+impl<T: TryInto<u8> + Copy> From<&[T]> for SudokuStruct {
+    fn from(sudoku_array: &[T]) -> Self {
         let mut sudoku: [u16; 81] = [SUDOKU_MAX; 81];
         for (item, pointer) in sudoku_array
             .iter()
             .zip(sudoku.iter_mut())
-            .filter(|(item, _)| **item != 0 && **item <= 9)
+            .filter_map(|(item, pointer)| {
+                if let Ok(x) = (*item).try_into() {
+                    Some((x, pointer))
+                } else {
+                    None
+                }
+            })
+            .filter(|(item, _)| *item != 0 && *item <= 9)
         {
             *pointer = 1 << (item - 1);
         }
         Self { sudoku }
     }
 }
-impl From<&[u8; 81]> for SudokuStruct {
-    fn from(sudoku_array: &[u8; 81]) -> Self {
+impl<T: TryInto<u8> + Copy> From<&[T; 81]> for SudokuStruct {
+    fn from(sudoku_array: &[T; 81]) -> Self {
         Self::from(&sudoku_array[..])
     }
 }
-impl From<[u8; 81]> for SudokuStruct {
-    fn from(sudoku_array: [u8; 81]) -> Self {
+impl<T: TryInto<u8> + Copy> From<[T; 81]> for SudokuStruct {
+    fn from(sudoku_array: [T; 81]) -> Self {
         Self::from(&sudoku_array[..])
     }
 }
-impl From<Vec<u8>> for SudokuStruct {
-    fn from(sudoku_array: Vec<u8>) -> Self {
+impl<T: TryInto<u8> + Copy> From<Vec<T>> for SudokuStruct {
+    fn from(sudoku_array: Vec<T>) -> Self {
         Self::from(&sudoku_array[..])
     }
 }
-impl From<&Vec<u8>> for SudokuStruct {
-    fn from(sudoku_array: &Vec<u8>) -> Self {
+impl<T: TryInto<u8> + Copy> From<&Vec<T>> for SudokuStruct {
+    fn from(sudoku_array: &Vec<T>) -> Self {
         Self::from(&sudoku_array[..])
     }
 }
+
 impl From<&str> for SudokuStruct {
     fn from(sudoku_str: &str) -> Self {
         let mut sudoku: [u16; 81] = [SUDOKU_MAX; 81];
