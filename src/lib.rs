@@ -144,6 +144,53 @@ fn pointing_pairs(sudoku_ref: &mut Sudoku) -> bool {
     sudoku_check == SUDOKU_MAX
 }
 
+fn box_line_reduction(sudoku_ref: &mut Sudoku) -> bool{
+    let mut sudoku = *sudoku_ref;
+    let mut sudoku_check = SUDOKU_MAX;
+    for floor_number in (0..3).map(|x| x * 27) {
+        let mut intersection = [0_u16; 9]; // Intersection
+        for i in 0..9 {
+            intersection[i] = sudoku[floor_number + i * 3]
+                | sudoku[floor_number + i * 3 + 1]
+                | sudoku[floor_number + i * 3 + 2];
+        }
+        // Rows
+        let only_row_1_1 = intersection[0] & (SUDOKU_MAX - (intersection[1] | intersection[2]));
+        let only_row_1_2 = intersection[1] & (SUDOKU_MAX - (intersection[0] | intersection[2]));
+        let only_row_1_3 = intersection[2] & (SUDOKU_MAX - (intersection[0] | intersection[1]));
+
+        let only_row_2_1 = intersection[3] & (SUDOKU_MAX - (intersection[4] | intersection[5]));
+        let only_row_2_2 = intersection[4] & (SUDOKU_MAX - (intersection[3] | intersection[5]));
+        let only_row_2_3 = intersection[5] & (SUDOKU_MAX - (intersection[3] | intersection[4]));
+
+        let only_row_3_1 = intersection[6] & (SUDOKU_MAX - (intersection[7] | intersection[8]));
+        let only_row_3_2 = intersection[7] & (SUDOKU_MAX - (intersection[6] | intersection[8]));
+        let only_row_3_3 = intersection[8] & (SUDOKU_MAX - (intersection[6] | intersection[7]));
+
+        let resultant_mask = [
+            SUDOKU_MAX - (only_row_1_2 | only_row_1_3 | only_row_2_1 | only_row_3_1),
+            SUDOKU_MAX - (only_row_1_1 | only_row_1_3 | only_row_2_2 | only_row_3_2),
+            SUDOKU_MAX - (only_row_1_1 | only_row_1_2 | only_row_2_3 | only_row_3_3),
+            SUDOKU_MAX - (only_row_1_1 | only_row_2_2 | only_row_2_3 | only_row_3_1),
+            SUDOKU_MAX - (only_row_1_2 | only_row_2_1 | only_row_2_3 | only_row_3_2),
+            SUDOKU_MAX - (only_row_1_3 | only_row_2_1 | only_row_2_2 | only_row_3_3),
+            SUDOKU_MAX - (only_row_1_1 | only_row_2_1 | only_row_3_2 | only_row_3_3),
+            SUDOKU_MAX - (only_row_1_2 | only_row_2_2 | only_row_3_1 | only_row_3_3),
+            SUDOKU_MAX - (only_row_1_3 | only_row_2_3 | only_row_3_1 | only_row_3_2),
+        ];
+        let mut temp_total = 0;
+        for (i, row) in resultant_mask.iter().enumerate() {
+            temp_total |= row;
+            sudoku[floor_number + i * 3] &= row;
+            sudoku[floor_number + i * 3 + 1] &= row;
+            sudoku[floor_number + i * 3 + 2] &= row;
+        }
+        sudoku_check &= temp_total;
+    }
+    *sudoku_ref = sudoku;
+    sudoku_check == SUDOKU_MAX
+}
+
 /**
 Remove and return the last set bit in a u128
 */
@@ -206,7 +253,10 @@ fn handle_route(
     }
     debug_assert!(min.1 <= 9);
     let mut value = route[min.0];
-    if solved_squares.count_ones() >= POINTING_PAIRS_CUTOFF || pointing_pairs(&mut route) {
+    if solved_squares.count_ones() >= POINTING_PAIRS_CUTOFF || (
+        box_line_reduction(&mut route) &&
+        pointing_pairs(&mut route)
+    ) {
         solved_squares |= 1 << min.0;
         while value != 0 {
             let i = value.trailing_zeros();
