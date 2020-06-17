@@ -29,6 +29,11 @@ const POINTING_PAIRS_CUTOFF: u32 = 40;
 Remove the value of at the chosen square from the set of options of each cell in the sudoku
 */
 fn apply_number(sudoku: &mut Sudoku, square: usize) {
+    debug_assert!(square < 81);
+    #[cfg(not(debug_assertions))]
+    if square >= 81 {
+        unsafe { std::hint::unreachable_unchecked() }
+    }
     let value = sudoku[square];
     let not_value = SUDOKU_MAX - value;
     let column_start = square % 9;
@@ -48,14 +53,19 @@ fn apply_number(sudoku: &mut Sudoku, square: usize) {
 Check what values the row, column and square it is in and compare them
 */
 fn hidden_singles(sudoku: &mut Sudoku, square: usize) -> Result<bool, ()> {
+    debug_assert!(square < 81);
+    #[cfg(not(debug_assertions))]
+    if square >= 81 {
+        unsafe { std::hint::unreachable_unchecked() }
+    }
     let value = sudoku[square];
     sudoku[square] = 0;
     let row_start = square / 9 * 9;
     let column_start = square % 9;
     let box_start = square / 3 % 3 * 3 + square / 27 * 27;
-    assert!(row_start + 8 < 81);
-    assert!(column_start + 72 < 81);
-    assert!(box_start + 20 < 81);
+    debug_assert!(row_start + 8 < 81);
+    debug_assert!(column_start + 72 < 81);
+    debug_assert!(box_start + 20 < 81);
     let needed = SUDOKU_MAX
         - unsafe {
             let temp = [20, 19, 18, 11, 10, 9, 2, 1, 0].iter().enumerate().fold(
@@ -144,7 +154,7 @@ fn pointing_pairs(sudoku_ref: &mut Sudoku) -> bool {
     sudoku_check == SUDOKU_MAX
 }
 
-fn box_line_reduction(sudoku_ref: &mut Sudoku) -> bool{
+fn box_line_reduction(sudoku_ref: &mut Sudoku) -> bool {
     let mut sudoku = *sudoku_ref;
     let mut sudoku_check = SUDOKU_MAX;
     for floor_number in (0..3).map(|x| x * 27) {
@@ -253,10 +263,9 @@ fn handle_route(
     }
     debug_assert!(min.1 <= 9);
     let mut value = route[min.0];
-    if solved_squares.count_ones() >= POINTING_PAIRS_CUTOFF || (
-        box_line_reduction(&mut route) &&
-        pointing_pairs(&mut route)
-    ) {
+    if solved_squares.count_ones() >= POINTING_PAIRS_CUTOFF
+        || (box_line_reduction(&mut route) && pointing_pairs(&mut route))
+    {
         solved_squares |= 1 << min.0;
         while value != 0 {
             let i = value.trailing_zeros();
