@@ -141,14 +141,19 @@ mod tests {
         );
     }
     #[quickcheck]
-    fn random_array(input: Vec<u32>) -> bool {
+    fn random_array_solve(input: Vec<u32>) -> bool {
         let input = input.iter().map(|x| *x as u8).collect::<Vec<u8>>();
         msolve::SudokuStruct::from(input).solve();
         true
     }
     #[quickcheck]
-    fn random_string(input: String) -> bool {
+    fn random_string_solve(input: String) -> bool {
         msolve::SudokuStruct::from(input).solve();
+        true
+    }
+    #[quickcheck]
+    fn random_string_convert_to_and_from(input: String) -> bool {
+        msolve::SudokuStruct::from(input).to_array();
         true
     }
 }
