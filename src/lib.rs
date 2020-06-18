@@ -362,7 +362,7 @@ impl SudokuStruct {
         SolutionIterator::new(self.sudoku).take(n).count()
     }
     pub fn has_single_solution(self) -> bool {
-        SolutionIterator::new(self.sudoku).take(2).count() == 1
+        self.count_solutions(2) == 1
     }
 }
 
