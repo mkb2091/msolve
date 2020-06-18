@@ -361,6 +361,9 @@ impl SudokuStruct {
     pub fn count_solutions(self, n: usize) -> usize {
         SolutionIterator::new(self.sudoku).take(n).count()
     }
+    pub fn has_single_solution(self) -> bool {
+        SolutionIterator::new(self.sudoku).take(2).count() == 1
+    }
 }
 
 use std::convert::TryInto;
