@@ -264,7 +264,7 @@ fn handle_route(
     debug_assert!(min.1 <= 9);
     let mut value = route[min.0];
     if solved_squares.count_ones() >= POINTING_PAIRS_CUTOFF
-        || (box_line_reduction(&mut route) && pointing_pairs(&mut route))
+        || (pointing_pairs(&mut route) && box_line_reduction(&mut route))
     {
         solved_squares |= 1 << min.0;
         while value != 0 {
