@@ -35,7 +35,7 @@ fn apply_number(sudoku: &mut Sudoku, square: usize) {
         unsafe { std::hint::unreachable_unchecked() }
     }
     let value = sudoku[square];
-    let not_value = SUDOKU_MAX - value;
+    let not_value = !value;
     let column_start = square % 9;
     let row_start = square - column_start;
     let box_start = square / 3 % 3 * 3 + square / 27 * 27;
@@ -116,12 +116,12 @@ fn pointing_pairs(sudoku_ref: &mut Sudoku) -> bool {
         let row1 = box_old[0] | box_old[1] | box_old[2];
         let row2 = box_old[3] | box_old[4] | box_old[5];
         let row3 = box_old[6] | box_old[7] | box_old[8];
-        let only_row1 = row1 & (SUDOKU_MAX - (row2 | row3));
-        let only_row2 = row2 & (SUDOKU_MAX - (row1 | row3));
-        let only_row3 = row3 & (SUDOKU_MAX - (row1 | row2));
+        let only_row1 = !row1 | row2 | row3;
+        let only_row2 = row1 | !row2 | row3;
+        let only_row3 = row1 | row2 | !row3;
         let rows = [only_row1, only_row2, only_row3];
         for row_number in 0..3 {
-            let row = SUDOKU_MAX - rows[row_number];
+            let row = rows[row_number];
             for i in 0..9 {
                 sudoku[row_start + row_number * 9 + i] &= row;
             }
@@ -129,12 +129,12 @@ fn pointing_pairs(sudoku_ref: &mut Sudoku) -> bool {
         let column1 = box_old[0] | box_old[3] | box_old[6];
         let column2 = box_old[1] | box_old[4] | box_old[7];
         let column3 = box_old[2] | box_old[5] | box_old[8];
-        let only_column1 = column1 & (SUDOKU_MAX - (column2 | column3));
-        let only_column2 = column2 & (SUDOKU_MAX - (column1 | column3));
-        let only_column3 = column3 & (SUDOKU_MAX - (column1 | column2));
+        let only_column1 = !column1 | column2 | column3;
+        let only_column2 = column1 | !column2 | column3;
+        let only_column3 = column1 | column2 | !column3;
         let columns = [only_column1, only_column2, only_column3];
         for column_number in 0..3 {
-            let column = SUDOKU_MAX - columns[column_number];
+            let column = columns[column_number];
             for i in 0..9 {
                 sudoku[column_start + column_number + i * 9] &= column;
             }
@@ -165,28 +165,28 @@ fn box_line_reduction(sudoku_ref: &mut Sudoku) -> bool {
                 | sudoku[floor_number + i * 3 + 2];
         }
         // Rows
-        let only_row_1_1 = intersection[0] & (SUDOKU_MAX - (intersection[1] | intersection[2]));
-        let only_row_1_2 = intersection[1] & (SUDOKU_MAX - (intersection[0] | intersection[2]));
-        let only_row_1_3 = intersection[2] & (SUDOKU_MAX - (intersection[0] | intersection[1]));
+        let only_row_1_1 = intersection[0] & !(intersection[1] | intersection[2]);
+        let only_row_1_2 = intersection[1] & !(intersection[0] | intersection[2]);
+        let only_row_1_3 = intersection[2] & !(intersection[0] | intersection[1]);
 
-        let only_row_2_1 = intersection[3] & (SUDOKU_MAX - (intersection[4] | intersection[5]));
-        let only_row_2_2 = intersection[4] & (SUDOKU_MAX - (intersection[3] | intersection[5]));
-        let only_row_2_3 = intersection[5] & (SUDOKU_MAX - (intersection[3] | intersection[4]));
+        let only_row_2_1 = intersection[3] & !(intersection[4] | intersection[5]);
+        let only_row_2_2 = intersection[4] & !(intersection[3] | intersection[5]);
+        let only_row_2_3 = intersection[5] & !(intersection[3] | intersection[4]);
 
-        let only_row_3_1 = intersection[6] & (SUDOKU_MAX - (intersection[7] | intersection[8]));
-        let only_row_3_2 = intersection[7] & (SUDOKU_MAX - (intersection[6] | intersection[8]));
-        let only_row_3_3 = intersection[8] & (SUDOKU_MAX - (intersection[6] | intersection[7]));
+        let only_row_3_1 = intersection[6] & !(intersection[7] | intersection[8]);
+        let only_row_3_2 = intersection[7] & !(intersection[6] | intersection[8]);
+        let only_row_3_3 = intersection[8] & !(intersection[6] | intersection[7]);
 
         let resultant_mask = [
-            SUDOKU_MAX - (only_row_1_2 | only_row_1_3 | only_row_2_1 | only_row_3_1),
-            SUDOKU_MAX - (only_row_1_1 | only_row_1_3 | only_row_2_2 | only_row_3_2),
-            SUDOKU_MAX - (only_row_1_1 | only_row_1_2 | only_row_2_3 | only_row_3_3),
-            SUDOKU_MAX - (only_row_1_1 | only_row_2_2 | only_row_2_3 | only_row_3_1),
-            SUDOKU_MAX - (only_row_1_2 | only_row_2_1 | only_row_2_3 | only_row_3_2),
-            SUDOKU_MAX - (only_row_1_3 | only_row_2_1 | only_row_2_2 | only_row_3_3),
-            SUDOKU_MAX - (only_row_1_1 | only_row_2_1 | only_row_3_2 | only_row_3_3),
-            SUDOKU_MAX - (only_row_1_2 | only_row_2_2 | only_row_3_1 | only_row_3_3),
-            SUDOKU_MAX - (only_row_1_3 | only_row_2_3 | only_row_3_1 | only_row_3_2),
+            !(only_row_1_2 | only_row_1_3 | only_row_2_1 | only_row_3_1),
+            !(only_row_1_1 | only_row_1_3 | only_row_2_2 | only_row_3_2),
+            !(only_row_1_1 | only_row_1_2 | only_row_2_3 | only_row_3_3),
+            !(only_row_1_1 | only_row_2_2 | only_row_2_3 | only_row_3_1),
+            !(only_row_1_2 | only_row_2_1 | only_row_2_3 | only_row_3_2),
+            !(only_row_1_3 | only_row_2_1 | only_row_2_2 | only_row_3_3),
+            !(only_row_1_1 | only_row_2_1 | only_row_3_2 | only_row_3_3),
+            !(only_row_1_2 | only_row_2_2 | only_row_3_1 | only_row_3_3),
+            !(only_row_1_3 | only_row_2_3 | only_row_3_1 | only_row_3_2),
         ];
 
         let mut temp_total = 0;
@@ -247,7 +247,7 @@ fn handle_route(
         return Ok(route);
     }
     let mut min: (usize, u32) = (0, std::u32::MAX);
-    let mut temp = std::u128::MAX - solved_squares;
+    let mut temp = !solved_squares;
     loop {
         let square = get_last_digit(&mut temp);
         if square >= 81 {
