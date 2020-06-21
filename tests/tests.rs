@@ -166,4 +166,22 @@ mod tests {
         msolve::SudokuStruct::from(input).to_array();
         true
     }
+    #[derive(Clone, Debug)]
+    struct Sudoku {
+        data: Vec<u8>,
+    }
+    impl quickcheck::Arbitrary for Sudoku {
+        fn arbitrary<G: quickcheck::Gen>(g: &mut G) -> Self {
+            let mut data = Vec::<u8>::with_capacity(81);
+            for _ in 0..81 {
+                data.push(u8::arbitrary(g));
+            }
+            Self { data }
+        }
+    }
+    #[quickcheck]
+    fn random_sudoku_solve(input: Sudoku) -> bool {
+        msolve::SudokuStruct::from(input.data).solve();
+        true
+    }
 }
