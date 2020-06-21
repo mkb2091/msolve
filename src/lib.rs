@@ -353,7 +353,7 @@ impl SudokuStruct {
         let mut iterator = self.iter();
         let result = iterator.next();
         if iterator.next().is_none() {
-            return result
+            return result;
         }
         None
     }
