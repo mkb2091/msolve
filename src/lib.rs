@@ -351,10 +351,9 @@ impl SudokuStruct {
     */
     pub fn solve_unique(self) -> Option<SudokuStruct> {
         let mut iterator = self.iter();
-        if let Some(result) = iterator.next() {
-            if iterator.next().is_none() {
-                return Some(result);
-            }
+        let result = iterator.next();
+        if iterator.next().is_none() {
+            return result
         }
         None
     }
