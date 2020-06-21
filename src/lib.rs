@@ -339,15 +339,18 @@ impl SudokuStruct {
     /**
     Get the first solution.
     */
+    pub fn iter(self) -> SolutionIterator {
+        SolutionIterator::new(self.sudoku)
+    }
     pub fn solve(self) -> Option<SudokuStruct> {
-        SolutionIterator::new(self.sudoku).next()
+        self.iter().next()
     }
 
     /**
     Returns the first solution if it is uniquely solvable, otherwise returns None
     */
     pub fn solve_unique(self) -> Option<SudokuStruct> {
-        let mut iterator = SolutionIterator::new(self.sudoku);
+        let mut iterator = self.iter();
         if let Some(result) = iterator.next() {
             if iterator.next().is_none() {
                 return Some(result);
@@ -359,7 +362,7 @@ impl SudokuStruct {
     Counts the number of solutions, up to maximum of n
     */
     pub fn count_solutions(self, n: usize) -> usize {
-        SolutionIterator::new(self.sudoku).take(n).count()
+        self.iter().take(n).count()
     }
     pub fn has_single_solution(self) -> bool {
         self.count_solutions(2) == 1
