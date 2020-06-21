@@ -188,6 +188,7 @@ fn box_line_reduction(sudoku_ref: &mut Sudoku) -> bool {
             SUDOKU_MAX - (only_row_1_2 | only_row_2_2 | only_row_3_1 | only_row_3_3),
             SUDOKU_MAX - (only_row_1_3 | only_row_2_3 | only_row_3_1 | only_row_3_2),
         ];
+
         let mut temp_total = 0;
         for (i, row) in resultant_mask.iter().enumerate() {
             temp_total |= row;
@@ -196,6 +197,26 @@ fn box_line_reduction(sudoku_ref: &mut Sudoku) -> bool {
             sudoku[floor_number + i * 3 + 2] &= row;
         }
         sudoku_check &= temp_total;
+
+        let only_rows = [
+            only_row_1_1,
+            only_row_1_2,
+            only_row_1_3,
+            only_row_2_1,
+            only_row_2_2,
+            only_row_2_3,
+            only_row_3_1,
+            only_row_3_2,
+            only_row_3_3,
+        ];
+
+        for (i, row) in only_rows.iter().enumerate() {
+            if row.count_ones() == 3 {
+                sudoku[floor_number + i * 3] &= row;
+                sudoku[floor_number + i * 3 + 1] &= row;
+                sudoku[floor_number + i * 3 + 2] &= row;
+            }
+        }
     }
     *sudoku_ref = sudoku;
     sudoku_check == SUDOKU_MAX
