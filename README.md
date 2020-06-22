@@ -5,8 +5,8 @@ A WIP sudoku solving library
 
 # Goals
 
-Add backtracker
+Improve performance, potentially via using SIMD, and or GPU
 
-Add SIMD support to improve speed
+Add sudoku difficulty grading, potentially by counting the number of iterations needed to solve
 
-Potentially add GPU support to maximise speed
+Add sudoku generation from a seed sudoku 
