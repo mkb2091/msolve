@@ -252,15 +252,7 @@ fn handle_route(
         if route[square] == 0 {
             return Err(());
         }
-        if route[square].is_power_of_two() {
-            if solved_squares.count_ones() == 80 {
-                return Ok(route);
-            }
-            apply_number(&mut route, square);
-            solved_squares |= 1 << square;
-            continue;
-        }
-        if hidden_singles(&mut route, square)? {
+        if route[square].is_power_of_two() || hidden_singles(&mut route, square)? {
             if solved_squares.count_ones() == 80 {
                 return Ok(route);
             }
