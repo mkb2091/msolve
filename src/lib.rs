@@ -256,17 +256,17 @@ fn handle_route(
             if solved_squares.count_ones() == 80 {
                 return Ok(route);
             }
-            apply_number(&mut route, square as usize);
+            apply_number(&mut route, square);
             solved_squares |= 1 << square;
             continue;
         }
-        if let Ok(changed) = hidden_singles(&mut route, square as usize) {
+        if let Ok(changed) = hidden_singles(&mut route, square) {
             debug_assert_eq!(changed || route[square].is_power_of_two(), changed);
             if changed {
                 if solved_squares.count_ones() == 80 {
                     return Ok(route);
                 }
-                apply_number(&mut route, square as usize);
+                apply_number(&mut route, square);
                 solved_squares |= 1 << square;
             } else {
                 let possible_values = route[square].count_ones();
