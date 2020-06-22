@@ -30,7 +30,6 @@ Remove the value of at the chosen square from the set of options of each cell in
 */
 fn apply_number(sudoku: &mut Sudoku, square: usize) {
     debug_assert!(square < 81);
-    #[cfg(not(debug_assertions))]
     if square >= 81 {
         unsafe { std::hint::unreachable_unchecked() }
     }
@@ -54,7 +53,6 @@ Check what values the row, column and square it is in and compare them
 */
 fn hidden_singles(sudoku: &mut Sudoku, square: usize) -> Result<bool, ()> {
     debug_assert!(square < 81);
-    #[cfg(not(debug_assertions))]
     if square >= 81 {
         unsafe { std::hint::unreachable_unchecked() }
     }
