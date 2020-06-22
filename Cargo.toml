@@ -1,12 +1,13 @@
 [package]
 name = "msolve"
 description = "Another sudoku solving library"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Alex Williams <mkb2191@protonmail.com>"]
 edition = "2018"
 include = ["src/lib.rs", "README.md", "benches/benchmarks.rs"]
 repository = "https://github.com/mkb2091/msolve/"
 license = "MIT"
+readme = "README.md"
 
 
 [dependencies]
