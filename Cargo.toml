@@ -28,7 +28,6 @@ name = "benchmarks"
 harness = false
 
 [profile.release]
-debug = true
 lto = true
 
 [profile.dev]
