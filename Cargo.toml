@@ -17,7 +17,7 @@ smallvec = {version = "1.4.0", optional = true}
 criterion = "0.3"
 quickcheck = "0.9"
 quickcheck_macros = "0.9"
-sudoku = "0.7.0"
+sudoku = { version = "0.7", features = ["unchecked_indexing"]}
 
 [features]
 default = ["smallvec"]
