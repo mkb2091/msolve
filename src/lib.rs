@@ -120,8 +120,7 @@ fn pointing_pairs(sudoku_ref: &mut Sudoku) -> bool {
         let only_row2 = row1 | !row2 | row3;
         let only_row3 = row1 | row2 | !row3;
         let rows = [only_row1, only_row2, only_row3];
-        for row_number in 0..3 {
-            let row = rows[row_number];
+        for (row_number, row) in rows.iter().enumerate() {
             for i in 0..9 {
                 sudoku[row_start + row_number * 9 + i] &= row;
             }
@@ -133,8 +132,7 @@ fn pointing_pairs(sudoku_ref: &mut Sudoku) -> bool {
         let only_column2 = column1 | !column2 | column3;
         let only_column3 = column1 | column2 | !column3;
         let columns = [only_column1, only_column2, only_column3];
-        for column_number in 0..3 {
-            let column = columns[column_number];
+        for (column_number, column) in columns.iter().enumerate() {
             for i in 0..9 {
                 sudoku[column_start + column_number + i * 9] &= column;
             }
