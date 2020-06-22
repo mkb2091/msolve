@@ -260,22 +260,17 @@ fn handle_route(
             solved_squares |= 1 << square;
             continue;
         }
-        if let Ok(changed) = hidden_singles(&mut route, square) {
-            debug_assert_eq!(changed || route[square].is_power_of_two(), changed);
-            if changed {
-                if solved_squares.count_ones() == 80 {
-                    return Ok(route);
-                }
-                apply_number(&mut route, square);
-                solved_squares |= 1 << square;
-            } else {
-                let possible_values = route[square].count_ones();
-                if possible_values < min.1 {
-                    min = (square, possible_values);
-                }
+        if hidden_singles(&mut route, square)? {
+            if solved_squares.count_ones() == 80 {
+                return Ok(route);
             }
+            apply_number(&mut route, square);
+            solved_squares |= 1 << square;
         } else {
-            return Err(());
+            let possible_values = route[square].count_ones();
+            if possible_values < min.1 {
+                min = (square, possible_values);
+            }
         }
     }
     debug_assert!(min.1 <= 9);
