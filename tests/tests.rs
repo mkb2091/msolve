@@ -128,11 +128,11 @@ mod tests {
     }
     #[test]
     fn empty_has_multiple_solutions() {
-        assert_eq!(false, msolve::Sudoku::from([0; 81]).has_single_solution());
+        assert_eq!(false, msolve::Sudoku::empty().has_single_solution());
     }
     #[test]
     fn can_find_first_1000_solutions_to_empty() {
-        assert_eq!(msolve::Sudoku::from([0; 81]).count_solutions(1000), 1000);
+        assert_eq!(msolve::Sudoku::empty().count_solutions(1000), 1000);
     }
 
     #[quickcheck]
