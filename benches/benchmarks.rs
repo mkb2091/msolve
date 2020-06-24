@@ -44,7 +44,6 @@ fn criterion_benchmark(c: &mut Criterion) {
         0, 0, 0, 0, 0, 4, 4, 1, 0, 0, 0, 0, 7, 9, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 9, 0, 0,
         2, 7, 1, 7, 0, 0, 0, 0, 5, 4, 0, 6, 0, 0, 2, 0, 0, 0, 0, 0, 0,
     ]);
-    let empty_sudoku: [u8; 81] = criterion::black_box([0; 81]);
     let random17_sudoku: [u8; 81] = criterion::black_box([
         0, 0, 0, 7, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 3, 0, 2, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 6, 0, 0, 0, 5, 0, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 1, 8, 0, 0, 0, 0, 8, 1,
@@ -125,7 +124,8 @@ fn criterion_benchmark(c: &mut Criterion) {
         c.bench_function("sudoku17_msolve_unique", move |b| {
             b.iter(|| {
                 criterion::black_box(
-                    &msolve::Sudoku::from(&sudoku17_msolve[i % sudoku17_msolve.len()]).solve_unique(),
+                    &msolve::Sudoku::from(&sudoku17_msolve[i % sudoku17_msolve.len()])
+                        .solve_unique(),
                 );
                 i += 1;
             })
@@ -165,12 +165,12 @@ fn criterion_benchmark(c: &mut Criterion) {
 
     c.bench_function("empty_sudoku", move |b| {
         b.iter(|| {
-            criterion::black_box(&msolve::Sudoku::from(&empty_sudoku).solve());
+            criterion::black_box(&msolve::Sudoku::empty().solve());
         })
     });
     c.bench_function("first 1000 solutions to empty_sudoku", move |b| {
         b.iter(|| {
-            criterion::black_box(&msolve::Sudoku::from(&empty_sudoku).count_solutions(1000));
+            criterion::black_box(&msolve::Sudoku::empty().count_solutions(1000));
         })
     });
 }
