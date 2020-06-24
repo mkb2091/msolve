@@ -3,9 +3,9 @@ extern crate smallvec;
 
 use std::convert::TryInto;
 
-#[cfg(default)]
+#[cfg(feature = "smallvec")]
 type SudokuBackTrackingVec = smallvec::SmallVec<[Sudoku; 10]>;
-#[cfg(not(default))]
+#[cfg(not(feature = "smallvec"))]
 type SudokuBackTrackingVec = Vec<Sudoku>;
 
 /** Max 9 bit number */
@@ -31,15 +31,15 @@ fn get_last_digit(x: &mut u128) -> usize {
     value as usize
 }
 
+/**
+Iterator of the solutions of a sudoku
+*/
 pub struct SolutionIterator {
     routes: SudokuBackTrackingVec,
     step_count: usize,
 }
 
 impl SolutionIterator {
-    /**
-    Initialise the solver
-    */
     fn new(sudoku: Sudoku) -> Self {
         let mut routes = SudokuBackTrackingVec::with_capacity(10);
         routes.push(sudoku);
@@ -66,6 +66,9 @@ impl Iterator for SolutionIterator {
     }
 }
 
+/**
+Structure that represents a sudoku
+*/
 #[derive(Copy, Clone)]
 pub struct Sudoku {
     cells: [u16; 81],
@@ -332,11 +335,14 @@ impl Sudoku {
         array
     }
     /**
-    Get the first solution.
+    Returns an iterator over all solutions
     */
     pub fn iter(self) -> SolutionIterator {
         SolutionIterator::new(self)
     }
+    /**
+    Get the first solution.
+    */
     pub fn solve(self) -> Option<Self> {
         self.iter().next()
     }
@@ -358,22 +364,34 @@ impl Sudoku {
     pub fn count_solutions(self, n: usize) -> usize {
         self.iter().take(n).count()
     }
+
+    /**
+    Check whether the sudoku has exactly one solution without returning the solution
+    */
     pub fn has_single_solution(self) -> bool {
         self.count_solutions(2) == 1
     }
 
-    pub fn empty() -> Self {
+    /**
+    Returns an empty sudoku grid, alternative to Sudoku::from([0; 81]) or Sudoku::from(vec![])
+    */
+    pub const fn empty() -> Self {
         Sudoku {
             cells: [SUDOKU_MAX; 81],
             solved_squares: 0,
         }
     }
-
+    /**
+    Returns the number of steps to find the first solution, approximately proportional to difficulty
+    */
     pub fn solve_difficulty(self) -> usize {
         let mut iter = self.iter();
         iter.next();
         iter.step_count
     }
+    /**
+    Returns the number of steps to find the first two solutions, approximately proportional to difficulty
+    */
     pub fn solve_unique_difficulty(self) -> usize {
         let mut iter = self.iter();
         iter.next();
