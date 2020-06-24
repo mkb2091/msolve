@@ -33,6 +33,7 @@ fn get_last_digit(x: &mut u128) -> usize {
 
 pub struct SolutionIterator {
     routes: SudokuBackTrackingVec,
+    step_count: usize,
 }
 
 impl SolutionIterator {
@@ -42,7 +43,10 @@ impl SolutionIterator {
     fn new(sudoku: Sudoku) -> Self {
         let mut routes = SudokuBackTrackingVec::with_capacity(10);
         routes.push(sudoku);
-        SolutionIterator { routes }
+        SolutionIterator {
+            routes,
+            step_count: 0,
+        }
     }
 }
 
@@ -53,6 +57,7 @@ impl Iterator for SolutionIterator {
     */
     fn next(&mut self) -> Option<Self::Item> {
         while let Some(mut state) = self.routes.pop() {
+            self.step_count += 1;
             if let Ok(result) = state.handle_route(&mut self.routes) {
                 return Some(result);
             }
@@ -71,6 +76,7 @@ impl Sudoku {
     /**
     Remove the value at the chosen square from the set of options of each cell in the sudoku
     */
+    #[inline(always)]
     fn apply_number(&mut self, square: usize) {
         debug_assert!(square < 81);
         if square >= 81 {
@@ -361,6 +367,18 @@ impl Sudoku {
             cells: [SUDOKU_MAX; 81],
             solved_squares: 0,
         }
+    }
+
+    pub fn solve_difficulty(self) -> usize {
+        let mut iter = self.iter();
+        iter.next();
+        iter.step_count
+    }
+    pub fn solve_unique_difficulty(self) -> usize {
+        let mut iter = self.iter();
+        iter.next();
+        iter.next();
+        iter.step_count
     }
 }
 

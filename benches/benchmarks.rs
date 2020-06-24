@@ -55,9 +55,10 @@ fn criterion_benchmark(c: &mut Criterion) {
         let top2365_msolve = top2365.clone();
         c.bench_function("top2365_msolve", move |b| {
             b.iter(|| {
-                criterion::black_box(&msolve::Sudoku::from(&top2365_msolve[i]).solve());
+                criterion::black_box(
+                    &msolve::Sudoku::from(&top2365_msolve[i % top2365_msolve.len()]).solve(),
+                );
                 i += 1;
-                i %= top2365_msolve.len();
             })
         });
     }
@@ -66,12 +67,11 @@ fn criterion_benchmark(c: &mut Criterion) {
         c.bench_function("top2365_sudoku", move |b| {
             b.iter(|| {
                 criterion::black_box(
-                    &sudoku::Sudoku::from_str_line(&top2365[i])
+                    &sudoku::Sudoku::from_str_line(&top2365[i % top2365.len()])
                         .unwrap()
                         .solve_one(),
                 );
                 i += 1;
-                i %= top2365.len();
             })
         });
     }
@@ -79,29 +79,31 @@ fn criterion_benchmark(c: &mut Criterion) {
         let top2365_msolve = top2365.clone();
         c.bench_function("top2365_msolve_unique", move |b| {
             b.iter(|| {
-                criterion::black_box(&msolve::Sudoku::from(&top2365_msolve[i]).solve_unique());
+                criterion::black_box(
+                    &msolve::Sudoku::from(&top2365_msolve[i % top2365_msolve.len()]).solve_unique(),
+                );
                 i += 1;
-                i %= top2365_msolve.len();
             })
         });
     }
     c.bench_function("top2365_sudoku_unique", move |b| {
         b.iter(|| {
             criterion::black_box(
-                &sudoku::Sudoku::from_str_line(&top2365[i])
+                &sudoku::Sudoku::from_str_line(&top2365[i % top2365.len()])
                     .unwrap()
                     .solve_unique(),
             );
             i += 1;
-            i %= top2365.len();
         })
     });
     {
         let sudoku17_msolve = sudoku17.clone();
         c.bench_function("sudoku17_msolve", move |b| {
             b.iter(|| {
-                criterion::black_box(&msolve::Sudoku::from(&sudoku17_msolve[i]).solve());
-                i %= sudoku17_msolve.len();
+                criterion::black_box(
+                    &msolve::Sudoku::from(&sudoku17_msolve[i % sudoku17_msolve.len()]).solve(),
+                );
+                i += 1;
             })
         });
     }
@@ -110,12 +112,11 @@ fn criterion_benchmark(c: &mut Criterion) {
         c.bench_function("sudoku17_sudoku", move |b| {
             b.iter(|| {
                 criterion::black_box(
-                    &sudoku::Sudoku::from_str_line(&sudoku17[i])
+                    &sudoku::Sudoku::from_str_line(&sudoku17[i % sudoku17.len()])
                         .unwrap()
                         .solve_one(),
                 );
                 i += 1;
-                i %= sudoku17.len();
             })
         });
     }
@@ -123,9 +124,10 @@ fn criterion_benchmark(c: &mut Criterion) {
         let sudoku17_msolve = sudoku17.clone();
         c.bench_function("sudoku17_msolve_unique", move |b| {
             b.iter(|| {
-                criterion::black_box(&msolve::Sudoku::from(&sudoku17_msolve[i]).solve_unique());
+                criterion::black_box(
+                    &msolve::Sudoku::from(&sudoku17_msolve[i % sudoku17_msolve.len()]).solve_unique(),
+                );
                 i += 1;
-                i %= sudoku17_msolve.len();
             })
         });
     }
@@ -133,12 +135,11 @@ fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("sudoku17_sudoku_unique", move |b| {
         b.iter(|| {
             criterion::black_box(
-                &sudoku::Sudoku::from_str_line(&sudoku17[i])
+                &sudoku::Sudoku::from_str_line(&sudoku17[i % sudoku17.len()])
                     .unwrap()
                     .solve_unique(),
             );
             i += 1;
-            i %= sudoku17.len();
         })
     });
     c.bench_function("easy_8802", move |b| {

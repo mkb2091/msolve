@@ -168,4 +168,9 @@ mod tests {
         msolve::Sudoku::from(input.data).solve();
         true
     }
+    #[quickcheck]
+    fn solve_unique_harder_than_solve(input: Sudoku) -> bool {
+        let sudoku = msolve::Sudoku::from(input.data);
+        sudoku.solve_unique_difficulty() >= sudoku.solve_difficulty()
+    }
 }
