@@ -65,6 +65,11 @@ fn criterion_benchmark(c: &mut Criterion) {
         0, 0, 0, 0, 0, 6, 0, 0, 0, 5, 0, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 1, 8, 0, 0, 0, 0, 8, 1,
         0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 5, 0, 0, 4, 0, 0, 0, 0, 3, 0, 0,
     ]);
+    let solved_sudoku: [u8; 81] = criterion::black_box([
+        8, 1, 2, 7, 5, 3, 6, 4, 9, 9, 4, 3, 6, 8, 2, 1, 7, 5, 6, 7, 5, 4, 9, 1, 2, 8, 3, 1, 5, 4,
+        2, 3, 7, 8, 9, 6, 3, 6, 9, 8, 4, 5, 7, 2, 1, 2, 8, 7, 1, 6, 9, 5, 3, 4, 5, 2, 1, 9, 7, 4,
+        3, 6, 8, 4, 3, 8, 5, 2, 6, 9, 1, 7, 7, 9, 6, 3, 1, 8, 4, 5, 2,
+    ]);
 
     c.bench_function("top2365_msolve", |b| {
         b.iter(|| {
@@ -184,7 +189,11 @@ fn criterion_benchmark(c: &mut Criterion) {
             criterion::black_box(&msolve::Sudoku::from(&random17_sudoku).solve());
         })
     });
-
+    c.bench_function("solved_sudoku", |b| {
+        b.iter(|| {
+            criterion::black_box(&msolve::Sudoku::from(&solved_sudoku).solve());
+        })
+    });
     c.bench_function("empty_sudoku", |b| {
         b.iter(|| {
             criterion::black_box(&msolve::Sudoku::empty().solve());
