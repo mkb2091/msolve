@@ -40,6 +40,7 @@ pub struct SolutionIterator {
 }
 
 impl SolutionIterator {
+    #[inline]
     fn new(sudoku: Sudoku) -> Self {
         let mut routes = SudokuBackTrackingVec::with_capacity(10);
         routes.push(sudoku);
@@ -337,12 +338,14 @@ impl Sudoku {
     /**
     Returns an iterator over all solutions
     */
+    #[inline]
     pub fn iter(self) -> SolutionIterator {
         SolutionIterator::new(self)
     }
     /**
     Get the first solution.
     */
+    #[inline]
     pub fn solve(self) -> Option<Self> {
         self.iter().next()
     }
@@ -350,6 +353,7 @@ impl Sudoku {
     /**
     Returns the first solution if it is uniquely solvable, otherwise returns None
     */
+    #[inline]
     pub fn solve_unique(self) -> Option<Self> {
         let mut iterator = self.iter();
         iterator.next().xor(iterator.next())
@@ -357,6 +361,7 @@ impl Sudoku {
     /**
     Counts the number of solutions, up to maximum of n
     */
+    #[inline]
     pub fn count_solutions(self, n: usize) -> usize {
         self.iter().take(n).count()
     }
@@ -364,6 +369,7 @@ impl Sudoku {
     /**
     Check whether the sudoku has exactly one solution without returning the solution
     */
+    #[inline]
     pub fn has_single_solution(self) -> bool {
         self.count_solutions(2) == 1
     }
@@ -371,6 +377,7 @@ impl Sudoku {
     /**
     Returns an empty sudoku grid, alternative to Sudoku::from([0; 81]) or Sudoku::from(vec![])
     */
+    #[inline]
     pub const fn empty() -> Self {
         Sudoku {
             cells: [SUDOKU_MAX; 81],
@@ -380,6 +387,7 @@ impl Sudoku {
     /**
     Returns the number of steps to find the first solution, approximately proportional to difficulty
     */
+    #[inline]
     pub fn solve_difficulty(self) -> usize {
         let mut iter = self.iter();
         iter.next();
@@ -388,6 +396,7 @@ impl Sudoku {
     /**
     Returns the number of steps to find the first two solutions, approximately proportional to difficulty
     */
+    #[inline]
     pub fn solve_unique_difficulty(self) -> usize {
         let mut iter = self.iter();
         iter.next();
@@ -419,21 +428,25 @@ impl<T: TryInto<usize> + Copy> From<&[T]> for Sudoku {
     }
 }
 impl<T: TryInto<usize> + Copy> From<&[T; 81]> for Sudoku {
+    #[inline]
     fn from(sudoku_array: &[T; 81]) -> Self {
         Self::from(&sudoku_array[..])
     }
 }
 impl<T: TryInto<usize> + Copy> From<[T; 81]> for Sudoku {
+    #[inline]
     fn from(sudoku_array: [T; 81]) -> Self {
         Self::from(&sudoku_array[..])
     }
 }
 impl<T: TryInto<usize> + Copy> From<Vec<T>> for Sudoku {
+    #[inline]
     fn from(sudoku_array: Vec<T>) -> Self {
         Self::from(&sudoku_array[..])
     }
 }
 impl<T: TryInto<usize> + Copy> From<&Vec<T>> for Sudoku {
+    #[inline]
     fn from(sudoku_array: &Vec<T>) -> Self {
         Self::from(&sudoku_array[..])
     }
@@ -454,11 +467,13 @@ impl From<&str> for Sudoku {
     }
 }
 impl From<String> for Sudoku {
+    #[inline]
     fn from(sudoku_str: String) -> Self {
         Self::from(&sudoku_str[..])
     }
 }
 impl From<&String> for Sudoku {
+    #[inline]
     fn from(sudoku_str: &String) -> Self {
         Self::from(&sudoku_str[..])
     }
