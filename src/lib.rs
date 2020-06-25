@@ -352,11 +352,7 @@ impl Sudoku {
     */
     pub fn solve_unique(self) -> Option<Self> {
         let mut iterator = self.iter();
-        let result = iterator.next();
-        if iterator.next().is_none() {
-            return result;
-        }
-        None
+        iterator.next().xor(iterator.next())
     }
     /**
     Counts the number of solutions, up to maximum of n
