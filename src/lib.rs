@@ -413,7 +413,7 @@ impl<T: TryInto<usize> + Copy> From<&[T]> for Sudoku {
                     .ok()
                     .and_then(|x| x.checked_sub(1))
                     .filter(|x| *x <= 8)
-                    .and_then(|x| Some((i, x)))
+                    .map(|x| (i, x))
             })
         {
             sudoku.cells[i] = 1 << item;
@@ -458,7 +458,7 @@ impl From<&str> for Sudoku {
                 character
                     .to_digit(10)
                     .and_then(|int| int.checked_sub(1))
-                    .and_then(|int| Some((i, int)))
+                    .map(|int| (i, int))
             })
         {
             sudoku.cells[i] = 1 << int;
