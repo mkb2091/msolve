@@ -1,3 +1,5 @@
+include!(concat!(env!("OUT_DIR"), "/consts.rs"));
+
 #[cfg(default)]
 extern crate smallvec;
 
@@ -86,19 +88,12 @@ impl Sudoku {
         if square >= 81 {
             unsafe { std::hint::unreachable_unchecked() }
         }
-        let value = self.cells[square];
-        let not_value = !value;
-        let column_start = square % 9;
-        let row_start = square - column_start;
-        let box_start = square / 3 % 3 * 3 + square / 27 * 27;
-        unsafe {
-            for (i, box_offset) in [20, 19, 18, 11, 10, 9, 2, 1, 0].iter().enumerate() {
-                *self.cells.get_unchecked_mut(row_start + i) &= not_value;
-                *self.cells.get_unchecked_mut(column_start + i * 9) &= not_value;
-                *self.cells.get_unchecked_mut(box_start + box_offset) &= not_value;
-            }
+        let not_value = !self.cells[square];
+        for i in CELLS_TO_CHANGE[square].iter() {
+            self.cells[*i as usize] &= not_value;
         }
-        self.cells[square] = value;
+
+        debug_assert_eq!(self.cells[square], !not_value);
         self.solved_squares |= 1 << square;
     }
 
