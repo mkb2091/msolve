@@ -413,15 +413,15 @@ impl<T: TryInto<usize> + Copy> From<&[T]> for Sudoku {
             .enumerate()
             .take(81)
             .filter_map(|(i, item)| {
-                if let Ok(x) = (*item).try_into() {
-                    Some((i, x))
-                } else {
-                    None
-                }
+                (*item)
+                    .try_into()
+                    .ok()
+                    .and_then(|x| x.checked_sub(1))
+                    .filter(|x| *x <= 8)
+                    .and_then(|x| Some((i, x)))
             })
-            .filter(|(_, item)| *item != 0 && *item <= 9)
         {
-            sudoku.cells[i] = 1 << (item - 1);
+            sudoku.cells[i] = 1 << item;
             sudoku.apply_number(i);
         }
         sudoku
@@ -455,13 +455,19 @@ impl<T: TryInto<usize> + Copy> From<&Vec<T>> for Sudoku {
 impl From<&str> for Sudoku {
     fn from(sudoku_str: &str) -> Self {
         let mut sudoku = Sudoku::empty();
-        for (i, character) in sudoku_str.chars().enumerate().take(81) {
-            if let Some(int) = character.to_digit(10) {
-                if int != 0 {
-                    sudoku.cells[i] = 1 << (int - 1);
-                    sudoku.apply_number(i);
-                }
-            }
+        for (i, int) in sudoku_str
+            .chars()
+            .enumerate()
+            .take(81)
+            .filter_map(|(i, character)| {
+                character
+                    .to_digit(10)
+                    .and_then(|int| int.checked_sub(1))
+                    .and_then(|int| Some((i, int)))
+            })
+        {
+            sudoku.cells[i] = 1 << int;
+            sudoku.apply_number(i);
         }
         sudoku
     }

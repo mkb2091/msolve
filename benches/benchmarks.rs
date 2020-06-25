@@ -29,8 +29,21 @@ fn criterion_benchmark(c: &mut Criterion) {
         line.clear();
     }
 
+    // kaggle is from https://www.kaggle.com/bryanpark/sudoku
+    let file_in = std::fs::File::open("bench_sudokus/kaggle.txt").expect("Failed to open file");
+    let mut buf = std::io::BufReader::new(file_in);
+    let mut kaggle = Vec::<String>::new();
+    let mut line = String::with_capacity(81);
+    while buf.read_line(&mut line).unwrap() > 0 {
+        if sudoku::Sudoku::from_str_line(&line).is_ok() {
+            kaggle.push(line.clone());
+        }
+        line.clear();
+    }
+
     let mut top2365_iter = top2365.iter().cycle();
     let mut sudoku17_iter = sudoku17.iter().cycle();
+    let mut kaggle_iter = sudoku17.iter().cycle();
 
     let worlds_hardest_sudoku: [u8; 81] = criterion::black_box([
         8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 6, 0, 0, 0, 0, 0, 0, 7, 0, 0, 9, 0, 2, 0, 0, 0, 5, 0,
@@ -115,6 +128,37 @@ fn criterion_benchmark(c: &mut Criterion) {
         b.iter(|| {
             criterion::black_box(
                 &sudoku::Sudoku::from_str_line(sudoku17_iter.next().unwrap())
+                    .unwrap()
+                    .solve_unique(),
+            );
+        })
+    });
+    c.bench_function("kaggle_msolve", |b| {
+        b.iter(|| {
+            criterion::black_box(&msolve::Sudoku::from(kaggle_iter.next().unwrap()).solve());
+        })
+    });
+
+    c.bench_function("kaggle_sudoku", |b| {
+        b.iter(|| {
+            criterion::black_box(
+                &sudoku::Sudoku::from_str_line(kaggle_iter.next().unwrap())
+                    .unwrap()
+                    .solve_one(),
+            );
+        })
+    });
+
+    c.bench_function("kaggle_msolve_unique", |b| {
+        b.iter(|| {
+            criterion::black_box(&msolve::Sudoku::from(kaggle_iter.next().unwrap()).solve_unique());
+        })
+    });
+
+    c.bench_function("kaggle_sudoku_unique", |b| {
+        b.iter(|| {
+            criterion::black_box(
+                &sudoku::Sudoku::from_str_line(kaggle_iter.next().unwrap())
                     .unwrap()
                     .solve_unique(),
             );
