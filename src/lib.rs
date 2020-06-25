@@ -419,6 +419,8 @@ impl<T: TryInto<usize> + Copy> From<&[T]> for Sudoku {
             sudoku.cells[i] = 1 << item;
             sudoku.apply_number(i);
         }
+        sudoku.pointing_pairs();
+        sudoku.box_line_reduction();
         sudoku
     }
 }
@@ -464,6 +466,8 @@ impl From<&str> for Sudoku {
             sudoku.cells[i] = 1 << int;
             sudoku.apply_number(i);
         }
+        sudoku.pointing_pairs();
+        sudoku.box_line_reduction();
         sudoku
     }
 }
