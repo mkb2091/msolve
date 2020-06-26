@@ -138,68 +138,7 @@ impl Sudoku {
         }
     }
 
-    /**
-    Apply pointing pairs technique.
-    For each box, determine which values can only be in a single intersection,
-    and then remove them from the house the intersection is in
-    */
-    fn pointing_pairs(&mut self) -> bool {
-        let mut sudoku = self.cells;
-        let mut sudoku_check = SUDOKU_MAX;
-        for &box_start in [0, 3, 6, 27, 30, 33, 54, 57, 60].iter() {
-            let row_start = box_start / 9 * 9;
-            let column_start = box_start % 9;
-            let box_old = [
-                sudoku[box_start],
-                sudoku[box_start + 1],
-                sudoku[box_start + 2],
-                sudoku[box_start + 9],
-                sudoku[box_start + 10],
-                sudoku[box_start + 11],
-                sudoku[box_start + 18],
-                sudoku[box_start + 19],
-                sudoku[box_start + 20],
-            ];
-            let row1 = box_old[0] | box_old[1] | box_old[2];
-            let row2 = box_old[3] | box_old[4] | box_old[5];
-            let row3 = box_old[6] | box_old[7] | box_old[8];
-            let only_row1 = !row1 | row2 | row3;
-            let only_row2 = row1 | !row2 | row3;
-            let only_row3 = row1 | row2 | !row3;
-            let rows = [only_row1, only_row2, only_row3];
-            for (row_number, row) in rows.iter().enumerate() {
-                for i in 0..9 {
-                    sudoku[row_start + row_number * 9 + i] &= row;
-                }
-            }
-            let column1 = box_old[0] | box_old[3] | box_old[6];
-            let column2 = box_old[1] | box_old[4] | box_old[7];
-            let column3 = box_old[2] | box_old[5] | box_old[8];
-            let only_column1 = !column1 | column2 | column3;
-            let only_column2 = column1 | !column2 | column3;
-            let only_column3 = column1 | column2 | !column3;
-            let columns = [only_column1, only_column2, only_column3];
-            for (column_number, column) in columns.iter().enumerate() {
-                for i in 0..9 {
-                    sudoku[column_start + column_number + i * 9] &= column;
-                }
-            }
-            sudoku[box_start] = box_old[0];
-            sudoku[box_start + 1] = box_old[1];
-            sudoku[box_start + 2] = box_old[2];
-            sudoku[box_start + 9] = box_old[3];
-            sudoku[box_start + 10] = box_old[4];
-            sudoku[box_start + 11] = box_old[5];
-            sudoku[box_start + 18] = box_old[6];
-            sudoku[box_start + 19] = box_old[7];
-            sudoku[box_start + 20] = box_old[8];
-            sudoku_check &= column1 | column2 | column3;
-        }
-        self.cells = sudoku;
-        sudoku_check == SUDOKU_MAX
-    }
-
-    fn box_line_reduction(&mut self) -> bool {
+    fn scan_floor(&mut self) -> bool {
         let mut sudoku = self.cells;
         let mut sudoku_check = SUDOKU_MAX;
         for floor_number in (0..3).map(|x| x * 27) {
@@ -266,6 +205,83 @@ impl Sudoku {
         self.cells = sudoku;
         sudoku_check == SUDOKU_MAX
     }
+    fn scan_tower(&mut self) -> bool {
+        let mut sudoku = self.cells;
+        let mut sudoku_check = SUDOKU_MAX;
+        for tower_number in (0..3).map(|x| x * 3) {
+            let mut intersection = [0_u16; 9]; // Intersection
+            for column in 0..3 {
+                for layer in 0..3 {
+                    intersection[column * 3 + layer] = sudoku[tower_number + layer * 27 + column]
+                        | sudoku[tower_number + layer * 27 + column + 9]
+                        | sudoku[tower_number + layer * 27 + column + 18]
+                }
+            }
+            // Columns
+            let only_col_1_1 = intersection[0] & !(intersection[1] | intersection[2]);
+            let only_col_1_2 = intersection[1] & !(intersection[0] | intersection[2]);
+            let only_col_1_3 = intersection[2] & !(intersection[0] | intersection[1]);
+
+            let only_col_2_1 = intersection[3] & !(intersection[4] | intersection[5]);
+            let only_col_2_2 = intersection[4] & !(intersection[3] | intersection[5]);
+            let only_col_2_3 = intersection[5] & !(intersection[3] | intersection[4]);
+
+            let only_col_3_1 = intersection[6] & !(intersection[7] | intersection[8]);
+            let only_col_3_2 = intersection[7] & !(intersection[6] | intersection[8]);
+            let only_col_3_3 = intersection[8] & !(intersection[6] | intersection[7]);
+
+            let resultant_mask = [
+                !(only_col_1_2 | only_col_1_3 | only_col_2_1 | only_col_3_1),
+                !(only_col_1_1 | only_col_1_3 | only_col_2_2 | only_col_3_2),
+                !(only_col_1_1 | only_col_1_2 | only_col_2_3 | only_col_3_3),
+                !(only_col_1_1 | only_col_2_2 | only_col_2_3 | only_col_3_1),
+                !(only_col_1_2 | only_col_2_1 | only_col_2_3 | only_col_3_2),
+                !(only_col_1_3 | only_col_2_1 | only_col_2_2 | only_col_3_3),
+                !(only_col_1_1 | only_col_2_1 | only_col_3_2 | only_col_3_3),
+                !(only_col_1_2 | only_col_2_2 | only_col_3_1 | only_col_3_3),
+                !(only_col_1_3 | only_col_2_3 | only_col_3_1 | only_col_3_2),
+            ];
+
+            let mut temp_total = 0;
+
+            for column_number in 0..3 {
+                for layer in 0..3 {
+                    let i = column_number * 3 + layer;
+                    let column = resultant_mask[i];
+
+                    temp_total |= column;
+                    sudoku[tower_number + layer * 27 + column_number] &= column;
+                    sudoku[tower_number + layer * 27 + column_number + 9] &= column;
+                    sudoku[tower_number + layer * 27 + column_number + 18] &= column;
+                }
+            }
+            sudoku_check &= temp_total;
+            let only_columns = [
+                only_col_1_1,
+                only_col_1_2,
+                only_col_1_3,
+                only_col_2_1,
+                only_col_2_2,
+                only_col_2_3,
+                only_col_3_1,
+                only_col_3_2,
+                only_col_3_3,
+            ];
+            for column_number in 0..3 {
+                for layer in 0..3 {
+                    let i = column_number * 3 + layer;
+                    let column = only_columns[i];
+                    if column.count_ones() == 3 {
+                        sudoku[tower_number + layer * 27 + column_number] &= column;
+                        sudoku[tower_number + layer * 27 + column_number + 9] &= column;
+                        sudoku[tower_number + layer * 27 + column_number + 18] &= column;
+                    }
+                }
+            }
+        }
+        self.cells = sudoku;
+        sudoku_check == SUDOKU_MAX
+    }
     /**
     Perform a single iteration solving
     Call hidden_singles for each unsolved cell, and call apply_number for each newly solved cell\
@@ -300,7 +316,7 @@ impl Sudoku {
         }
         debug_assert!(min.1 <= 9);
         if self.solved_squares.count_ones() >= POINTING_PAIRS_CUTOFF
-            || (self.pointing_pairs() && self.box_line_reduction())
+            || (self.scan_floor() && self.scan_tower())
         {
             let mut value = self.cells[min.0];
             while value != 0 {
@@ -419,8 +435,8 @@ impl<T: TryInto<usize> + Copy> From<&[T]> for Sudoku {
             sudoku.cells[i] = 1 << item;
             sudoku.apply_number(i);
         }
-        sudoku.pointing_pairs();
-        sudoku.box_line_reduction();
+        sudoku.scan_floor();
+        sudoku.scan_tower();
         sudoku
     }
 }
@@ -466,8 +482,8 @@ impl From<&str> for Sudoku {
             sudoku.cells[i] = 1 << int;
             sudoku.apply_number(i);
         }
-        sudoku.pointing_pairs();
-        sudoku.box_line_reduction();
+        sudoku.scan_floor();
+        sudoku.scan_tower();
         sudoku
     }
 }
