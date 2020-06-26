@@ -46,7 +46,7 @@ impl SolutionIterator {
     fn new(sudoku: Sudoku) -> Self {
         let mut routes = SudokuBackTrackingVec::with_capacity(10);
         routes.push(sudoku);
-        SolutionIterator {
+        Self {
             routes,
             step_count: 0,
         }
@@ -249,7 +249,7 @@ impl Sudoku {
     Select unsolved cell with least possible values
     For each possible value, clone the sudoku state, set the cell to the value and add to the state list
     */
-    fn handle_route(&mut self, routes: &mut SudokuBackTrackingVec) -> Result<Sudoku, ()> {
+    fn handle_route(&mut self, routes: &mut SudokuBackTrackingVec) -> Result<Self, ()> {
         if self.solved_squares.count_ones() == 81 {
             return Ok(*self);
         }
@@ -351,7 +351,7 @@ impl Sudoku {
     */
     #[inline]
     pub const fn empty() -> Self {
-        Sudoku {
+        Self {
             cells: [SUDOKU_MAX; 81],
             solved_squares: 0,
         }
@@ -379,7 +379,7 @@ impl Sudoku {
 
 impl<T: TryInto<usize> + Copy> From<&[T]> for Sudoku {
     fn from(sudoku_array: &[T]) -> Self {
-        let mut sudoku = Sudoku::empty();
+        let mut sudoku = Self::empty();
         for (i, item) in sudoku_array
             .iter()
             .enumerate()
@@ -428,7 +428,7 @@ impl<T: TryInto<usize> + Copy> From<&Vec<T>> for Sudoku {
 
 impl From<&str> for Sudoku {
     fn from(sudoku_str: &str) -> Self {
-        let mut sudoku = Sudoku::empty();
+        let mut sudoku = Self::empty();
         for (i, int) in sudoku_str
             .chars()
             .enumerate()
