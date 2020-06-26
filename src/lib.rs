@@ -21,7 +21,7 @@ For sudoku17, 41 is best
 For sudoku17 unique, 42 is best
 For empty_n, lower is better, though limited difference between values below 55
 */
-const POINTING_PAIRS_CUTOFF: u32 = 40;
+const SCANNING_CUTOFF: u32 = 40;
 
 /**
 Remove and return the last set bit in a u128
@@ -276,7 +276,7 @@ impl Sudoku {
             }
         }
         debug_assert!(min.1 <= 9);
-        if self.solved_squares.count_ones() >= POINTING_PAIRS_CUTOFF
+        if self.solved_squares.count_ones() >= SCANNING_CUTOFF
             || (self.scan_floor() && self.scan_tower())
         {
             let mut value = self.cells[min.0];
