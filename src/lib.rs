@@ -78,6 +78,36 @@ pub struct Sudoku {
     solved_squares: u128,
 }
 
+fn generate_masks_from_intersections(isec: [u16; 9]) -> ([u16; 9], [u16; 9]) {
+    let only_1_1 = isec[0] & !((isec[1] | isec[2]) & (isec[3] | isec[6]));
+    let only_1_2 = isec[1] & !((isec[0] | isec[2]) & (isec[4] | isec[7]));
+    let only_1_3 = isec[2] & !((isec[0] | isec[1]) & (isec[5] | isec[8]));
+
+    let only_2_1 = isec[3] & !((isec[4] | isec[5]) & (isec[0] | isec[6]));
+    let only_2_2 = isec[4] & !((isec[3] | isec[5]) & (isec[1] | isec[7]));
+    let only_2_3 = isec[5] & !((isec[3] | isec[4]) & (isec[2] | isec[8]));
+
+    let only_3_1 = isec[6] & !((isec[7] | isec[8]) & (isec[0] | isec[3]));
+    let only_3_2 = isec[7] & !((isec[6] | isec[8]) & (isec[1] | isec[4]));
+    let only_3_3 = isec[8] & !((isec[6] | isec[7]) & (isec[2] | isec[5]));
+
+    let resultant_mask = [
+        !(only_1_2 | only_1_3 | only_2_1 | only_3_1),
+        !(only_1_1 | only_1_3 | only_2_2 | only_3_2),
+        !(only_1_1 | only_1_2 | only_2_3 | only_3_3),
+        !(only_1_1 | only_2_2 | only_2_3 | only_3_1),
+        !(only_1_2 | only_2_1 | only_2_3 | only_3_2),
+        !(only_1_3 | only_2_1 | only_2_2 | only_3_3),
+        !(only_1_1 | only_2_1 | only_3_2 | only_3_3),
+        !(only_1_2 | only_2_2 | only_3_1 | only_3_3),
+        !(only_1_3 | only_2_3 | only_3_1 | only_3_2),
+    ];
+    let only = [
+        only_1_1, only_1_2, only_1_3, only_2_1, only_2_2, only_2_3, only_3_1, only_3_2, only_3_3,
+    ];
+    (resultant_mask, only)
+}
+
 impl Sudoku {
     /**
     Remove the value at the chosen square from the set of options of each cell in the sudoku
@@ -142,36 +172,13 @@ impl Sudoku {
         let mut sudoku = self.cells;
         let mut sudoku_check = SUDOKU_MAX;
         for floor_number in (0..3).map(|x| x * 27) {
-            let mut intersection = [0_u16; 9]; // Intersection
+            let mut intersections = [0_u16; 9]; // Intersection
             for i in 0..9 {
-                intersection[i] = sudoku[floor_number + i * 3]
+                intersections[i] = sudoku[floor_number + i * 3]
                     | sudoku[floor_number + i * 3 + 1]
                     | sudoku[floor_number + i * 3 + 2];
             }
-            // Rows
-            let only_row_1_1 = intersection[0] & !(intersection[1] | intersection[2]);
-            let only_row_1_2 = intersection[1] & !(intersection[0] | intersection[2]);
-            let only_row_1_3 = intersection[2] & !(intersection[0] | intersection[1]);
-
-            let only_row_2_1 = intersection[3] & !(intersection[4] | intersection[5]);
-            let only_row_2_2 = intersection[4] & !(intersection[3] | intersection[5]);
-            let only_row_2_3 = intersection[5] & !(intersection[3] | intersection[4]);
-
-            let only_row_3_1 = intersection[6] & !(intersection[7] | intersection[8]);
-            let only_row_3_2 = intersection[7] & !(intersection[6] | intersection[8]);
-            let only_row_3_3 = intersection[8] & !(intersection[6] | intersection[7]);
-
-            let resultant_mask = [
-                !(only_row_1_2 | only_row_1_3 | only_row_2_1 | only_row_3_1),
-                !(only_row_1_1 | only_row_1_3 | only_row_2_2 | only_row_3_2),
-                !(only_row_1_1 | only_row_1_2 | only_row_2_3 | only_row_3_3),
-                !(only_row_1_1 | only_row_2_2 | only_row_2_3 | only_row_3_1),
-                !(only_row_1_2 | only_row_2_1 | only_row_2_3 | only_row_3_2),
-                !(only_row_1_3 | only_row_2_1 | only_row_2_2 | only_row_3_3),
-                !(only_row_1_1 | only_row_2_1 | only_row_3_2 | only_row_3_3),
-                !(only_row_1_2 | only_row_2_2 | only_row_3_1 | only_row_3_3),
-                !(only_row_1_3 | only_row_2_3 | only_row_3_1 | only_row_3_2),
-            ];
+            let (resultant_mask, only) = generate_masks_from_intersections(intersections);
 
             let mut temp_total = 0;
             for (i, row) in resultant_mask.iter().enumerate() {
@@ -182,19 +189,7 @@ impl Sudoku {
             }
             sudoku_check &= temp_total;
 
-            let only_rows = [
-                only_row_1_1,
-                only_row_1_2,
-                only_row_1_3,
-                only_row_2_1,
-                only_row_2_2,
-                only_row_2_3,
-                only_row_3_1,
-                only_row_3_2,
-                only_row_3_3,
-            ];
-
-            for (i, row) in only_rows.iter().enumerate() {
+            for (i, row) in only.iter().enumerate() {
                 if row.count_ones() == 3 {
                     sudoku[floor_number + i * 3] &= row;
                     sudoku[floor_number + i * 3 + 1] &= row;
@@ -209,38 +204,15 @@ impl Sudoku {
         let mut sudoku = self.cells;
         let mut sudoku_check = SUDOKU_MAX;
         for tower_number in (0..3).map(|x| x * 3) {
-            let mut intersection = [0_u16; 9]; // Intersection
+            let mut intersections = [0_u16; 9]; // Intersection
             for column in 0..3 {
                 for layer in 0..3 {
-                    intersection[column * 3 + layer] = sudoku[tower_number + layer * 27 + column]
+                    intersections[column * 3 + layer] = sudoku[tower_number + layer * 27 + column]
                         | sudoku[tower_number + layer * 27 + column + 9]
                         | sudoku[tower_number + layer * 27 + column + 18]
                 }
             }
-            // Columns
-            let only_col_1_1 = intersection[0] & !(intersection[1] | intersection[2]);
-            let only_col_1_2 = intersection[1] & !(intersection[0] | intersection[2]);
-            let only_col_1_3 = intersection[2] & !(intersection[0] | intersection[1]);
-
-            let only_col_2_1 = intersection[3] & !(intersection[4] | intersection[5]);
-            let only_col_2_2 = intersection[4] & !(intersection[3] | intersection[5]);
-            let only_col_2_3 = intersection[5] & !(intersection[3] | intersection[4]);
-
-            let only_col_3_1 = intersection[6] & !(intersection[7] | intersection[8]);
-            let only_col_3_2 = intersection[7] & !(intersection[6] | intersection[8]);
-            let only_col_3_3 = intersection[8] & !(intersection[6] | intersection[7]);
-
-            let resultant_mask = [
-                !(only_col_1_2 | only_col_1_3 | only_col_2_1 | only_col_3_1),
-                !(only_col_1_1 | only_col_1_3 | only_col_2_2 | only_col_3_2),
-                !(only_col_1_1 | only_col_1_2 | only_col_2_3 | only_col_3_3),
-                !(only_col_1_1 | only_col_2_2 | only_col_2_3 | only_col_3_1),
-                !(only_col_1_2 | only_col_2_1 | only_col_2_3 | only_col_3_2),
-                !(only_col_1_3 | only_col_2_1 | only_col_2_2 | only_col_3_3),
-                !(only_col_1_1 | only_col_2_1 | only_col_3_2 | only_col_3_3),
-                !(only_col_1_2 | only_col_2_2 | only_col_3_1 | only_col_3_3),
-                !(only_col_1_3 | only_col_2_3 | only_col_3_1 | only_col_3_2),
-            ];
+            let (resultant_mask, only) = generate_masks_from_intersections(intersections);
 
             let mut temp_total = 0;
 
@@ -256,21 +228,10 @@ impl Sudoku {
                 }
             }
             sudoku_check &= temp_total;
-            let only_columns = [
-                only_col_1_1,
-                only_col_1_2,
-                only_col_1_3,
-                only_col_2_1,
-                only_col_2_2,
-                only_col_2_3,
-                only_col_3_1,
-                only_col_3_2,
-                only_col_3_3,
-            ];
             for column_number in 0..3 {
                 for layer in 0..3 {
                     let i = column_number * 3 + layer;
-                    let column = only_columns[i];
+                    let column = only[i];
                     if column.count_ones() == 3 {
                         sudoku[tower_number + layer * 27 + column_number] &= column;
                         sudoku[tower_number + layer * 27 + column_number + 9] &= column;
