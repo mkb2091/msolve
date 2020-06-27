@@ -45,7 +45,7 @@ impl SolutionIterator {
     #[inline]
     fn new(sudoku: Sudoku) -> Self {
         let mut routes = SudokuBackTrackingVec::with_capacity(10);
-        if sudoku.cells.iter().all(|x|*x != 0) {
+        if sudoku.cells.iter().all(|x| *x != 0) {
             routes.push(sudoku);
         }
         Self {
