@@ -12,8 +12,9 @@ fn criterion_benchmark(c: &mut Criterion) {
     let mut top2365 = Vec::<String>::new();
     let mut line = String::with_capacity(81);
     while buf.read_line(&mut line).unwrap() > 0 {
-        if sudoku::Sudoku::from_str_line(&line).is_ok() {
-            top2365.push(line.clone());
+        if let Ok(mut sudoku) = sudoku::Sudoku::from_str_line(&line) {
+            sudoku.shuffle();
+            top2365.push((&sudoku.to_str_line()).to_string());
         }
         line.clear();
     }
@@ -23,8 +24,11 @@ fn criterion_benchmark(c: &mut Criterion) {
     let mut sudoku17 = Vec::<String>::new();
     let mut line = String::with_capacity(81);
     while buf.read_line(&mut line).unwrap() > 0 {
-        if sudoku::Sudoku::from_str_line(&line).is_ok() {
-            sudoku17.push(line.clone());
+        if let Ok(mut sudoku) = sudoku::Sudoku::from_str_line(&line) {
+            for _ in 0..50 {
+                sudoku.shuffle();
+                sudoku17.push((&sudoku.to_str_line()).to_string());
+            }
         }
         line.clear();
     }
@@ -35,8 +39,9 @@ fn criterion_benchmark(c: &mut Criterion) {
     let mut kaggle = Vec::<String>::new();
     let mut line = String::with_capacity(81);
     while buf.read_line(&mut line).unwrap() > 0 {
-        if sudoku::Sudoku::from_str_line(&line).is_ok() {
-            kaggle.push(line.clone());
+        if let Ok(mut sudoku) = sudoku::Sudoku::from_str_line(&line) {
+            sudoku.shuffle();
+            kaggle.push((&sudoku.to_str_line()).to_string());
         }
         line.clear();
     }
@@ -47,8 +52,9 @@ fn criterion_benchmark(c: &mut Criterion) {
     let mut gen_puzzles = Vec::<String>::new();
     let mut line = String::with_capacity(81);
     while buf.read_line(&mut line).unwrap() > 0 {
-        if sudoku::Sudoku::from_str_line(&line).is_ok() {
-            gen_puzzles.push(line.clone());
+        if let Ok(mut sudoku) = sudoku::Sudoku::from_str_line(&line) {
+            sudoku.shuffle();
+            gen_puzzles.push((&sudoku.to_str_line()).to_string());
         }
         line.clear();
     }
