@@ -13,8 +13,10 @@ fn criterion_benchmark(c: &mut Criterion) {
     let mut line = String::with_capacity(81);
     while buf.read_line(&mut line).unwrap() > 0 {
         if let Ok(mut sudoku) = sudoku::Sudoku::from_str_line(&line) {
-            sudoku.shuffle();
-            top2365.push((&sudoku.to_str_line()).to_string());
+            for _ in 0..50 {
+                sudoku.shuffle();
+                top2365.push((&sudoku.to_str_line()).to_string());
+            }
         }
         line.clear();
     }
@@ -25,10 +27,8 @@ fn criterion_benchmark(c: &mut Criterion) {
     let mut line = String::with_capacity(81);
     while buf.read_line(&mut line).unwrap() > 0 {
         if let Ok(mut sudoku) = sudoku::Sudoku::from_str_line(&line) {
-            for _ in 0..50 {
-                sudoku.shuffle();
-                sudoku17.push((&sudoku.to_str_line()).to_string());
-            }
+            sudoku.shuffle();
+            sudoku17.push((&sudoku.to_str_line()).to_string());
         }
         line.clear();
     }
