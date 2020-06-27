@@ -6,6 +6,7 @@ extern crate quickcheck_macros;
 
 #[cfg(test)]
 mod tests {
+    const MAX_SOLVE_COUNT: usize = 100;
     #[test]
     fn top2365() {
         use std::io::BufRead;
@@ -24,6 +25,10 @@ mod tests {
                     );
                 } else {
                     assert!(msolve::Sudoku::from(&line).solve_unique().is_none());
+                    assert_eq!(
+                        sudoku.count_at_most(MAX_SOLVE_COUNT),
+                        msolve::Sudoku::from(&line).count_solutions(MAX_SOLVE_COUNT)
+                    );
                 }
             }
             line.clear();
@@ -47,6 +52,10 @@ mod tests {
                     );
                 } else {
                     assert!(msolve::Sudoku::from(&line).solve_unique().is_none());
+                    assert_eq!(
+                        sudoku.count_at_most(MAX_SOLVE_COUNT),
+                        msolve::Sudoku::from(&line).count_solutions(MAX_SOLVE_COUNT)
+                    );
                 }
             }
             line.clear();
@@ -70,6 +79,10 @@ mod tests {
                     );
                 } else {
                     assert!(msolve::Sudoku::from(&line).solve_unique().is_none());
+                    assert_eq!(
+                        sudoku.count_at_most(MAX_SOLVE_COUNT),
+                        msolve::Sudoku::from(&line).count_solutions(MAX_SOLVE_COUNT)
+                    );
                 }
             }
             line.clear();
@@ -94,6 +107,10 @@ mod tests {
                     );
                 } else {
                     assert!(msolve::Sudoku::from(&line).solve_unique().is_none());
+                    assert_eq!(
+                        sudoku.count_at_most(100),
+                        msolve::Sudoku::from(&line).count_solutions(100)
+                    );
                 }
             }
             line.clear();
@@ -114,7 +131,10 @@ mod tests {
         assert!(msolve::Sudoku::from(&sudoku).has_single_solution());
         assert_eq!(
             &solution[..],
-            &msolve::Sudoku::from(&sudoku).solve().unwrap().to_array()[..]
+            &msolve::Sudoku::from(&sudoku)
+                .solve_unique()
+                .unwrap()
+                .to_array()[..]
         );
     }
 
@@ -133,7 +153,10 @@ mod tests {
         assert!(msolve::Sudoku::from(&sudoku).has_single_solution());
         assert_eq!(
             &solution[..],
-            &msolve::Sudoku::from(&sudoku).solve().unwrap().to_array()[..]
+            &msolve::Sudoku::from(&sudoku)
+                .solve_unique()
+                .unwrap()
+                .to_array()[..]
         );
     }
     #[test]
@@ -151,7 +174,10 @@ mod tests {
         assert!(msolve::Sudoku::from(&sudoku).has_single_solution());
         assert_eq!(
             &solution[..],
-            &msolve::Sudoku::from(&sudoku).solve().unwrap().to_array()[..]
+            &msolve::Sudoku::from(&sudoku)
+                .solve_unique()
+                .unwrap()
+                .to_array()[..]
         );
     }
     #[test]
@@ -170,7 +196,10 @@ mod tests {
         assert!(msolve::Sudoku::from(&sudoku).has_single_solution());
         assert_eq!(
             &solution[..],
-            &msolve::Sudoku::from(&sudoku).solve().unwrap().to_array()[..]
+            &msolve::Sudoku::from(&sudoku)
+                .solve_unique()
+                .unwrap()
+                .to_array()[..]
         );
     }
     #[test]
