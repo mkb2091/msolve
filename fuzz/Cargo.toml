@@ -10,7 +10,10 @@ edition = "2018"
 cargo-fuzz = true
 
 [dependencies]
-libfuzzer-sys = "0.3"
+libfuzzer-sys = {version = "0.3", features = ["arbitrary-derive"]}
+sudoku = { version = "0.7", features = ["unchecked_indexing"]}
+arbitrary = {version = "0.4", features = ["derive"]}
+
 
 [dependencies.msolve]
 path = ".."
