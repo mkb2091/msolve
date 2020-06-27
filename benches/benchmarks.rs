@@ -41,9 +41,22 @@ fn criterion_benchmark(c: &mut Criterion) {
         line.clear();
     }
 
+    // gen_puzzles is from http://www.enjoysudoku.com/gen_puzzles.zip
+    let file_in = std::fs::File::open("bench_sudokus/gen_puzzles").expect("Failed to open file");
+    let mut buf = std::io::BufReader::new(file_in);
+    let mut gen_puzzles = Vec::<String>::new();
+    let mut line = String::with_capacity(81);
+    while buf.read_line(&mut line).unwrap() > 0 {
+        if sudoku::Sudoku::from_str_line(&line).is_ok() {
+            gen_puzzles.push(line.clone());
+        }
+        line.clear();
+    }
+
     let mut top2365_iter = top2365.iter().cycle();
     let mut sudoku17_iter = sudoku17.iter().cycle();
-    let mut kaggle_iter = sudoku17.iter().cycle();
+    let mut kaggle_iter = kaggle.iter().cycle();
+    let mut gen_puzzles_iter = gen_puzzles.iter().cycle();
 
     let worlds_hardest_sudoku: [u8; 81] = criterion::black_box([
         8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 6, 0, 0, 0, 0, 0, 0, 7, 0, 0, 9, 0, 2, 0, 0, 0, 5, 0,
@@ -70,6 +83,8 @@ fn criterion_benchmark(c: &mut Criterion) {
         2, 3, 7, 8, 9, 6, 3, 6, 9, 8, 4, 5, 7, 2, 1, 2, 8, 7, 1, 6, 9, 5, 3, 4, 5, 2, 1, 9, 7, 4,
         3, 6, 8, 4, 3, 8, 5, 2, 6, 9, 1, 7, 7, 9, 6, 3, 1, 8, 4, 5, 2,
     ]);
+    let worst_case =
+        "000000000200200006243000005624300000000000000000000000000000000000000000000000000";
 
     c.bench_function("top2365_msolve", |b| {
         b.iter(|| {
@@ -138,6 +153,7 @@ fn criterion_benchmark(c: &mut Criterion) {
             );
         })
     });
+
     c.bench_function("kaggle_msolve", |b| {
         b.iter(|| {
             criterion::black_box(&msolve::Sudoku::from(kaggle_iter.next().unwrap()).solve());
@@ -164,6 +180,39 @@ fn criterion_benchmark(c: &mut Criterion) {
         b.iter(|| {
             criterion::black_box(
                 &sudoku::Sudoku::from_str_line(kaggle_iter.next().unwrap())
+                    .unwrap()
+                    .solve_unique(),
+            );
+        })
+    });
+    c.bench_function("gen_puzzles_msolve", |b| {
+        b.iter(|| {
+            criterion::black_box(&msolve::Sudoku::from(gen_puzzles_iter.next().unwrap()).solve());
+        })
+    });
+
+    c.bench_function("gen_puzzles_sudoku", |b| {
+        b.iter(|| {
+            criterion::black_box(
+                &sudoku::Sudoku::from_str_line(gen_puzzles_iter.next().unwrap())
+                    .unwrap()
+                    .solve_one(),
+            );
+        })
+    });
+
+    c.bench_function("gen_puzzles_msolve_unique", |b| {
+        b.iter(|| {
+            criterion::black_box(
+                &msolve::Sudoku::from(gen_puzzles_iter.next().unwrap()).solve_unique(),
+            );
+        })
+    });
+
+    c.bench_function("gen_puzzles_sudoku_unique", |b| {
+        b.iter(|| {
+            criterion::black_box(
+                &sudoku::Sudoku::from_str_line(gen_puzzles_iter.next().unwrap())
                     .unwrap()
                     .solve_unique(),
             );
@@ -202,6 +251,14 @@ fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("first 1000 solutions to empty_sudoku", |b| {
         b.iter(|| {
             criterion::black_box(&msolve::Sudoku::empty().count_solutions(1000));
+        })
+    });
+
+    let mut group = c.benchmark_group("Worst Case");
+    group.sample_size(10);
+    group.bench_function("worst_case", |b| {
+        b.iter(|| {
+            criterion::black_box(&msolve::Sudoku::from(worst_case).solve());
         })
     });
 }
