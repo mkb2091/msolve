@@ -19,6 +19,7 @@ criterion = "0.3"
 quickcheck = {version = "0.9", default-features = false}
 quickcheck_macros = "0.9"
 sudoku = { version = "0.7", features = ["unchecked_indexing"]}
+rand = "0.7"
 
 [features]
 default = ["smallvec"]

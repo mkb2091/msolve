@@ -89,6 +89,34 @@ mod tests {
         }
     }
     #[test]
+    fn forum_hardest_1905_list() {
+        use std::io::BufRead;
+        let file_in =
+            std::fs::File::open("bench_sudokus/forum_hardest_1905").expect("Failed to open file");
+        let mut buf = std::io::BufReader::new(file_in);
+        let mut line = String::with_capacity(81);
+        while buf.read_line(&mut line).unwrap() > 0 {
+            if let Ok(sudoku) = sudoku::Sudoku::from_str_line(&line) {
+                if let Some(solution) = sudoku.solve_unique() {
+                    assert_eq!(
+                        &solution.to_bytes()[..],
+                        &msolve::Sudoku::from(&line)
+                            .solve_unique()
+                            .unwrap()
+                            .to_array()[..]
+                    );
+                } else {
+                    assert!(msolve::Sudoku::from(&line).solve_unique().is_none());
+                    assert_eq!(
+                        sudoku.count_at_most(MAX_SOLVE_COUNT),
+                        msolve::Sudoku::from(&line).count_solutions(MAX_SOLVE_COUNT)
+                    );
+                }
+            }
+            line.clear();
+        }
+    }
+    #[test]
     fn gen_puzzles_list() {
         use std::io::BufRead;
         let file_in =

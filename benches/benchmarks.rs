@@ -1,6 +1,9 @@
 #[macro_use]
 extern crate criterion;
+extern crate rand;
 extern crate sudoku;
+
+use rand::prelude::*;
 
 use criterion::Criterion;
 use std::io::BufRead;
@@ -59,10 +62,31 @@ fn criterion_benchmark(c: &mut Criterion) {
         line.clear();
     }
 
+    // forum_hardest_1905 is from http://forum.enjoysudoku.com/the-hardest-sudokus-new-thread-t6539-600.html#p277835
+    let file_in =
+        std::fs::File::open("bench_sudokus/forum_hardest_1905").expect("Failed to open file");
+    let mut buf = std::io::BufReader::new(file_in);
+    let mut forum_hardest_1905 = Vec::<String>::new();
+    let mut line = String::with_capacity(81);
+    while buf.read_line(&mut line).unwrap() > 0 {
+        if let Ok(mut sudoku) = sudoku::Sudoku::from_str_line(&line) {
+            sudoku.shuffle();
+            forum_hardest_1905.push((&sudoku.to_str_line()).to_string());
+        }
+        line.clear();
+    }
+
+    top2365.shuffle(&mut rand::thread_rng());
+    sudoku17.shuffle(&mut rand::thread_rng());
+    kaggle.shuffle(&mut rand::thread_rng());
+    gen_puzzles.shuffle(&mut rand::thread_rng());
+    forum_hardest_1905.shuffle(&mut rand::thread_rng());
+
     let mut top2365_iter = top2365.iter().cycle();
     let mut sudoku17_iter = sudoku17.iter().cycle();
     let mut kaggle_iter = kaggle.iter().cycle();
     let mut gen_puzzles_iter = gen_puzzles.iter().cycle();
+    let mut forum_hardest_1905_iter = forum_hardest_1905.iter().cycle();
 
     let worlds_hardest_sudoku: [u8; 81] = criterion::black_box([
         8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 6, 0, 0, 0, 0, 0, 0, 7, 0, 0, 9, 0, 2, 0, 0, 0, 5, 0,
@@ -191,6 +215,43 @@ fn criterion_benchmark(c: &mut Criterion) {
             );
         })
     });
+
+    c.bench_function("forum_hardest_1905_msolve", |b| {
+        b.iter(|| {
+            criterion::black_box(
+                &msolve::Sudoku::from(forum_hardest_1905_iter.next().unwrap()).solve(),
+            );
+        })
+    });
+
+    c.bench_function("forum_hardest_1905_sudoku", |b| {
+        b.iter(|| {
+            criterion::black_box(
+                &sudoku::Sudoku::from_str_line(forum_hardest_1905_iter.next().unwrap())
+                    .unwrap()
+                    .solve_one(),
+            );
+        })
+    });
+
+    c.bench_function("forum_hardest_1905_msolve_unique", |b| {
+        b.iter(|| {
+            criterion::black_box(
+                &msolve::Sudoku::from(forum_hardest_1905_iter.next().unwrap()).solve_unique(),
+            );
+        })
+    });
+
+    c.bench_function("forum_hardest_1905_sudoku_unique", |b| {
+        b.iter(|| {
+            criterion::black_box(
+                &sudoku::Sudoku::from_str_line(forum_hardest_1905_iter.next().unwrap())
+                    .unwrap()
+                    .solve_unique(),
+            );
+        })
+    });
+
     c.bench_function("gen_puzzles_msolve", |b| {
         b.iter(|| {
             criterion::black_box(&msolve::Sudoku::from(gen_puzzles_iter.next().unwrap()).solve());
