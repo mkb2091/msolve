@@ -170,7 +170,7 @@ impl Sudoku {
         }
     }
 
-    fn scan_floor(&mut self) -> bool {
+    fn scan(&mut self) -> bool {
         let mut sudoku = self.cells;
         let mut sudoku_check = SUDOKU_MAX;
         for floor_number in (0..3).map(|x| x * 27) {
@@ -199,12 +199,9 @@ impl Sudoku {
                 }
             }
         }
-        self.cells = sudoku;
-        sudoku_check == SUDOKU_MAX
-    }
-    fn scan_tower(&mut self) -> bool {
-        let mut sudoku = self.cells;
-        let mut sudoku_check = SUDOKU_MAX;
+        if sudoku_check != SUDOKU_MAX {
+            return false;
+        }
         for tower_number in (0..3).map(|x| x * 3) {
             let mut intersections = [0_u16; 9]; // Intersection
             for column in 0..3 {
@@ -278,9 +275,7 @@ impl Sudoku {
             }
         }
         debug_assert!(min.1 <= 9);
-        if self.solved_squares.count_ones() >= SCANNING_CUTOFF
-            || (self.scan_floor() && self.scan_tower())
-        {
+        if self.solved_squares.count_ones() >= SCANNING_CUTOFF || (self.scan()) {
             let mut value = self.cells[min.0];
             while value != 0 {
                 let i = value.trailing_zeros();
@@ -398,8 +393,7 @@ impl<T: TryInto<usize> + Copy> From<&[T]> for Sudoku {
             sudoku.cells[i] = 1 << item;
             sudoku.apply_number(i);
         }
-        sudoku.scan_floor();
-        sudoku.scan_tower();
+        sudoku.scan();
         sudoku
     }
 }
@@ -445,8 +439,7 @@ impl From<&str> for Sudoku {
             sudoku.cells[i] = 1 << int;
             sudoku.apply_number(i);
         }
-        sudoku.scan_floor();
-        sudoku.scan_tower();
+        sudoku.scan();
         sudoku
     }
 }
