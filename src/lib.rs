@@ -183,21 +183,14 @@ impl Sudoku {
             let (resultant_mask, only) = generate_masks_from_intersections(intersections);
 
             let mut temp_total = 0;
-            for (i, row) in resultant_mask.iter().enumerate() {
+            for (i, (row, only_row)) in resultant_mask.iter().zip(only.iter()).enumerate() {
                 temp_total |= row;
+                let row = row & [SUDOKU_MAX, *only_row][(only_row.count_ones() == 3) as usize];
                 sudoku[floor_number + i * 3] &= row;
                 sudoku[floor_number + i * 3 + 1] &= row;
                 sudoku[floor_number + i * 3 + 2] &= row;
             }
             sudoku_check &= temp_total;
-
-            for (i, row) in only.iter().enumerate() {
-                if row.count_ones() == 3 {
-                    sudoku[floor_number + i * 3] &= row;
-                    sudoku[floor_number + i * 3 + 1] &= row;
-                    sudoku[floor_number + i * 3 + 2] &= row;
-                }
-            }
         }
         if sudoku_check != SUDOKU_MAX {
             return false;
@@ -219,25 +212,16 @@ impl Sudoku {
                 for layer in 0..3 {
                     let i = column_number * 3 + layer;
                     let column = resultant_mask[i];
-
+                    let only_column = only[i];
                     temp_total |= column;
+                    let column = column
+                        & [SUDOKU_MAX, only_column][(only_column.count_ones() == 3) as usize];
                     sudoku[tower_number + layer * 27 + column_number] &= column;
                     sudoku[tower_number + layer * 27 + column_number + 9] &= column;
                     sudoku[tower_number + layer * 27 + column_number + 18] &= column;
                 }
             }
             sudoku_check &= temp_total;
-            for column_number in 0..3 {
-                for layer in 0..3 {
-                    let i = column_number * 3 + layer;
-                    let column = only[i];
-                    if column.count_ones() == 3 {
-                        sudoku[tower_number + layer * 27 + column_number] &= column;
-                        sudoku[tower_number + layer * 27 + column_number + 9] &= column;
-                        sudoku[tower_number + layer * 27 + column_number + 18] &= column;
-                    }
-                }
-            }
         }
         self.cells = sudoku;
         sudoku_check == SUDOKU_MAX
