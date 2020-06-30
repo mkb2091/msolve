@@ -121,7 +121,7 @@ impl Sudoku {
             unsafe { std::hint::unreachable_unchecked() }
         }
         let not_value = !self.cells[square];
-        for i in CELLS_TO_CHANGE[square].iter() {
+        for i in &CELLS_TO_CHANGE[square] {
             self.cells[*i as usize] &= not_value;
         }
 
