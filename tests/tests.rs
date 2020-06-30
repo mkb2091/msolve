@@ -145,6 +145,34 @@ mod tests {
         }
     }
     #[test]
+    fn serg_benchmark_list() {
+        use std::io::BufRead;
+        let file_in =
+            std::fs::File::open("bench_sudokus/serg_benchmark").expect("Failed to open file");
+        let mut buf = std::io::BufReader::new(file_in);
+        let mut line = String::with_capacity(81);
+        while buf.read_line(&mut line).unwrap() > 0 {
+            if let Ok(sudoku) = sudoku::Sudoku::from_str_line(&line) {
+                if let Some(solution) = sudoku.solve_unique() {
+                    assert_eq!(
+                        &solution.to_bytes()[..],
+                        &msolve::Sudoku::from(&line)
+                            .solve_unique()
+                            .unwrap()
+                            .to_array()[..]
+                    );
+                } else {
+                    assert!(msolve::Sudoku::from(&line).solve_unique().is_none());
+                    assert_eq!(
+                        sudoku.count_at_most(100),
+                        msolve::Sudoku::from(&line).count_solutions(100)
+                    );
+                }
+            }
+            line.clear();
+        }
+    }
+    #[test]
     fn worlds_hardest_test() {
         let sudoku: [u8; 81] = [
             8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 6, 0, 0, 0, 0, 0, 0, 7, 0, 0, 9, 0, 2, 0, 0, 0, 5,
