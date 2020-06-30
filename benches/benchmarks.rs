@@ -76,17 +76,32 @@ fn criterion_benchmark(c: &mut Criterion) {
         line.clear();
     }
 
+    // serg_benchmark is http://sites.google.com/site/sergsudoku/benchmark.zip
+    let file_in = std::fs::File::open("bench_sudokus/serg_benchmark").expect("Failed to open file");
+    let mut buf = std::io::BufReader::new(file_in);
+    let mut serg_benchmark = Vec::<String>::new();
+    let mut line = String::with_capacity(81);
+    while buf.read_line(&mut line).unwrap() > 0 {
+        if let Ok(mut sudoku) = sudoku::Sudoku::from_str_line(&line) {
+            sudoku.shuffle();
+            serg_benchmark.push((&sudoku.to_str_line()).to_string());
+        }
+        line.clear();
+    }
+
     top2365.shuffle(&mut rand::thread_rng());
     sudoku17.shuffle(&mut rand::thread_rng());
     kaggle.shuffle(&mut rand::thread_rng());
     gen_puzzles.shuffle(&mut rand::thread_rng());
     forum_hardest_1905.shuffle(&mut rand::thread_rng());
+    serg_benchmark.shuffle(&mut rand::thread_rng());
 
     let mut top2365_iter = top2365.iter().cycle();
     let mut sudoku17_iter = sudoku17.iter().cycle();
     let mut kaggle_iter = kaggle.iter().cycle();
     let mut gen_puzzles_iter = gen_puzzles.iter().cycle();
     let mut forum_hardest_1905_iter = forum_hardest_1905.iter().cycle();
+    let mut serg_benchmark_iter = serg_benchmark.iter().cycle();
 
     let worlds_hardest_sudoku: [u8; 81] = criterion::black_box([
         8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 6, 0, 0, 0, 0, 0, 0, 7, 0, 0, 9, 0, 2, 0, 0, 0, 5, 0,
@@ -280,6 +295,42 @@ fn criterion_benchmark(c: &mut Criterion) {
         b.iter(|| {
             criterion::black_box(
                 &sudoku::Sudoku::from_str_line(gen_puzzles_iter.next().unwrap())
+                    .unwrap()
+                    .solve_unique(),
+            );
+        })
+    });
+
+    c.bench_function("serg_benchmark_msolve", |b| {
+        b.iter(|| {
+            criterion::black_box(
+                &msolve::Sudoku::from(serg_benchmark_iter.next().unwrap()).solve(),
+            );
+        })
+    });
+
+    c.bench_function("serg_benchmark_sudoku", |b| {
+        b.iter(|| {
+            criterion::black_box(
+                &sudoku::Sudoku::from_str_line(serg_benchmark_iter.next().unwrap())
+                    .unwrap()
+                    .solve_one(),
+            );
+        })
+    });
+
+    c.bench_function("serg_benchmark_msolve_unique", |b| {
+        b.iter(|| {
+            criterion::black_box(
+                &msolve::Sudoku::from(serg_benchmark_iter.next().unwrap()).solve_unique(),
+            );
+        })
+    });
+
+    c.bench_function("serg_benchmark_sudoku_unique", |b| {
+        b.iter(|| {
+            criterion::black_box(
+                &sudoku::Sudoku::from_str_line(serg_benchmark_iter.next().unwrap())
                     .unwrap()
                     .solve_unique(),
             );
