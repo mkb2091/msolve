@@ -356,29 +356,35 @@ impl Sudoku {
         iter.next();
         iter.step_count
     }
-}
 
-impl<T: TryInto<usize> + Copy> From<&[T]> for Sudoku {
-    fn from(sudoku_array: &[T]) -> Self {
+    fn import<T: Iterator<Item = (usize, usize)>>(square_iterator: T) -> Self {
         let mut sudoku = Self::empty();
-        for (i, item) in sudoku_array
-            .iter()
-            .enumerate()
-            .take(81)
-            .filter_map(|(i, item)| {
-                (*item)
-                    .try_into()
-                    .ok()
-                    .and_then(|x| x.checked_sub(1))
-                    .filter(|x| *x <= 8)
-                    .map(|x| (i, x))
-            })
-        {
-            sudoku.cells[i] = 1 << item;
+        for (i, int) in square_iterator {
+            debug_assert!(i < 81);
+            sudoku.cells[i] = 1 << int;
             sudoku.apply_number(i);
         }
         sudoku.scan();
         sudoku
+    }
+}
+
+impl<T: TryInto<usize> + Copy> From<&[T]> for Sudoku {
+    fn from(sudoku_array: &[T]) -> Self {
+        Self::import(
+            sudoku_array
+                .iter()
+                .enumerate()
+                .take(81)
+                .filter_map(|(i, item)| {
+                    (*item)
+                        .try_into()
+                        .ok()
+                        .and_then(|x| x.checked_sub(1))
+                        .filter(|x| *x <= 8)
+                        .map(|x| (i, x))
+                }),
+        )
     }
 }
 impl<T: TryInto<usize> + Copy> From<&[T; 81]> for Sudoku {
@@ -408,23 +414,18 @@ impl<T: TryInto<usize> + Copy> From<&Vec<T>> for Sudoku {
 
 impl From<&str> for Sudoku {
     fn from(sudoku_str: &str) -> Self {
-        let mut sudoku = Self::empty();
-        for (i, int) in sudoku_str
-            .chars()
-            .enumerate()
-            .take(81)
-            .filter_map(|(i, character)| {
-                character
-                    .to_digit(10)
-                    .and_then(|int| int.checked_sub(1))
-                    .map(|int| (i, int))
-            })
-        {
-            sudoku.cells[i] = 1 << int;
-            sudoku.apply_number(i);
-        }
-        sudoku.scan();
-        sudoku
+        Self::import(
+            sudoku_str
+                .chars()
+                .enumerate()
+                .take(81)
+                .filter_map(|(i, character)| {
+                    character
+                        .to_digit(10)
+                        .and_then(|int| int.checked_sub(1))
+                        .map(|int| (i, int as usize))
+                }),
+        )
     }
 }
 impl From<String> for Sudoku {
