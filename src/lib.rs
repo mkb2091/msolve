@@ -24,16 +24,6 @@ For empty_n, lower is better, though limited difference between values below 55
 const SCANNING_CUTOFF: u32 = 40;
 
 /**
-Remove and return the last set bit in a u128
-*/
-#[inline(always)]
-fn get_last_digit(x: &mut u128) -> usize {
-    let value = x.trailing_zeros();
-    *x -= 1 << value;
-    value as usize
-}
-
-/**
 Iterator of the solutions of a sudoku
 */
 pub struct SolutionIterator {
@@ -72,12 +62,13 @@ impl Iterator for SolutionIterator {
 }
 
 /**
-Structure that represents a sudoku
+Remove and return the last set bit in a u128
 */
-#[derive(Copy, Clone)]
-pub struct Sudoku {
-    cells: [u16; 81],
-    solved_squares: u128,
+#[inline(always)]
+fn get_last_digit(x: &mut u128) -> usize {
+    let value = x.trailing_zeros();
+    *x -= 1 << value;
+    value as usize
 }
 
 fn generate_masks_from_intersections(isec: [u16; 9]) -> ([u16; 9], [u16; 9]) {
@@ -108,6 +99,15 @@ fn generate_masks_from_intersections(isec: [u16; 9]) -> ([u16; 9], [u16; 9]) {
         only_1_1, only_1_2, only_1_3, only_2_1, only_2_2, only_2_3, only_3_1, only_3_2, only_3_3,
     ];
     (resultant_mask, only)
+}
+
+/**
+Structure that represents a sudoku
+*/
+#[derive(Copy, Clone)]
+pub struct Sudoku {
+    cells: [u16; 81],
+    solved_squares: u128,
 }
 
 impl Sudoku {
