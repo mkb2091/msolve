@@ -357,10 +357,18 @@ impl Sudoku {
         iter.step_count
     }
 
-    fn import<T: Iterator<Item = (usize, usize)>>(square_iterator: T) -> Self {
+    fn import<T: Iterator<Item = Option<u32>>>(square_iterator: T) -> Self {
         let mut sudoku = Self::empty();
-        for (i, int) in square_iterator {
-            debug_assert!(i < 81);
+        for (i, int) in square_iterator
+            .into_iter()
+            .enumerate()
+            .take(81)
+            .filter_map(|(i, item)| {
+                item.filter(|x| *x <= 9)
+                    .and_then(|x| x.checked_sub(1))
+                    .map(|x| (i, x))
+            })
+        {
             sudoku.cells[i] = 1 << int;
             sudoku.apply_number(i);
         }
@@ -369,43 +377,30 @@ impl Sudoku {
     }
 }
 
-impl<T: TryInto<usize> + Copy> From<&[T]> for Sudoku {
+impl<T: TryInto<u32> + Copy> From<&[T]> for Sudoku {
     fn from(sudoku_array: &[T]) -> Self {
-        Self::import(
-            sudoku_array
-                .iter()
-                .enumerate()
-                .take(81)
-                .filter_map(|(i, item)| {
-                    (*item)
-                        .try_into()
-                        .ok()
-                        .and_then(|x| x.checked_sub(1))
-                        .filter(|x| *x <= 8)
-                        .map(|x| (i, x))
-                }),
-        )
+        Self::import(sudoku_array.iter().map(|x| (*x).try_into().ok()))
     }
 }
-impl<T: TryInto<usize> + Copy> From<&[T; 81]> for Sudoku {
+impl<T: TryInto<u32> + Copy> From<&[T; 81]> for Sudoku {
     #[inline]
     fn from(sudoku_array: &[T; 81]) -> Self {
         Self::from(&sudoku_array[..])
     }
 }
-impl<T: TryInto<usize> + Copy> From<[T; 81]> for Sudoku {
+impl<T: TryInto<u32> + Copy> From<[T; 81]> for Sudoku {
     #[inline]
     fn from(sudoku_array: [T; 81]) -> Self {
         Self::from(&sudoku_array[..])
     }
 }
-impl<T: TryInto<usize> + Copy> From<Vec<T>> for Sudoku {
+impl<T: TryInto<u32> + Copy> From<Vec<T>> for Sudoku {
     #[inline]
     fn from(sudoku_array: Vec<T>) -> Self {
         Self::from(&sudoku_array[..])
     }
 }
-impl<T: TryInto<usize> + Copy> From<&Vec<T>> for Sudoku {
+impl<T: TryInto<u32> + Copy> From<&Vec<T>> for Sudoku {
     #[inline]
     fn from(sudoku_array: &Vec<T>) -> Self {
         Self::from(&sudoku_array[..])
@@ -414,18 +409,7 @@ impl<T: TryInto<usize> + Copy> From<&Vec<T>> for Sudoku {
 
 impl From<&str> for Sudoku {
     fn from(sudoku_str: &str) -> Self {
-        Self::import(
-            sudoku_str
-                .chars()
-                .enumerate()
-                .take(81)
-                .filter_map(|(i, character)| {
-                    character
-                        .to_digit(10)
-                        .and_then(|int| int.checked_sub(1))
-                        .map(|int| (i, int as usize))
-                }),
-        )
+        Self::import(sudoku_str.chars().map(|character| character.to_digit(10)))
     }
 }
 impl From<String> for Sudoku {
