@@ -360,7 +360,6 @@ impl Sudoku {
     fn import<T: Iterator<Item = Option<u32>>>(square_iterator: T) -> Self {
         let mut sudoku = Self::empty();
         for (i, int) in square_iterator
-            .into_iter()
             .enumerate()
             .take(81)
             .filter_map(|(i, item)| {
