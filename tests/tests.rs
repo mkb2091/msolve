@@ -184,6 +184,8 @@ mod tests {
             4, 2, 3, 7, 8, 9, 6, 3, 6, 9, 8, 4, 5, 7, 2, 1, 2, 8, 7, 1, 6, 9, 5, 3, 4, 5, 2, 1, 9,
             7, 4, 3, 6, 8, 4, 3, 8, 5, 2, 6, 9, 1, 7, 7, 9, 6, 3, 1, 8, 4, 5, 2,
         ];
+        let solutions_str =
+            "812753649943682175675491283154237896369845721287169534521974368438526917796318452";
         assert!(msolve::Sudoku::from(&sudoku).has_single_solution());
         assert_eq!(
             &solution[..],
@@ -191,6 +193,13 @@ mod tests {
                 .solve_unique()
                 .unwrap()
                 .to_array()[..]
+        );
+        assert_eq!(
+            solutions_str,
+            msolve::Sudoku::from(&sudoku)
+                .solve_unique()
+                .unwrap()
+                .to_string()
         );
     }
 
