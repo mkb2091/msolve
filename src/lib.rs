@@ -248,6 +248,7 @@ impl Sudoku {
             }
             if self.cells[square].is_power_of_two() || self.hidden_singles(square)? {
                 if self.solved_squares.count_ones() == 80 {
+                    self.solved_squares |= 1 << square;
                     return Ok(*self);
                 }
                 self.apply_number(square);
