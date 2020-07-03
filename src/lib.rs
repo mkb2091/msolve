@@ -78,7 +78,7 @@ const fn cells_in_house(square: usize) -> [u8; 20] {
 }
 
 const CELLS_TO_CHANGE: [[u8; 20]; 81] = {
-    let data = [
+    [
         cells_in_house(0),
         cells_in_house(1),
         cells_in_house(2),
@@ -160,15 +160,15 @@ const CELLS_TO_CHANGE: [[u8; 20]; 81] = {
         cells_in_house(78),
         cells_in_house(79),
         cells_in_house(80),
-    ];
+    ]
     //For when while in const is stablized
     /*let mut data = [[0; 20]; 81];
     let mut i = 0;
     while i < 81 {
         data[i] = cells_in_house(i);
         i += 1;
-    }*/
-    data
+    }
+    data*/
 };
 
 /*
