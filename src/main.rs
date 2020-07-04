@@ -133,12 +133,22 @@ Modes:
 
                     let _ = output_handle.write_all(&count.to_string().as_bytes());
                     let _ = output_handle.write_all(b";");
-                    let _ = output_handle.write_all(&sudoku.to_bytes());
-                    let _ = output_handle.write_all(b"\n");
+                    let _ = output_handle.write_all(&buffer.as_bytes());
                 }
                 Mode::Info => {
                     info[sudoku.count_solutions(2)] += 1;
                 }
+            }
+        } else {
+            match mode {
+                Mode::Info => {
+                    info[0] += 1;
+                }
+                Mode::CountSolutions(_) => {
+                    let _ = output_handle.write_all(b"0;");
+                    let _ = output_handle.write_all(&buffer.as_bytes());
+                }
+                _ => {}
             }
         }
         buffer.clear();
