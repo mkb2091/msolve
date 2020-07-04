@@ -339,6 +339,9 @@ impl Sudoku {
                 sudoku[floor_number + i * 3] &= row;
                 sudoku[floor_number + i * 3 + 1] &= row;
                 sudoku[floor_number + i * 3 + 2] &= row;
+
+                sudoku_check *= (only_row.count_ones() > 3) as u16;
+                // If more than 3 digits can only be in intersection, then there is no solution
             }
             sudoku_check &= temp_total;
         }
@@ -369,6 +372,9 @@ impl Sudoku {
                     sudoku[tower_number + layer * 27 + column_number] &= column;
                     sudoku[tower_number + layer * 27 + column_number + 9] &= column;
                     sudoku[tower_number + layer * 27 + column_number + 18] &= column;
+
+                    sudoku_check *= (only_column.count_ones() > 3) as u16;
+                    // If more than 3 digits can only be in intersection, then there is no solution
                 }
             }
             sudoku_check &= temp_total;
