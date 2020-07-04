@@ -30,6 +30,7 @@ harness = false
 
 [profile.release]
 lto = true
+panic = "abort"
 
 [profile.dev]
 opt-level = 3

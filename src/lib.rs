@@ -436,6 +436,20 @@ impl Sudoku {
         }
         array
     }
+
+    pub fn to_bytes(&self) -> [u8; 81] {
+        let mut chars = [b'.'; 81];
+        let mut temp = self.solved_squares;
+        loop {
+            let square = temp.trailing_zeros() as usize;
+            if square >= 81 {
+                break;
+            }
+            temp -= 1 << square;
+            chars[square] = (b"123456789")[self.cells[square].trailing_zeros() as usize];
+        }
+        chars
+    }
     /**
     Returns an iterator over all solutions
     */
@@ -574,18 +588,7 @@ impl From<&String> for Sudoku {
 
 impl std::fmt::Display for Sudoku {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut chars = [b'.'; 81];
-        let mut temp = self.solved_squares;
-        loop {
-            let square = temp.trailing_zeros() as usize;
-            if square >= 81 {
-                break;
-            }
-            temp -= 1 << square;
-            chars[square] = (b"123456789")[self.cells[square].trailing_zeros() as usize];
-        }
-
-        write!(f, "{}", std::str::from_utf8(&chars).unwrap())
+        write!(f, "{}", std::str::from_utf8(&self.to_bytes()).unwrap())
     }
 }
 
