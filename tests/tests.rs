@@ -6,11 +6,10 @@ extern crate quickcheck_macros;
 
 #[cfg(test)]
 mod tests {
-    const MAX_SOLVE_COUNT: usize = 100;
-    #[test]
-    fn top2365() {
+    use std::convert::TryFrom;
+    fn test_file(path: &str) {
         use std::io::BufRead;
-        let file_in = std::fs::File::open("bench_sudokus/top2365").expect("Failed to open file");
+        let file_in = std::fs::File::open(path).expect("Failed to open file");
         let mut buf = std::io::BufReader::new(file_in);
         let mut line = String::with_capacity(81);
         while buf.read_line(&mut line).unwrap() > 0 {
@@ -18,159 +17,49 @@ mod tests {
                 if let Some(solution) = sudoku.solve_unique() {
                     assert_eq!(
                         &solution.to_bytes()[..],
-                        &msolve::Sudoku::from(&line)
+                        &line
+                            .parse::<msolve::Sudoku>()
+                            .unwrap()
                             .solve_unique()
                             .unwrap()
                             .to_array()[..]
                     );
                 } else {
-                    assert!(msolve::Sudoku::from(&line).solve_unique().is_none());
-                    assert_eq!(
-                        sudoku.count_at_most(MAX_SOLVE_COUNT),
-                        msolve::Sudoku::from(&line).count_solutions(MAX_SOLVE_COUNT)
-                    );
+                    if let Ok(msolve_sudoku) = line.parse::<msolve::Sudoku>() {
+                        assert!(msolve_sudoku.solve_unique().is_none());
+                        assert_eq!(
+                            sudoku.count_at_most(100),
+                            msolve_sudoku.count_solutions(100)
+                        );
+                    }
                 }
             }
             line.clear();
         }
+    }
+    #[test]
+    fn top2365() {
+        test_file("bench_sudokus/top2365");
     }
     #[test]
     fn sudoku17_list() {
-        use std::io::BufRead;
-        let file_in = std::fs::File::open("bench_sudokus/sudoku17").expect("Failed to open file");
-        let mut buf = std::io::BufReader::new(file_in);
-        let mut line = String::with_capacity(81);
-        while buf.read_line(&mut line).unwrap() > 0 {
-            if let Ok(sudoku) = sudoku::Sudoku::from_str_line(&line) {
-                if let Some(solution) = sudoku.solve_unique() {
-                    assert_eq!(
-                        &solution.to_bytes()[..],
-                        &msolve::Sudoku::from(&line)
-                            .solve_unique()
-                            .unwrap()
-                            .to_array()[..]
-                    );
-                } else {
-                    assert!(msolve::Sudoku::from(&line).solve_unique().is_none());
-                    assert_eq!(
-                        sudoku.count_at_most(MAX_SOLVE_COUNT),
-                        msolve::Sudoku::from(&line).count_solutions(MAX_SOLVE_COUNT)
-                    );
-                }
-            }
-            line.clear();
-        }
+        test_file("bench_sudokus/sudoku17");
     }
     #[test]
     fn kaggle_list() {
-        use std::io::BufRead;
-        let file_in = std::fs::File::open("bench_sudokus/kaggle.txt").expect("Failed to open file");
-        let mut buf = std::io::BufReader::new(file_in);
-        let mut line = String::with_capacity(81);
-        while buf.read_line(&mut line).unwrap() > 0 {
-            if let Ok(sudoku) = sudoku::Sudoku::from_str_line(&line) {
-                if let Some(solution) = sudoku.solve_unique() {
-                    assert_eq!(
-                        &solution.to_bytes()[..],
-                        &msolve::Sudoku::from(&line)
-                            .solve_unique()
-                            .unwrap()
-                            .to_array()[..]
-                    );
-                } else {
-                    assert!(msolve::Sudoku::from(&line).solve_unique().is_none());
-                    assert_eq!(
-                        sudoku.count_at_most(MAX_SOLVE_COUNT),
-                        msolve::Sudoku::from(&line).count_solutions(MAX_SOLVE_COUNT)
-                    );
-                }
-            }
-            line.clear();
-        }
+        test_file("bench_sudokus/kaggle.txt");
     }
     #[test]
     fn forum_hardest_1905_list() {
-        use std::io::BufRead;
-        let file_in =
-            std::fs::File::open("bench_sudokus/forum_hardest_1905").expect("Failed to open file");
-        let mut buf = std::io::BufReader::new(file_in);
-        let mut line = String::with_capacity(81);
-        while buf.read_line(&mut line).unwrap() > 0 {
-            if let Ok(sudoku) = sudoku::Sudoku::from_str_line(&line) {
-                if let Some(solution) = sudoku.solve_unique() {
-                    assert_eq!(
-                        &solution.to_bytes()[..],
-                        &msolve::Sudoku::from(&line)
-                            .solve_unique()
-                            .unwrap()
-                            .to_array()[..]
-                    );
-                } else {
-                    assert!(msolve::Sudoku::from(&line).solve_unique().is_none());
-                    assert_eq!(
-                        sudoku.count_at_most(MAX_SOLVE_COUNT),
-                        msolve::Sudoku::from(&line).count_solutions(MAX_SOLVE_COUNT)
-                    );
-                }
-            }
-            line.clear();
-        }
+        test_file("bench_sudokus/forum_hardest_1905");
     }
     #[test]
     fn gen_puzzles_list() {
-        use std::io::BufRead;
-        let file_in =
-            std::fs::File::open("bench_sudokus/gen_puzzles").expect("Failed to open file");
-        let mut buf = std::io::BufReader::new(file_in);
-        let mut line = String::with_capacity(81);
-        while buf.read_line(&mut line).unwrap() > 0 {
-            if let Ok(sudoku) = sudoku::Sudoku::from_str_line(&line) {
-                if let Some(solution) = sudoku.solve_unique() {
-                    assert_eq!(
-                        &solution.to_bytes()[..],
-                        &msolve::Sudoku::from(&line)
-                            .solve_unique()
-                            .unwrap()
-                            .to_array()[..]
-                    );
-                } else {
-                    assert!(msolve::Sudoku::from(&line).solve_unique().is_none());
-                    assert_eq!(
-                        sudoku.count_at_most(100),
-                        msolve::Sudoku::from(&line).count_solutions(100)
-                    );
-                }
-            }
-            line.clear();
-        }
+        test_file("bench_sudokus/gen_puzzles");
     }
     #[test]
     fn serg_benchmark_list() {
-        use std::io::BufRead;
-        let file_in =
-            std::fs::File::open("bench_sudokus/serg_benchmark").expect("Failed to open file");
-        let mut buf = std::io::BufReader::new(file_in);
-        let mut line = String::with_capacity(81);
-        while buf.read_line(&mut line).unwrap() > 0 {
-            if let Ok(sudoku) = sudoku::Sudoku::from_str_line(&line) {
-                if let Some(solution) = sudoku.solve_unique() {
-                    assert_eq!(
-                        &solution.to_bytes()[..],
-                        &msolve::Sudoku::from(&line)
-                            .solve_unique()
-                            .unwrap()
-                            .to_array()[..]
-                    );
-                } else {
-                    assert!(msolve::Sudoku::from(&line).solve_unique().is_none());
-                    assert_eq!(
-                        sudoku.count_at_most(100),
-                        msolve::Sudoku::from(&line).count_solutions(100)
-                    );
-                }
-            }
-            line.clear();
-        }
+        test_file("bench_sudokus/serg_benchmark");
     }
     #[test]
     fn worlds_hardest_test() {
@@ -185,21 +74,25 @@ mod tests {
             7, 4, 3, 6, 8, 4, 3, 8, 5, 2, 6, 9, 1, 7, 7, 9, 6, 3, 1, 8, 4, 5, 2,
         ];
         let solutions_str =
-            "812753649943682175675491283154237896369845721287169534521974368438526917796318452";
-        assert!(msolve::Sudoku::from(&sudoku).has_single_solution());
+            b"812753649943682175675491283154237896369845721287169534521974368438526917796318452";
+        assert!(msolve::Sudoku::try_from(&sudoku)
+            .unwrap()
+            .has_single_solution());
         assert_eq!(
             &solution[..],
-            &msolve::Sudoku::from(&sudoku)
+            &msolve::Sudoku::try_from(&sudoku)
+                .unwrap()
                 .solve_unique()
                 .unwrap()
                 .to_array()[..]
         );
         assert_eq!(
-            solutions_str,
-            msolve::Sudoku::from(&sudoku)
+            &solutions_str[..],
+            &msolve::Sudoku::try_from(&sudoku)
+                .unwrap()
                 .solve_unique()
                 .unwrap()
-                .to_string()
+                .to_bytes()[..]
         );
     }
 
@@ -215,10 +108,13 @@ mod tests {
             8, 5, 3, 7, 6, 9, 4, 6, 3, 4, 8, 9, 2, 1, 5, 7, 7, 9, 5, 4, 6, 1, 8, 3, 2, 5, 1, 9, 2,
             8, 6, 4, 7, 3, 4, 7, 2, 3, 1, 9, 5, 6, 8, 8, 6, 3, 7, 4, 5, 2, 1, 9,
         ];
-        assert!(msolve::Sudoku::from(&sudoku).has_single_solution());
+        assert!(msolve::Sudoku::try_from(&sudoku)
+            .unwrap()
+            .has_single_solution());
         assert_eq!(
             &solution[..],
-            &msolve::Sudoku::from(&sudoku)
+            &msolve::Sudoku::try_from(&sudoku)
+                .unwrap()
                 .solve_unique()
                 .unwrap()
                 .to_array()[..]
@@ -236,10 +132,13 @@ mod tests {
             3, 1, 7, 8, 5, 9, 6, 8, 1, 6, 5, 4, 9, 7, 2, 3, 7, 5, 9, 6, 2, 3, 4, 1, 8, 3, 7, 5, 2,
             8, 1, 9, 6, 4, 9, 8, 2, 3, 6, 4, 1, 5, 7, 6, 4, 1, 9, 5, 7, 3, 8, 2,
         ];
-        assert!(msolve::Sudoku::from(&sudoku).has_single_solution());
+        assert!(msolve::Sudoku::try_from(&sudoku)
+            .unwrap()
+            .has_single_solution());
         assert_eq!(
             &solution[..],
-            &msolve::Sudoku::from(&sudoku)
+            &msolve::Sudoku::try_from(&sudoku)
+                .unwrap()
                 .solve_unique()
                 .unwrap()
                 .to_array()[..]
@@ -257,11 +156,13 @@ mod tests {
             5, 8, 3, 9, 1, 6, 4, 4, 1, 8, 2, 5, 6, 7, 9, 3, 3, 6, 9, 1, 7, 4, 5, 2, 8, 5, 3, 6, 9,
             4, 8, 2, 7, 1, 7, 9, 1, 3, 2, 5, 4, 8, 6, 8, 4, 2, 7, 6, 1, 3, 5, 9,
         ];
-        assert_eq!(msolve::Sudoku::from(&sudoku).count_solutions(1000), 1);
-        assert!(msolve::Sudoku::from(&sudoku).has_single_solution());
+        assert!(msolve::Sudoku::try_from(&sudoku)
+            .unwrap()
+            .has_single_solution());
         assert_eq!(
             &solution[..],
-            &msolve::Sudoku::from(&sudoku)
+            &msolve::Sudoku::try_from(&sudoku)
+                .unwrap()
                 .solve_unique()
                 .unwrap()
                 .to_array()[..]
@@ -278,17 +179,20 @@ mod tests {
 
     #[quickcheck]
     fn random_array_solve(input: Vec<u32>) -> bool {
-        msolve::Sudoku::from(input).solve_one();
+        if let Ok(sudoku) = msolve::Sudoku::try_from(input) {
+            sudoku.solve_one();
+            sudoku.to_array();
+            sudoku.to_bytes();
+        }
         true
     }
     #[quickcheck]
     fn random_string_solve(input: String) -> bool {
-        msolve::Sudoku::from(input).solve_one();
-        true
-    }
-    #[quickcheck]
-    fn random_string_convert_to_and_from(input: String) -> bool {
-        msolve::Sudoku::from(input).to_array();
+        if let Ok(sudoku) = input.parse::<msolve::Sudoku>() {
+            sudoku.solve_one();
+            sudoku.to_array();
+            sudoku.to_bytes();
+        }
         true
     }
     #[derive(Clone, Debug)]
@@ -306,12 +210,19 @@ mod tests {
     }
     #[quickcheck]
     fn random_sudoku_solve(input: Sudoku) -> bool {
-        msolve::Sudoku::from(input.data).solve_one();
+        if let Ok(sudoku) = msolve::Sudoku::try_from(input.data) {
+            sudoku.solve_one();
+            sudoku.to_array();
+            sudoku.to_bytes();
+        }
         true
     }
     #[quickcheck]
     fn solve_unique_harder_than_solve(input: Sudoku) -> bool {
-        let sudoku = msolve::Sudoku::from(input.data);
-        sudoku.solve_unique_difficulty() >= sudoku.solve_difficulty()
+        if let Ok(sudoku) = msolve::Sudoku::try_from(input.data) {
+            sudoku.solve_unique_difficulty() >= sudoku.solve_difficulty()
+        } else {
+            true
+        }
     }
 }

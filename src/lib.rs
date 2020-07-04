@@ -1,7 +1,9 @@
 #[cfg(default)]
 extern crate smallvec;
 
+use std::convert::TryFrom;
 use std::convert::TryInto;
+use std::str::FromStr;
 
 #[cfg(feature = "smallvec")]
 type SudokuBackTrackingVec = smallvec::SmallVec<[Sudoku; 10]>;
@@ -440,7 +442,7 @@ impl Sudoku {
     pub fn to_bytes(&self) -> [u8; 81] {
         let mut chars = [b'.'; 81];
         let mut temp = self.solved_squares;
-        loop {
+        while temp != 0 {
             let square = get_last_digit!(temp, usize);
             if square >= 81 {
                 break;
@@ -523,7 +525,7 @@ impl Sudoku {
         iter.step_count
     }
 
-    fn import<T: Iterator<Item = Option<u32>>>(square_iterator: T) -> Self {
+    fn import<T: Iterator<Item = Option<u32>>>(square_iterator: T) -> Result<Self, InvalidSudoku> {
         let mut sudoku = Self::empty();
         for (i, int) in square_iterator
             .enumerate()
@@ -535,63 +537,58 @@ impl Sudoku {
             })
         {
             if sudoku.cells[i] & (1 << int) == 0 {
-                sudoku.cells[0] = 0;
-                sudoku.solved_squares = 0;
-                break
+                return Err(InvalidSudoku);
             }
             sudoku.cells[i] = 1 << int;
             sudoku.apply_number(i);
         }
         sudoku.scan();
-        sudoku
+        Ok(sudoku)
     }
 }
 
-impl<T: TryInto<u32> + Copy> From<&[T]> for Sudoku {
-    fn from(sudoku_array: &[T]) -> Self {
+#[derive(Debug)]
+pub struct InvalidSudoku;
+
+impl<T: TryInto<u32> + Copy> TryFrom<&[T]> for Sudoku {
+    type Error = InvalidSudoku;
+    fn try_from(sudoku_array: &[T]) -> Result<Self, Self::Error> {
         Self::import(sudoku_array.iter().map(|x| (*x).try_into().ok()))
     }
 }
-impl<T: TryInto<u32> + Copy> From<&[T; 81]> for Sudoku {
+impl<T: TryInto<u32> + Copy> TryFrom<&[T; 81]> for Sudoku {
+    type Error = InvalidSudoku;
     #[inline]
-    fn from(sudoku_array: &[T; 81]) -> Self {
-        Self::from(&sudoku_array[..])
+    fn try_from(sudoku_array: &[T; 81]) -> Result<Self, Self::Error> {
+        Self::try_from(&sudoku_array[..])
     }
 }
-impl<T: TryInto<u32> + Copy> From<[T; 81]> for Sudoku {
+impl<T: TryInto<u32> + Copy> TryFrom<[T; 81]> for Sudoku {
+    type Error = InvalidSudoku;
     #[inline]
-    fn from(sudoku_array: [T; 81]) -> Self {
-        Self::from(&sudoku_array[..])
+    fn try_from(sudoku_array: [T; 81]) -> Result<Self, Self::Error> {
+        Self::try_from(&sudoku_array[..])
     }
 }
-impl<T: TryInto<u32> + Copy> From<Vec<T>> for Sudoku {
+impl<T: TryInto<u32> + Copy> TryFrom<Vec<T>> for Sudoku {
+    type Error = InvalidSudoku;
     #[inline]
-    fn from(sudoku_array: Vec<T>) -> Self {
-        Self::from(&sudoku_array[..])
+    fn try_from(sudoku_array: Vec<T>) -> Result<Self, Self::Error> {
+        Self::try_from(&sudoku_array[..])
     }
 }
-impl<T: TryInto<u32> + Copy> From<&Vec<T>> for Sudoku {
+impl<T: TryInto<u32> + Copy> TryFrom<&Vec<T>> for Sudoku {
+    type Error = InvalidSudoku;
     #[inline]
-    fn from(sudoku_array: &Vec<T>) -> Self {
-        Self::from(&sudoku_array[..])
+    fn try_from(sudoku_array: &Vec<T>) -> Result<Self, Self::Error> {
+        Self::try_from(&sudoku_array[..])
     }
 }
 
-impl From<&str> for Sudoku {
-    fn from(sudoku_str: &str) -> Self {
+impl FromStr for Sudoku {
+    type Err = InvalidSudoku;
+    fn from_str(sudoku_str: &str) -> Result<Self, Self::Err> {
         Self::import(sudoku_str.chars().map(|character| character.to_digit(10)))
-    }
-}
-impl From<String> for Sudoku {
-    #[inline]
-    fn from(sudoku_str: String) -> Self {
-        Self::from(&sudoku_str[..])
-    }
-}
-impl From<&String> for Sudoku {
-    #[inline]
-    fn from(sudoku_str: &String) -> Self {
-        Self::from(&sudoku_str[..])
     }
 }
 

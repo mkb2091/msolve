@@ -96,48 +96,49 @@ Modes:
         if result == 0 {
             break;
         }
-        let sudoku = msolve::Sudoku::from(&buffer);
-        match mode {
-            Mode::SolveUnique => {
-                if let Some(solution) = sudoku.solve_unique() {
-                    let _ = output_handle.write_all(&solution.to_bytes());
-                    let _ = output_handle.write_all(b"\n");
+        if let Ok(sudoku) = buffer.parse::<msolve::Sudoku>() {
+            match mode {
+                Mode::SolveUnique => {
+                    if let Some(solution) = sudoku.solve_unique() {
+                        let _ = output_handle.write_all(&solution.to_bytes());
+                        let _ = output_handle.write_all(b"\n");
+                    }
                 }
-            }
-            Mode::SolveOne => {
-                if let Some(solution) = sudoku.solve_one() {
-                    let _ = output_handle.write_all(&solution.to_bytes());
-                    let _ = output_handle.write_all(b"\n");
+                Mode::SolveOne => {
+                    if let Some(solution) = sudoku.solve_one() {
+                        let _ = output_handle.write_all(&solution.to_bytes());
+                        let _ = output_handle.write_all(b"\n");
+                    }
                 }
-            }
-            Mode::SolveN(n) => {
-                for solution in sudoku.iter().take(n) {
-                    let _ = output_handle.write_all(&solution.to_bytes());
-                    let _ = output_handle.write_all(b"\n");
+                Mode::SolveN(n) => {
+                    for solution in sudoku.iter().take(n) {
+                        let _ = output_handle.write_all(&solution.to_bytes());
+                        let _ = output_handle.write_all(b"\n");
+                    }
                 }
-            }
-            Mode::FindWithSingleSolution => {
-                if sudoku.has_single_solution() {
-                    let _ = output_handle.write_all(&sudoku.to_bytes());
-                    let _ = output_handle.write_all(b"\n");
+                Mode::FindWithSingleSolution => {
+                    if sudoku.has_single_solution() {
+                        let _ = output_handle.write_all(&sudoku.to_bytes());
+                        let _ = output_handle.write_all(b"\n");
+                    }
                 }
-            }
-            Mode::FindWithSolution => {
-                if sudoku.has_solution() {
-                    let _ = output_handle.write_all(&sudoku.to_bytes());
-                    let _ = output_handle.write_all(b"\n");
+                Mode::FindWithSolution => {
+                    if sudoku.has_solution() {
+                        let _ = output_handle.write_all(&sudoku.to_bytes());
+                        let _ = output_handle.write_all(b"\n");
+                    }
                 }
-            }
-            Mode::CountSolutions(n) => {
-                let count = sudoku.count_solutions(n);
+                Mode::CountSolutions(n) => {
+                    let count = sudoku.count_solutions(n);
 
-                let _ = output_handle.write_all(&count.to_string().as_bytes());
-                let _ = output_handle.write_all(b";");
-                let _ = output_handle.write_all(&sudoku.to_bytes());
-                let _ = output_handle.write_all(b"\n");
-            }
-            Mode::Info => {
-                info[sudoku.count_solutions(2)] += 1;
+                    let _ = output_handle.write_all(&count.to_string().as_bytes());
+                    let _ = output_handle.write_all(b";");
+                    let _ = output_handle.write_all(&sudoku.to_bytes());
+                    let _ = output_handle.write_all(b"\n");
+                }
+                Mode::Info => {
+                    info[sudoku.count_solutions(2)] += 1;
+                }
             }
         }
         buffer.clear();
