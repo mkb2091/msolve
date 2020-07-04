@@ -548,8 +548,11 @@ impl Sudoku {
             sudoku.cells[i] = 1 << int;
             sudoku.apply_number(i);
         }
-        sudoku.scan();
-        Ok(sudoku)
+        if sudoku.scan() {
+            Ok(sudoku)
+        } else {
+            Err(InvalidSudoku)
+        }
     }
 }
 
