@@ -8,6 +8,8 @@ enum Mode {
     SolveUnique,
     SolveOne,
     SolveN(usize),
+    FindWithSingleSolution,
+    FindWithSolution,
     Info,
 }
 
@@ -38,6 +40,8 @@ fn main() {
                     }
                 }
                 "info" => Mode::Info,
+                "find_with_single_solution" => Mode::FindWithSingleSolution,
+                "find_with_solution" => Mode::FindWithSolution,
                 _ => {
                     println!("Unknown mode: {}", arg1);
                     return;
@@ -81,6 +85,18 @@ fn main() {
             }
             Mode::Info => {
                 info[sudoku.count_solutions(2)] += 1;
+            }
+            Mode::FindWithSingleSolution => {
+                if sudoku.has_single_solution() {
+                    let _ = output_handle.write_all(&sudoku.to_bytes());
+                    let _ = output_handle.write_all(b"\n");
+                }
+            }
+            Mode::FindWithSolution => {
+                if sudoku.has_solution() {
+                    let _ = output_handle.write_all(&sudoku.to_bytes());
+                    let _ = output_handle.write_all(b"\n");
+                }
             }
         }
         buffer.clear();

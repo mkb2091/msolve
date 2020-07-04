@@ -13,13 +13,17 @@ Add sudoku generation from a seed sudoku
 
 # Usage 
 
-To get the first solution to inputted sudoku list: msolve solve_one < sudokufile.txt > output.txt
+To get the first solution to each sudoku in input: msolve solve_one < sudokufile.txt > output.txt
 
-To get the solutions of all puzzles with a unique solution:  msolve solve_unique < sudokufile.txt > output.txt
+To get the solution for each uniquely solvable sudoku in input:  msolve solve_unique < sudokufile.txt > output.txt
 
-To get the first N solutions:  msolve solve_n N < sudokufile.txt > output.txt
+To get the first N solutions to each sudoku in input: msolve solve_n N < sudokufile.txt > output.txt
 
 To get information about the sudoku file: msolve info < sudokufile.txt
 
 Example output for info:
   0 Solutions: 486451, 1 Solution: 763, 2+ Solutions: 12786
+
+To list all puzzles with a single unique solution: msolve find_with_single_solution < sudokufile.txt > output.txt
+
+To list all puzzles with at least one unique solution: msolve find_with_solution < sudokufile.txt > output.txt

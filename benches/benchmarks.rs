@@ -269,7 +269,9 @@ fn criterion_benchmark(c: &mut Criterion) {
 
     c.bench_function("gen_puzzles_msolve", |b| {
         b.iter(|| {
-            criterion::black_box(&msolve::Sudoku::from(gen_puzzles_iter.next().unwrap()).solve_one());
+            criterion::black_box(
+                &msolve::Sudoku::from(gen_puzzles_iter.next().unwrap()).solve_one(),
+            );
         })
     });
 

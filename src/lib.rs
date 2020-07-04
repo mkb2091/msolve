@@ -489,6 +489,11 @@ impl Sudoku {
         self.count_solutions(2) == 1
     }
 
+    #[inline]
+    pub fn has_solution(self) -> bool {
+        self.count_solutions(1) == 1
+    }
+
     /**
     Returns an empty sudoku grid, alternative to Sudoku::from([0; 81]) or Sudoku::from(vec![])
     */
