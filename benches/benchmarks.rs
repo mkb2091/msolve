@@ -17,12 +17,10 @@ fn bench_solving(sudoku: Option<&String>, is_msolve: bool, is_unique: bool) -> u
         } else {
             0
         }
+    } else if let Ok(sudoku) = sudoku::Sudoku::from_str_line(sudoku.unwrap()) {
+        sudoku.count_at_most(is_unique as usize + 1)
     } else {
-        if let Ok(sudoku) = sudoku::Sudoku::from_str_line(sudoku.unwrap()) {
-            sudoku.count_at_most(is_unique as usize + 1)
-        } else {
-            0
-        }
+        0
     }
 }
 

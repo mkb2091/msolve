@@ -24,14 +24,12 @@ mod tests {
                             .unwrap()
                             .to_array()[..]
                     );
-                } else {
-                    if let Ok(msolve_sudoku) = line.parse::<msolve::Sudoku>() {
-                        assert!(msolve_sudoku.solve_unique().is_none());
-                        assert_eq!(
-                            sudoku.count_at_most(100),
-                            msolve_sudoku.count_solutions(100)
-                        );
-                    }
+                } else if let Ok(msolve_sudoku) = line.parse::<msolve::Sudoku>() {
+                    assert!(msolve_sudoku.solve_unique().is_none());
+                    assert_eq!(
+                        sudoku.count_at_most(100),
+                        msolve_sudoku.count_solutions(100)
+                    );
                 }
             }
             line.clear();
