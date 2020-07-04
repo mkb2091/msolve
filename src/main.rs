@@ -22,20 +22,13 @@ fn main() {
                 "solve_unique" => Mode::SolveUnique,
                 "solve_one" => Mode::SolveOne,
                 "solve_n" => {
-                    if let Some(arg2) = args.next() {
-                        if let Some(arg2) = arg2.to_str() {
-                            if let Ok(n) = arg2.parse::<usize>() {
-                                Mode::SolveN(n)
-                            } else {
-                                println!("Not a number: {}", arg2);
-                                return;
-                            }
-                        } else {
-                            println!("Argument is not valid UTF-8");
-                            return;
-                        }
+                    if let Some(n) = args
+                        .next()
+                        .and_then(|arg2| arg2.to_str().and_then(|arg| arg.parse::<usize>().ok()))
+                    {
+                        Mode::SolveN(n)
                     } else {
-                        println!("solve_n requires second argument to specify n");
+                        println!("Invalid or missing N argument");
                         return;
                     }
                 }
