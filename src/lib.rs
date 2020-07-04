@@ -37,16 +37,7 @@ const fn cells_in_house(square: usize) -> [u8; 20] {
         + (1 << 63)
         + (1 << 72))
         << column_start;
-    squares_to_change |= (1
-        + (1 << 1)
-        + (1 << 2)
-        + (1 << 9)
-        + (1 << 10)
-        + (1 << 11)
-        + (1 << 18)
-        + (1 << 19)
-        + (1 << 20))
-        << box_start;
+    squares_to_change |= (0b111 + (0b111 << 9) + (0b111 << 18)) << box_start;
     squares_to_change &= !(1 << square);
     let mut squares_to_change_array = [0; 20];
     squares_to_change_array[0] = get_last_digit!(squares_to_change, u8);
