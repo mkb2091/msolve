@@ -1,7 +1,7 @@
 [package]
 name = "msolve"
 description = "Another sudoku solving library"
-version = "0.4.0"
+version = "0.4.1"
 authors = ["Alex Williams <mkb2191@protonmail.com>"]
 edition = "2018"
 include = ["src/main.rs", "src/lib.rs", "README.md", "benches/benchmarks.rs"]
