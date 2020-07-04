@@ -14,11 +14,10 @@ enum Mode {
 }
 
 fn main() {
-    let mut mode = Mode::Info;
     let mut args = std::env::args_os().skip(1);
-    if let Some(arg1) = args.next() {
+    let mode = if let Some(arg1) = args.next() {
         if let Some(arg1) = arg1.to_str() {
-            mode = match arg1 {
+            match arg1 {
                 "solve_unique" => Mode::SolveUnique,
                 "solve_one" => Mode::SolveOne,
                 "solve_n" => {
@@ -44,7 +43,34 @@ fn main() {
             println!("Argument is not valid UTF-8");
             return;
         }
-    }
+    } else {
+        println!(
+            "
+Usage:
+	msolve {{mode}} < input.txt
+
+	Or
+
+	other_program | msolve {{mode}}
+
+
+Modes:
+
+	solve_unique: returns solution for each uniquely solvable sudoku in input
+
+	solve_one: returns first solution found for each sudoku in input, order is not guaranteed to be constant
+
+	solve_n {{N}}: returns first N solution found for each sudoku in input, order is not guaranteed to be constant
+
+	find_with_single_solution: returns all sudokus with a single unique solution
+
+	find_with_solution: returns all sudokus with at least one solution
+
+	info: returns the number of puzzles with no solution, 1 solution and 2+ solutions
+			"
+        );
+        return;
+    };
 
     let stdin = std::io::stdin();
     let mut input = stdin.lock();
