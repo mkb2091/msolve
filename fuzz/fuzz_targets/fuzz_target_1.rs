@@ -19,7 +19,7 @@ fuzz_target!(|data: Sudoku| {
         .map(|x| *x)
         .collect::<Vec<u8>>();
     if let Ok(sudoku) = msolve::Sudoku::try_from(data) {
-        if let Some(solution) = sudoku.solve_one() {
+        if let Some(solution) = sudoku.solve_unique() {
             assert!(solution.to_array()[0] <= 9);
         }
     }
