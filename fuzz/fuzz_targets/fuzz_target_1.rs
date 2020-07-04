@@ -1,7 +1,7 @@
 #![no_main]
 use arbitrary::Arbitrary;
 use libfuzzer_sys::fuzz_target;
-
+use std::convert::TryFrom;
 
 #[derive(Arbitrary, Debug)]
 struct Sudoku {
@@ -16,9 +16,11 @@ fuzz_target!(|data: Sudoku| {
         .iter()
         .chain(middle.iter())
         .chain(end.iter())
-        .map(|x|*x)
+        .map(|x| *x)
         .collect::<Vec<u8>>();
-    if let Some(solution) = msolve::Sudoku::from(data).solve() {
-        assert!(solution.to_array()[0] <= 9);
+    if let Ok(sudoku) = msolve::Sudoku::try_from(data) {
+        if let Some(solution) = sudoku.solve_one() {
+            assert!(solution.to_array()[0] <= 9);
+        }
     }
 });
