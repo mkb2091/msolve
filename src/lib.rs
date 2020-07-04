@@ -461,7 +461,7 @@ impl Sudoku {
     Get the first solution.
     */
     #[inline]
-    pub fn solve(self) -> Option<Self> {
+    pub fn solve_one(self) -> Option<Self> {
         self.iter().next()
     }
 

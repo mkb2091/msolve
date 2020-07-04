@@ -1,4 +1,5 @@
 mod lib;
+pub use lib::*;
 use std::io::BufRead;
 use std::io::Write;
 
@@ -67,7 +68,7 @@ fn main() {
                 }
             }
             Mode::SolveOne => {
-                if let Some(solution) = sudoku.solve() {
+                if let Some(solution) = sudoku.solve_one() {
                     let _ = output_handle.write_all(&solution.to_bytes());
                     let _ = output_handle.write_all(b"\n");
                 }

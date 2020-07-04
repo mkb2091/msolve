@@ -278,12 +278,12 @@ mod tests {
 
     #[quickcheck]
     fn random_array_solve(input: Vec<u32>) -> bool {
-        msolve::Sudoku::from(input).solve();
+        msolve::Sudoku::from(input).solve_one();
         true
     }
     #[quickcheck]
     fn random_string_solve(input: String) -> bool {
-        msolve::Sudoku::from(input).solve();
+        msolve::Sudoku::from(input).solve_one();
         true
     }
     #[quickcheck]
@@ -306,7 +306,7 @@ mod tests {
     }
     #[quickcheck]
     fn random_sudoku_solve(input: Sudoku) -> bool {
-        msolve::Sudoku::from(input.data).solve();
+        msolve::Sudoku::from(input.data).solve_one();
         true
     }
     #[quickcheck]

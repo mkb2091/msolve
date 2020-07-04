@@ -133,7 +133,7 @@ fn criterion_benchmark(c: &mut Criterion) {
 
     c.bench_function("top2365_msolve", |b| {
         b.iter(|| {
-            criterion::black_box(&msolve::Sudoku::from(top2365_iter.next().unwrap()).solve());
+            criterion::black_box(&msolve::Sudoku::from(top2365_iter.next().unwrap()).solve_one());
         })
     });
 
@@ -167,7 +167,7 @@ fn criterion_benchmark(c: &mut Criterion) {
 
     c.bench_function("sudoku17_msolve", |b| {
         b.iter(|| {
-            criterion::black_box(&msolve::Sudoku::from(sudoku17_iter.next().unwrap()).solve());
+            criterion::black_box(&msolve::Sudoku::from(sudoku17_iter.next().unwrap()).solve_one());
         })
     });
 
@@ -201,7 +201,7 @@ fn criterion_benchmark(c: &mut Criterion) {
 
     c.bench_function("kaggle_msolve", |b| {
         b.iter(|| {
-            criterion::black_box(&msolve::Sudoku::from(kaggle_iter.next().unwrap()).solve());
+            criterion::black_box(&msolve::Sudoku::from(kaggle_iter.next().unwrap()).solve_one());
         })
     });
 
@@ -234,7 +234,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("forum_hardest_1905_msolve", |b| {
         b.iter(|| {
             criterion::black_box(
-                &msolve::Sudoku::from(forum_hardest_1905_iter.next().unwrap()).solve(),
+                &msolve::Sudoku::from(forum_hardest_1905_iter.next().unwrap()).solve_one(),
             );
         })
     });
@@ -269,7 +269,7 @@ fn criterion_benchmark(c: &mut Criterion) {
 
     c.bench_function("gen_puzzles_msolve", |b| {
         b.iter(|| {
-            criterion::black_box(&msolve::Sudoku::from(gen_puzzles_iter.next().unwrap()).solve());
+            criterion::black_box(&msolve::Sudoku::from(gen_puzzles_iter.next().unwrap()).solve_one());
         })
     });
 
@@ -304,7 +304,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("serg_benchmark_msolve", |b| {
         b.iter(|| {
             criterion::black_box(
-                &msolve::Sudoku::from(serg_benchmark_iter.next().unwrap()).solve(),
+                &msolve::Sudoku::from(serg_benchmark_iter.next().unwrap()).solve_one(),
             );
         })
     });
@@ -338,32 +338,32 @@ fn criterion_benchmark(c: &mut Criterion) {
     });
     c.bench_function("easy_8802", |b| {
         b.iter(|| {
-            criterion::black_box(&msolve::Sudoku::from(&easy_8802).solve());
+            criterion::black_box(&msolve::Sudoku::from(&easy_8802).solve_one());
         })
     });
     c.bench_function("World's Hardest Sudoku", |b| {
         b.iter(|| {
-            criterion::black_box(&msolve::Sudoku::from(&worlds_hardest_sudoku).solve());
+            criterion::black_box(&msolve::Sudoku::from(&worlds_hardest_sudoku).solve_one());
         })
     });
     c.bench_function("hardbrute_sudoku", |b| {
         b.iter(|| {
-            criterion::black_box(&msolve::Sudoku::from(&hardbrute_sudoku).solve());
+            criterion::black_box(&msolve::Sudoku::from(&hardbrute_sudoku).solve_one());
         })
     });
     c.bench_function("random17_sudoku", |b| {
         b.iter(|| {
-            criterion::black_box(&msolve::Sudoku::from(&random17_sudoku).solve());
+            criterion::black_box(&msolve::Sudoku::from(&random17_sudoku).solve_one());
         })
     });
     c.bench_function("solved_sudoku", |b| {
         b.iter(|| {
-            criterion::black_box(&msolve::Sudoku::from(&solved_sudoku).solve());
+            criterion::black_box(&msolve::Sudoku::from(&solved_sudoku).solve_one());
         })
     });
     c.bench_function("empty_sudoku", |b| {
         b.iter(|| {
-            criterion::black_box(&msolve::Sudoku::empty().solve());
+            criterion::black_box(&msolve::Sudoku::empty().solve_one());
         })
     });
     c.bench_function("first 1000 solutions to empty_sudoku", |b| {
@@ -376,7 +376,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     group.sample_size(10);
     group.bench_function("worst_case", |b| {
         b.iter(|| {
-            criterion::black_box(&msolve::Sudoku::from(worst_case).solve());
+            criterion::black_box(&msolve::Sudoku::from(worst_case).solve_one());
         })
     });
 }
