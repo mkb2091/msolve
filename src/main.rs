@@ -10,6 +10,7 @@ enum Mode {
     SolveN(usize),
     FindWithSingleSolution,
     FindWithSolution,
+    CountSolutions(usize),
     Info,
 }
 
@@ -34,6 +35,17 @@ fn main() {
                 "info" => Mode::Info,
                 "find_with_single_solution" => Mode::FindWithSingleSolution,
                 "find_with_solution" => Mode::FindWithSolution,
+                "count_solutions" => {
+                    if let Some(n) = args
+                        .next()
+                        .and_then(|arg2| arg2.to_str().and_then(|arg| arg.parse::<usize>().ok()))
+                    {
+                        Mode::CountSolutions(n)
+                    } else {
+                        println!("Invalid or missing N argument, where N is the maximum number of solutions to count");
+                        return;
+                    }
+                }
                 _ => {
                     println!("Unknown mode: {}", arg1);
                     return;
@@ -65,6 +77,8 @@ Modes:
 	find_with_single_solution: returns all sudokus with a single unique solution
 
 	find_with_solution: returns all sudokus with at least one solution
+
+	count_solutions {{N}}: returns each sudoku with the number of solutions up to a maximum of N in the format {{count}};{{sudoku}}
 
 	info: returns the number of puzzles with no solution, 1 solution and 2+ solutions
 			"
@@ -102,9 +116,6 @@ Modes:
                     let _ = output_handle.write_all(b"\n");
                 }
             }
-            Mode::Info => {
-                info[sudoku.count_solutions(2)] += 1;
-            }
             Mode::FindWithSingleSolution => {
                 if sudoku.has_single_solution() {
                     let _ = output_handle.write_all(&sudoku.to_bytes());
@@ -116,6 +127,17 @@ Modes:
                     let _ = output_handle.write_all(&sudoku.to_bytes());
                     let _ = output_handle.write_all(b"\n");
                 }
+            }
+            Mode::CountSolutions(n) => {
+                let count = sudoku.count_solutions(n);
+
+                let _ = output_handle.write_all(&count.to_string().as_bytes());
+                let _ = output_handle.write_all(b";");
+                let _ = output_handle.write_all(&sudoku.to_bytes());
+                let _ = output_handle.write_all(b"\n");
+            }
+            Mode::Info => {
+                info[sudoku.count_solutions(2)] += 1;
             }
         }
         buffer.clear();

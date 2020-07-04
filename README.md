@@ -27,3 +27,5 @@ Example output for info:
 To list all puzzles with a single unique solution: msolve find_with_single_solution < sudokufile.txt > output.txt
 
 To list all puzzles with at least one unique solution: msolve find_with_solution < sudokufile.txt > output.txt
+
+To get the number of solutions of each puzzles, up to a maximum of N: msolve count_solutions N < sudokufile.txt > output.txt
