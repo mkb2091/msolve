@@ -534,6 +534,11 @@ impl Sudoku {
                     .map(|x| (i, x))
             })
         {
+            if sudoku.cells[i] & (1 << int) == 0 {
+                sudoku.cells[0] = 0;
+                sudoku.solved_squares = 0;
+                break
+            }
             sudoku.cells[i] = 1 << int;
             sudoku.apply_number(i);
         }
