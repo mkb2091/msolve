@@ -441,11 +441,10 @@ impl Sudoku {
         let mut chars = [b'.'; 81];
         let mut temp = self.solved_squares;
         loop {
-            let square = temp.trailing_zeros() as usize;
+            let square = get_last_digit!(temp, usize);
             if square >= 81 {
                 break;
             }
-            temp -= 1 << square;
             chars[square] = (b"123456789")[self.cells[square].trailing_zeros() as usize];
         }
         chars
