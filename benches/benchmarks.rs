@@ -6,7 +6,6 @@ extern crate sudoku;
 use rand::prelude::*;
 
 use criterion::Criterion;
-use std::convert::TryFrom;
 use std::io::BufRead;
 use std::str::FromStr;
 
@@ -127,43 +126,27 @@ fn criterion_benchmark(c: &mut Criterion) {
     ]);
     c.bench_function("easy_8802", |b| {
         b.iter(|| {
-            criterion::black_box(&msolve::Sudoku::try_from(&easy_8802).unwrap().solve_one());
+            criterion::black_box(&msolve::Sudoku::from(&easy_8802).solve_one());
         })
     });
     c.bench_function("World's Hardest Sudoku", |b| {
         b.iter(|| {
-            criterion::black_box(
-                &msolve::Sudoku::try_from(&worlds_hardest_sudoku)
-                    .unwrap()
-                    .solve_one(),
-            );
+            criterion::black_box(&msolve::Sudoku::from(&worlds_hardest_sudoku).solve_one());
         })
     });
     c.bench_function("hardbrute_sudoku", |b| {
         b.iter(|| {
-            criterion::black_box(
-                &msolve::Sudoku::try_from(&hardbrute_sudoku)
-                    .unwrap()
-                    .solve_one(),
-            );
+            criterion::black_box(&msolve::Sudoku::from(&hardbrute_sudoku).solve_one());
         })
     });
     c.bench_function("random17_sudoku", |b| {
         b.iter(|| {
-            criterion::black_box(
-                &msolve::Sudoku::try_from(&random17_sudoku)
-                    .unwrap()
-                    .solve_one(),
-            );
+            criterion::black_box(&msolve::Sudoku::from(&random17_sudoku).solve_one());
         })
     });
     c.bench_function("solved_sudoku", |b| {
         b.iter(|| {
-            criterion::black_box(
-                &msolve::Sudoku::try_from(&solved_sudoku)
-                    .unwrap()
-                    .solve_one(),
-            );
+            criterion::black_box(&msolve::Sudoku::from(&solved_sudoku).solve_one());
         })
     });
     c.bench_function("empty_sudoku", |b| {
@@ -174,6 +157,13 @@ fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("first 1000 solutions to empty_sudoku", |b| {
         b.iter(|| {
             criterion::black_box(&msolve::Sudoku::empty().count_solutions(1000));
+        })
+    });
+    c.bench_function("Generate puzzle", |b| {
+        b.iter(|| {
+            criterion::black_box(
+                &msolve::Sudoku::empty().generate_from_seed(&mut rand::thread_rng(), 0),
+            );
         })
     });
 }

@@ -1,7 +1,9 @@
 #[cfg(default)]
 extern crate smallvec;
 
-use std::convert::TryFrom;
+use rand::distributions::Distribution;
+
+use std::convert::From;
 use std::convert::TryInto;
 use std::str::FromStr;
 
@@ -12,6 +14,10 @@ type SudokuBackTrackingVec = Vec<Sudoku>;
 
 /** Max 9 bit number */
 const SUDOKU_MAX: u16 = (1 << 9) - 1;
+
+const INVALID_SUDOKU: u128 = 1 << 127;
+
+const SOLVED_SUDOKU: u128 = (1 << 81) - 1;
 
 macro_rules! get_last_digit {
     ($x:ident, $value_type:ty) => {{
@@ -184,9 +190,12 @@ pub struct SolutionIterator {
 
 impl SolutionIterator {
     #[inline]
-    fn new(sudoku: Sudoku) -> Self {
+    fn new(mut sudoku: Sudoku) -> Self {
         let mut routes = SudokuBackTrackingVec::with_capacity(10);
-        if sudoku.cells.iter().all(|x| *x != 0) {
+        if sudoku.solved_squares < INVALID_SUDOKU
+            && sudoku.scan()
+            && sudoku.cells.iter().all(|x| *x != 0)
+        {
             routes.push(sudoku);
         }
         Self {
@@ -426,14 +435,14 @@ impl Sudoku {
     Convert the sudoku into a [u8; 81] containing the numerical form of each solved square
     */
     pub fn to_array(&self) -> [u8; 81] {
-        let mut array: [u8; 81] = [0; 81];
-        for (square, processed) in self
-            .cells
-            .iter()
-            .enumerate()
-            .filter(|(_, &value)| value.is_power_of_two())
-        {
-            array[square] = processed.trailing_zeros() as u8 + 1;
+        let mut array = [0; 81];
+        let mut temp = self.solved_squares;
+        while temp != 0 {
+            let square = get_last_digit!(temp, usize);
+            if square >= 81 {
+                break;
+            }
+            array[square] = self.cells[square].trailing_zeros() as u8 + 1;
         }
         array
     }
@@ -524,7 +533,60 @@ impl Sudoku {
         iter.step_count
     }
 
-    fn import<T: Iterator<Item = Option<u32>>>(square_iterator: T) -> Result<Self, InvalidSudoku> {
+    pub fn generate_from_seed<T>(self, rng: &mut T, cells_to_remove: usize) -> Self
+    where
+        T: rand::Rng + rand_core::RngCore,
+    {
+        let mut array = self.to_array();
+        let mut solved_squares = self.solved_squares & SOLVED_SUDOKU;
+        let desired_solved_count = solved_squares
+            .count_ones()
+            .saturating_sub(cells_to_remove as u32);
+        while solved_squares.count_ones() > desired_solved_count
+            || !Self::from(array).has_solution()
+        {
+            let solved_index = rng.gen_range(0, solved_squares.count_ones() as usize);
+            let mut temp = solved_squares;
+            let mut i = get_last_digit!(temp, usize);
+            for _ in 0..solved_index {
+                i = get_last_digit!(temp, usize);
+            }
+            debug_assert_ne!(array[i], 0);
+            array[i] = 0;
+
+            solved_squares -= 1 << i;
+        }
+
+        let mut sudoku = Self::from(array);
+        sudoku.scan();
+        let cell_distribution = rand::distributions::Uniform::new(0, 81);
+        while !sudoku.has_single_solution() {
+            let index = cell_distribution.sample(rng);
+            if sudoku.solved_squares & (1 << index) != 0 {
+                continue;
+            }
+            let mut temp = sudoku;
+            let mut value = temp.cells[index];
+            debug_assert_ne!(value, 0);
+            let chosen_value_index = rng.gen_range(0, value.count_ones());
+            let mut i = get_last_digit!(value, usize);
+            for _ in 0..chosen_value_index {
+                i = get_last_digit!(value, usize);
+            }
+            temp.cells[index] = 1 << i;
+            temp.apply_number(index);
+            temp.scan();
+            if temp.has_solution() {
+                sudoku = temp;
+            } else {
+                sudoku.cells[index] -= 1 << i;
+            }
+        }
+
+        sudoku
+    }
+
+    fn import<T: Iterator<Item = Option<u32>>>(square_iterator: T) -> Self {
         let mut sudoku = Self::empty();
         for (i, int) in square_iterator
             .enumerate()
@@ -535,62 +597,54 @@ impl Sudoku {
                     .map(|x| (i, x))
             })
         {
-            if sudoku.cells[i] & (1 << int) == 0 {
-                return Err(InvalidSudoku);
+            if sudoku.cells[i] & (1 << int) == 0 || sudoku.solved_squares >= INVALID_SUDOKU {
+                sudoku.cells[i] = 1 << int;
+                sudoku.solved_squares |= INVALID_SUDOKU + (1 << i);
+            } else {
+                sudoku.cells[i] = 1 << int;
+                sudoku.apply_number(i);
             }
-            sudoku.cells[i] = 1 << int;
-            sudoku.apply_number(i);
         }
-        if sudoku.scan() {
-            Ok(sudoku)
-        } else {
-            Err(InvalidSudoku)
-        }
+        sudoku
     }
 }
 
-#[derive(Debug)]
-pub struct InvalidSudoku;
-
-impl<T: TryInto<u32> + Copy> TryFrom<&[T]> for Sudoku {
-    type Error = InvalidSudoku;
-    fn try_from(sudoku_array: &[T]) -> Result<Self, Self::Error> {
+impl<T: TryInto<u32> + Copy> From<&[T]> for Sudoku {
+    fn from(sudoku_array: &[T]) -> Self {
         Self::import(sudoku_array.iter().map(|x| (*x).try_into().ok()))
     }
 }
-impl<T: TryInto<u32> + Copy> TryFrom<&[T; 81]> for Sudoku {
-    type Error = InvalidSudoku;
+impl<T: TryInto<u32> + Copy> From<&[T; 81]> for Sudoku {
     #[inline]
-    fn try_from(sudoku_array: &[T; 81]) -> Result<Self, Self::Error> {
-        Self::try_from(&sudoku_array[..])
+    fn from(sudoku_array: &[T; 81]) -> Self {
+        Self::from(&sudoku_array[..])
     }
 }
-impl<T: TryInto<u32> + Copy> TryFrom<[T; 81]> for Sudoku {
-    type Error = InvalidSudoku;
+impl<T: TryInto<u32> + Copy> From<[T; 81]> for Sudoku {
     #[inline]
-    fn try_from(sudoku_array: [T; 81]) -> Result<Self, Self::Error> {
-        Self::try_from(&sudoku_array[..])
+    fn from(sudoku_array: [T; 81]) -> Self {
+        Self::from(&sudoku_array[..])
     }
 }
-impl<T: TryInto<u32> + Copy> TryFrom<Vec<T>> for Sudoku {
-    type Error = InvalidSudoku;
+impl<T: TryInto<u32> + Copy> From<Vec<T>> for Sudoku {
     #[inline]
-    fn try_from(sudoku_array: Vec<T>) -> Result<Self, Self::Error> {
-        Self::try_from(&sudoku_array[..])
+    fn from(sudoku_array: Vec<T>) -> Self {
+        Self::from(&sudoku_array[..])
     }
 }
-impl<T: TryInto<u32> + Copy> TryFrom<&Vec<T>> for Sudoku {
-    type Error = InvalidSudoku;
+impl<T: TryInto<u32> + Copy> From<&Vec<T>> for Sudoku {
     #[inline]
-    fn try_from(sudoku_array: &Vec<T>) -> Result<Self, Self::Error> {
-        Self::try_from(&sudoku_array[..])
+    fn from(sudoku_array: &Vec<T>) -> Self {
+        Self::from(&sudoku_array[..])
     }
 }
 
 impl FromStr for Sudoku {
-    type Err = InvalidSudoku;
+    type Err = std::convert::Infallible;
     fn from_str(sudoku_str: &str) -> Result<Self, Self::Err> {
-        Self::import(sudoku_str.chars().map(|character| character.to_digit(10)))
+        Ok(Self::import(
+            sudoku_str.chars().map(|character| character.to_digit(10)),
+        ))
     }
 }
 

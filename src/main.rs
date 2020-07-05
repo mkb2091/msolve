@@ -13,6 +13,7 @@ enum Mode {
     CountSolutions(usize),
     Difficulty,
     DifficultyVerifyUnique,
+    Generate(usize),
     Info,
 }
 
@@ -50,6 +51,17 @@ fn main() {
                 }
                 "difficulty" => Mode::Difficulty,
                 "difficulty_verify_unique" => Mode::DifficultyVerifyUnique,
+                "generate" => {
+                    if let Some(n) = args
+                        .next()
+                        .and_then(|arg2| arg2.to_str().and_then(|arg| arg.parse::<usize>().ok()))
+                    {
+                        Mode::Generate(n)
+                    } else {
+                        println!("Invalid or missing N argument, where N is the maximum number of cells to remove from seed sudoku");
+                        return;
+                    }
+                }
                 _ => {
                     println!("Unknown mode: {}", arg1);
                     return;
@@ -100,6 +112,7 @@ Modes:
     let stdout = std::io::stdout();
     let mut output_handle = stdout.lock();
     let mut info = [0; 3];
+    let mut rng = rand::thread_rng();
     while let Ok(result) = input.read_line(&mut buffer) {
         if result == 0 {
             break;
@@ -156,6 +169,11 @@ Modes:
                     let _ = output_handle.write_all(&steps.to_string().as_bytes());
                     let _ = output_handle.write_all(b";");
                     let _ = output_handle.write_all(&buffer.as_bytes());
+                }
+                Mode::Generate(n) => {
+                    let _ =
+                        output_handle.write_all(&sudoku.generate_from_seed(&mut rng, n).to_bytes());
+                    let _ = output_handle.write_all(b"\n");
                 }
                 Mode::Info => {
                     info[sudoku.count_solutions(2)] += 1;
