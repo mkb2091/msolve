@@ -212,32 +212,29 @@ impl Iterator for SolutionIterator {
     }
 }
 
-fn generate_masks_from_intersections(isec: [u16; 9]) -> ([u16; 9], [u16; 9]) {
-    let only_1_1 = isec[0] & !((isec[1] | isec[2]) & (isec[3] | isec[6]));
-    let only_1_2 = isec[1] & !((isec[0] | isec[2]) & (isec[4] | isec[7]));
-    let only_1_3 = isec[2] & !((isec[0] | isec[1]) & (isec[5] | isec[8]));
+fn generate_masks_from_intersections(isec: [u16; 9], mut only: [u16; 9]) -> ([u16; 9], [u16; 9]) {
+    only[0] |= isec[0] & !((isec[1] | isec[2]) & (isec[3] | isec[6]));
+    only[1] |= isec[1] & !((isec[0] | isec[2]) & (isec[4] | isec[7]));
+    only[2] |= isec[2] & !((isec[0] | isec[1]) & (isec[5] | isec[8]));
 
-    let only_2_1 = isec[3] & !((isec[4] | isec[5]) & (isec[0] | isec[6]));
-    let only_2_2 = isec[4] & !((isec[3] | isec[5]) & (isec[1] | isec[7]));
-    let only_2_3 = isec[5] & !((isec[3] | isec[4]) & (isec[2] | isec[8]));
+    only[3] |= isec[3] & !((isec[4] | isec[5]) & (isec[0] | isec[6]));
+    only[4] |= isec[4] & !((isec[3] | isec[5]) & (isec[1] | isec[7]));
+    only[5] |= isec[5] & !((isec[3] | isec[4]) & (isec[2] | isec[8]));
 
-    let only_3_1 = isec[6] & !((isec[7] | isec[8]) & (isec[0] | isec[3]));
-    let only_3_2 = isec[7] & !((isec[6] | isec[8]) & (isec[1] | isec[4]));
-    let only_3_3 = isec[8] & !((isec[6] | isec[7]) & (isec[2] | isec[5]));
+    only[6] |= isec[6] & !((isec[7] | isec[8]) & (isec[0] | isec[3]));
+    only[7] |= isec[7] & !((isec[6] | isec[8]) & (isec[1] | isec[4]));
+    only[8] |= isec[8] & !((isec[6] | isec[7]) & (isec[2] | isec[5]));
 
     let resultant_mask = [
-        !(only_1_2 | only_1_3 | only_2_1 | only_3_1),
-        !(only_1_1 | only_1_3 | only_2_2 | only_3_2),
-        !(only_1_1 | only_1_2 | only_2_3 | only_3_3),
-        !(only_1_1 | only_2_2 | only_2_3 | only_3_1),
-        !(only_1_2 | only_2_1 | only_2_3 | only_3_2),
-        !(only_1_3 | only_2_1 | only_2_2 | only_3_3),
-        !(only_1_1 | only_2_1 | only_3_2 | only_3_3),
-        !(only_1_2 | only_2_2 | only_3_1 | only_3_3),
-        !(only_1_3 | only_2_3 | only_3_1 | only_3_2),
-    ];
-    let only = [
-        only_1_1, only_1_2, only_1_3, only_2_1, only_2_2, only_2_3, only_3_1, only_3_2, only_3_3,
+        !(only[1] | only[2] | only[3] | only[6]),
+        !(only[0] | only[2] | only[4] | only[7]),
+        !(only[0] | only[1] | only[5] | only[8]),
+        !(only[0] | only[4] | only[5] | only[6]),
+        !(only[1] | only[3] | only[5] | only[7]),
+        !(only[2] | only[3] | only[4] | only[8]),
+        !(only[0] | only[3] | only[7] | only[8]),
+        !(only[1] | only[4] | only[6] | only[8]),
+        !(only[2] | only[5] | only[6] | only[7]),
     ];
     (resultant_mask, only)
 }
@@ -315,13 +312,15 @@ impl Sudoku {
         let mut sudoku = self.cells;
         let mut sudoku_check = SUDOKU_MAX;
         for floor_number in (0..3).map(|x| x * 27) {
+            let mut only = [0; 9];
             let mut intersections = [0_u16; 9]; // Intersection
             for i in 0..9 {
                 intersections[i] = sudoku[floor_number + i * 3]
                     | sudoku[floor_number + i * 3 + 1]
                     | sudoku[floor_number + i * 3 + 2];
+                only[i] = intersections[i] * (intersections[i].count_ones() <= 3) as u16;
             }
-            let (resultant_mask, only) = generate_masks_from_intersections(intersections);
+            let (resultant_mask, only) = generate_masks_from_intersections(intersections, only);
 
             let mut temp_total = 0;
             for (i, (row, only_row)) in resultant_mask.iter().zip(only.iter()).enumerate() {
@@ -340,15 +339,18 @@ impl Sudoku {
             return false;
         }
         for tower_number in (0..3).map(|x| x * 3) {
+            let mut only = [0; 9];
             let mut intersections = [0_u16; 9]; // Intersection
             for column in 0..3 {
                 for layer in 0..3 {
-                    intersections[column * 3 + layer] = sudoku[tower_number + layer * 27 + column]
+                    let i = column * 3 + layer;
+                    intersections[i] = sudoku[tower_number + layer * 27 + column]
                         | sudoku[tower_number + layer * 27 + column + 9]
-                        | sudoku[tower_number + layer * 27 + column + 18]
+                        | sudoku[tower_number + layer * 27 + column + 18];
+                    only[i] = intersections[i] * (intersections[i].count_ones() <= 3) as u16;
                 }
             }
-            let (resultant_mask, only) = generate_masks_from_intersections(intersections);
+            let (resultant_mask, only) = generate_masks_from_intersections(intersections, only);
 
             let mut temp_total = 0;
 
