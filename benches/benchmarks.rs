@@ -52,6 +52,8 @@ fn criterion_benchmark(c: &mut Criterion) {
         ("kaggle.txt", true),         // https://www.kaggle.com/bryanpark/sudoku
         ("gen_puzzles", true),        // http://www.enjoysudoku.com/gen_puzzles.zip
         ("forum_hardest_1905", true), // http://forum.enjoysudoku.com/the-hardest-sudokus-new-thread-t6539-600.html#p277835
+        ("hardest_to_solve", false), // Top 1000 hardest to solve for msolve from forum_hardest_1905
+        ("hardest_to_verify", false), // Top 1000 hardest to solve unique for msolve from forum_hardest_1905
         ("serg_benchmark", true),     // http://sites.google.com/site/sergsudoku/benchmark.zip
     ];
 
