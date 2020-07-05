@@ -71,13 +71,10 @@ fn criterion_benchmark(c: &mut Criterion) {
             line.clear();
         }
         if *shuffle {
-            let len = sudokus.len();
-            for i in 0..len {
-                sudokus[i] = {
-                    let mut sudoku = sudoku::Sudoku::from_str_line(&sudokus[i]).unwrap();
-                    sudoku.shuffle();
-                    sudoku.to_string()
-                };
+            for sudoku_string in sudokus.iter_mut() {
+                let mut sudoku = sudoku::Sudoku::from_str_line(&*sudoku_string).unwrap();
+                sudoku.shuffle();
+                *sudoku_string = sudoku.to_string()
             }
             while sudokus.len() < 50000 {
                 let len = sudokus.len();
