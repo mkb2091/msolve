@@ -11,6 +11,8 @@ enum Mode {
     FindWithSingleSolution,
     FindWithSolution,
     CountSolutions(usize),
+    Difficulty,
+    DifficultyVerifyUnique,
     Info,
 }
 
@@ -46,6 +48,8 @@ fn main() {
                         return;
                     }
                 }
+                "difficulty" => Mode::Difficulty,
+                "difficulty_verify_unique" => Mode::DifficultyVerifyUnique,
                 _ => {
                     println!("Unknown mode: {}", arg1);
                     return;
@@ -79,6 +83,10 @@ Modes:
 	find_with_solution: returns all sudokus with at least one solution
 
 	count_solutions {{N}}: returns each sudoku with the number of solutions up to a maximum of N in the format {{count}};{{sudoku}}
+
+    difficulty: returns each sudoku with the number of backtracking steps to solve in the format {{steps}};{{sudoku}}
+
+    difficulty_verify_unique: returns each sudoku with the number of backtracking steps to verify uniqueness in the format {{steps}};{{sudoku}}
 
 	info: returns the number of puzzles with no solution, 1 solution and 2+ solutions
 			"
@@ -132,6 +140,20 @@ Modes:
                     let count = sudoku.count_solutions(n);
 
                     let _ = output_handle.write_all(&count.to_string().as_bytes());
+                    let _ = output_handle.write_all(b";");
+                    let _ = output_handle.write_all(&buffer.as_bytes());
+                }
+                Mode::Difficulty => {
+                    let steps = sudoku.solve_difficulty();
+
+                    let _ = output_handle.write_all(&steps.to_string().as_bytes());
+                    let _ = output_handle.write_all(b";");
+                    let _ = output_handle.write_all(&buffer.as_bytes());
+                }
+                Mode::DifficultyVerifyUnique => {
+                    let steps = sudoku.solve_unique_difficulty();
+
+                    let _ = output_handle.write_all(&steps.to_string().as_bytes());
                     let _ = output_handle.write_all(b";");
                     let _ = output_handle.write_all(&buffer.as_bytes());
                 }
