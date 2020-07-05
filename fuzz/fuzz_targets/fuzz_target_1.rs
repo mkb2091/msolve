@@ -19,8 +19,14 @@ fuzz_target!(|data: Sudoku| {
         .map(|x| *x)
         .collect::<Vec<u8>>();
     if let Ok(sudoku) = msolve::Sudoku::try_from(data) {
-        if let Some(solution) = sudoku.solve_unique() {
-            assert!(solution.to_array()[0] <= 9);
+        let mut solved = false;
+        for solution in sudoku.iter().take(2) {
+            assert!(solution.to_array().iter().all(|x| *x <= 9 && *x != 0));
+            assert!(solution.to_bytes().iter().all(|x| *x != b'.'));
+            solved = true;
+        }
+        if !solved {
+            assert!(sudoku.to_bytes().iter().any(|x| *x == b'.'));
         }
     }
 });
