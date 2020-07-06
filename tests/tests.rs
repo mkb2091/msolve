@@ -215,6 +215,6 @@ mod tests {
     }
     #[quickcheck]
     fn to_array_returns_inputs_below_10(input: Sudoku) -> bool {
-        &input.data[..] == &msolve::Sudoku::from(&input.data).to_array()[..]
+        input.data[..] == msolve::Sudoku::from(&input.data).to_array()[..]
     }
 }
