@@ -34,7 +34,7 @@ name = "benchmarks"
 harness = false
 
 [profile.release]
-lto = true
+lto = 'thin'
 panic = "abort"
 
 [profile.dev]
