@@ -533,6 +533,10 @@ impl Sudoku {
         iter.step_count
     }
 
+    pub fn solved_cell_count(&self) -> usize {
+        (self.solved_squares & SOLVED_SUDOKU).count_ones() as usize
+    }
+
     pub fn generate_from_seed<T>(self, rng: &mut T, cells_to_remove: usize) -> Self
     where
         T: rand::Rng + rand_core::RngCore,
@@ -607,6 +611,12 @@ impl Sudoku {
             }
         }
         sudoku
+    }
+}
+
+impl PartialEq for Sudoku {
+    fn eq(&self, other: &Self) -> bool {
+        self.solved_squares == other.solved_squares && self.cells[..] == other.cells[..]
     }
 }
 
