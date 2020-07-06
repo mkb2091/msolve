@@ -1,6 +1,3 @@
-#[cfg(feature = "cli")]
-#[macro_use]
-extern crate clap;
 mod lib;
 pub use lib::*;
 
@@ -137,14 +134,11 @@ mod cli {
 
             buffer.clear();
         }
-        match opts.mode {
-            Mode::Info => {
-                println!(
-                    "0 Solutions: {}, 1 Solution: {}, 2+ Solutions: {}",
-                    info[0], info[1], info[2]
-                );
-            }
-            _ => {}
+        if let Mode::Info = opts.mode {
+            println!(
+                "0 Solutions: {}, 1 Solution: {}, 2+ Solutions: {}",
+                info[0], info[1], info[2]
+            );
         }
     }
 }
