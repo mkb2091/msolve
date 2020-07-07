@@ -8,7 +8,6 @@ mod cli {
     use std::io::Write;
 
     use clap::Clap;
-    use rand::Rng;
 
     #[derive(Clap, Copy, Clone)]
     #[clap(version = "1.0")]
@@ -71,9 +70,11 @@ mod cli {
     #[derive(Clap, Copy, Clone)]
     struct GenerateContinuous {
         #[clap(short, long)]
-        pool_size: usize,
+        pool_size: std::num::NonZeroUsize,
         #[clap(short, long, default_value = "0")]
         iterations: usize,
+        #[clap(short, long, default_value = "2")]
+        growth_factor: std::num::NonZeroUsize,
     }
 
     fn score_sudoku(sudoku: &msolve::Sudoku, opts: &Opts) -> i32 {
@@ -105,7 +106,11 @@ mod cli {
         let mut generation_pool = Vec::<(msolve::Sudoku, i32)>::new();
         if let Mode::Generate(generate) = opts.mode {
             if let GenerateMode::Continuous(continuous) = generate.mode {
-                generation_pool.reserve(continuous.pool_size);
+                generation_pool
+                    .reserve(continuous.pool_size.get() * continuous.growth_factor.get() + 1);
+                let sudoku = msolve::Sudoku::empty().generate_from_seed(&mut rng, 0);
+                let score = score_sudoku(&sudoku, &opts);
+                generation_pool.push((sudoku, score));
             }
         }
         while let Ok(result) = input.read_line(&mut buffer) {
@@ -189,21 +194,29 @@ mod cli {
 
         if let Mode::Generate(generate) = opts.mode {
             if let GenerateMode::Continuous(continuous) = generate.mode {
-                if generation_pool.is_empty() {
-                    let _ = output_handle.write_all(b"Empty generation pool, exiting\n");
-                    return;
-                }
+                let mut pool_2 = Vec::<(msolve::Sudoku, i32)>::with_capacity(
+                    continuous.pool_size.get() * continuous.growth_factor.get() + 1,
+                );
                 let mut iteration = 1;
                 while iteration != continuous.iterations {
                     iteration += 1;
-                    let len = generation_pool.len();
-                    for i in 0..len {
-                        let sudoku = generation_pool[i]
-                            .0
-                            .generate_from_seed(&mut rng, generate.cells_to_remove);
-                        let score = score_sudoku(&sudoku, &opts);
-                        // Reinitializing as sudoku contains extra information that makes solving quicker
-                        generation_pool.push((sudoku, score));
+                    for (old_sudoku, _) in generation_pool.iter() {
+                        for _ in 0..continuous.growth_factor.get() {
+                            let sudoku =
+                                old_sudoku.generate_from_seed(&mut rng, generate.cells_to_remove);
+                            let score = score_sudoku(&sudoku, &opts);
+                            // Reinitializing as sudoku contains extra information that makes solving quicker
+                            pool_2.push((sudoku, score));
+                        }
+                    }
+                    let sudoku = msolve::Sudoku::empty().generate_from_seed(&mut rng, 0);
+                    let score = score_sudoku(&sudoku, &opts);
+                    pool_2.push((sudoku, score));
+
+                    pool_2.sort_unstable_by(|a, b| b.1.cmp(&a.1));
+                    pool_2.dedup();
+
+                    for (sudoku, score) in pool_2.iter() {
                         if generate.display_score {
                             let _ = output_handle.write_all(&score.to_string().as_bytes());
                             let _ = output_handle.write_all(b";");
@@ -211,19 +224,13 @@ mod cli {
                         let _ = output_handle.write_all(&sudoku.to_bytes());
                         let _ = output_handle.write_all(b"\n");
                     }
-                    generation_pool.sort_unstable_by(|a, b| b.1.cmp(&a.1));
-                    generation_pool.dedup();
-                    generation_pool.truncate(continuous.pool_size);
-                    let i = rng.gen_range(0, generation_pool.len());
-                    let new = msolve::Sudoku::empty().generate_from_seed(&mut rng, 0);
-                    let score = score_sudoku(&new, &opts);
-                    generation_pool[i] = (new, score);
-                    if generate.display_score {
-                        let _ = output_handle.write_all(&score.to_string().as_bytes());
-                        let _ = output_handle.write_all(b";");
-                    }
-                    let _ = output_handle.write_all(&new.to_bytes());
-                    let _ = output_handle.write_all(b"\n");
+
+                    pool_2.shrink_to_fit(); // Incase large input
+
+                    pool_2.truncate(continuous.pool_size.get());
+
+                    std::mem::swap(&mut generation_pool, &mut pool_2);
+                    pool_2.clear();
                 }
             }
         }
