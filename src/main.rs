@@ -34,15 +34,11 @@ mod cli {
 
     #[derive(Clap, Copy, Clone)]
     struct Solve {
-        #[clap(short, long)]
-        unique: bool,
         #[clap(short, long, default_value = "1")]
         count: usize,
     }
     #[derive(Clap, Copy, Clone)]
     struct Select {
-        #[clap(short, long)]
-        verify_uniqueness: bool,
         #[clap(short, long)]
         invert: bool,
     }
@@ -112,7 +108,7 @@ mod cli {
             let sudoku = buffer.parse::<msolve::Sudoku>().unwrap();
             match opts.mode {
                 Mode::Solve(solve) => {
-                    if solve.unique {
+                    if opts.verify_uniqueness {
                         if let Some(solution) = sudoku.solve_unique() {
                             let _ = output_handle.write_all(&solution.to_bytes());
                             let _ = output_handle.write_all(b"\n");
@@ -125,7 +121,7 @@ mod cli {
                     }
                 }
                 Mode::Select(select) => {
-                    let mut does_match = if select.verify_uniqueness {
+                    let mut does_match = if opts.verify_uniqueness {
                         sudoku.has_single_solution()
                     } else {
                         sudoku.has_solution()
