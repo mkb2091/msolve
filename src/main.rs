@@ -78,8 +78,14 @@ mod cli {
     }
 
     fn score_sudoku(sudoku: &msolve::Sudoku, continuous: &GenerateContinuous) -> i32 {
-        (sudoku.solve_unique_difficulty() * continuous.step_weight) as i32
-            - (sudoku.solved_cell_count() * continuous.clue_weight) as i32
+        let mut score = 0;
+        if continuous.step_weight != 0 {
+            score += (sudoku.solve_unique_difficulty() * continuous.step_weight) as i32;
+        }
+        if continuous.clue_weight != 0 {
+            score -= (sudoku.solved_cell_count() * continuous.clue_weight) as i32;
+        }
+        score
     }
 
     pub fn main() {
