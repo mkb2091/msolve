@@ -187,7 +187,8 @@ mod cli {
         if let Mode::Generate(generate) = opts.mode {
             if let GenerateMode::Continuous(continuous) = generate.mode {
                 if generation_pool.is_empty() {
-                    let _ = output_handle.write_all(b"Empty generation pool, exiting");
+                    let _ = output_handle.write_all(b"Empty generation pool, exiting\n");
+                    return;
                 }
                 let mut iteration = 1;
                 while iteration != continuous.iterations {
