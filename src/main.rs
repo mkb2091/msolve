@@ -78,19 +78,11 @@ mod cli {
     }
 
     fn score_sudoku(sudoku: &msolve::Sudoku, opts: &Opts) -> i32 {
-        let mut score = 0;
-        if opts.step_weight != 0 {
-            let sudoku = msolve::Sudoku::from(sudoku.to_array());
-            score += (if opts.verify_uniqueness {
-                sudoku.solve_unique_difficulty()
-            } else {
-                sudoku.solve_difficulty()
-            } * opts.step_weight) as i32;
-        }
-        if opts.clue_weight != 0 {
-            score -= (sudoku.solved_cell_count() * opts.clue_weight) as i32;
-        }
-        score
+        msolve::Sudoku::from(sudoku.to_array()).difficulty(
+            opts.verify_uniqueness,
+            opts.step_weight,
+            opts.clue_weight,
+        )
     }
 
     pub fn main() {

@@ -513,24 +513,25 @@ impl Sudoku {
             solved_squares: 0,
         }
     }
+
     /**
-    Returns the number of steps to find the first solution, approximately proportional to difficulty
+    Estimates the difficulty
     */
     #[inline]
-    pub fn solve_difficulty(self) -> usize {
-        let mut iter = self.iter();
-        iter.next();
-        iter.step_count
-    }
-    /**
-    Returns the number of steps to find the first two solutions, approximately proportional to difficulty
-    */
-    #[inline]
-    pub fn solve_unique_difficulty(self) -> usize {
-        let mut iter = self.iter();
-        iter.next();
-        iter.next();
-        iter.step_count
+    pub fn difficulty(self, verify_unique: bool, step_weight: usize, clue_weight: usize) -> i32 {
+        let mut difficulty = 0;
+        if step_weight != 0 {
+            let mut iter = self.iter();
+            iter.next();
+            if verify_unique {
+                iter.next();
+            }
+            difficulty += (iter.step_count * step_weight) as i32
+        }
+        if clue_weight != 0 {
+            difficulty -= (self.solved_cell_count() * clue_weight) as i32;
+        }
+        difficulty
     }
 
     pub fn solved_cell_count(&self) -> usize {

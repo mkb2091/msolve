@@ -204,7 +204,7 @@ mod tests {
     #[quickcheck]
     fn solve_unique_harder_than_solve(input: Sudoku) -> bool {
         let sudoku = msolve::Sudoku::from(input.data);
-        sudoku.solve_unique_difficulty() >= sudoku.solve_difficulty()
+        sudoku.difficulty(true, 1, 1) >= sudoku.difficulty(false, 1, 1)
     }
     #[quickcheck]
     fn generate_from_seed_has_single_solution(input: Sudoku, n: u8) -> bool {
