@@ -13,6 +13,12 @@ mod cli {
     #[derive(Clap, Copy, Clone)]
     #[clap(version = "1.0")]
     struct Opts {
+        #[clap(short, long)]
+        verify_uniqueness: bool,
+        #[clap(short, long, default_value = "1")]
+        step_weight: usize,
+        #[clap(short, long, default_value = "1")]
+        clue_weight: usize,
         #[clap(subcommand)]
         mode: Mode,
     }
@@ -21,7 +27,7 @@ mod cli {
     enum Mode {
         Solve(Solve),
         Select(Select),
-        Difficulty(Difficulty),
+        Difficulty,
         CountSolutions(CountSolutions),
         Generate(Generate),
         Info,
@@ -41,11 +47,6 @@ mod cli {
         #[clap(short, long)]
         invert: bool,
     }
-    #[derive(Clap, Copy, Clone)]
-    struct Difficulty {
-        #[clap(short, long)]
-        verify_uniqueness: bool,
-    }
 
     #[derive(Clap, Copy, Clone)]
     struct CountSolutions {
@@ -57,6 +58,8 @@ mod cli {
         cells_to_remove: usize,
         #[clap(subcommand)]
         mode: GenerateMode,
+        #[clap(short, long)]
+        display_score: bool,
     }
 
     #[derive(Clap, Copy, Clone)]
@@ -71,19 +74,20 @@ mod cli {
         pool_size: usize,
         #[clap(short, long, default_value = "0")]
         iterations: usize,
-        #[clap(short, long, default_value = "1")]
-        step_weight: usize,
-        #[clap(short, long, default_value = "1")]
-        clue_weight: usize,
     }
 
-    fn score_sudoku(sudoku: &msolve::Sudoku, continuous: &GenerateContinuous) -> i32 {
+    fn score_sudoku(sudoku: &msolve::Sudoku, opts: &Opts) -> i32 {
         let mut score = 0;
-        if continuous.step_weight != 0 {
-            score += (sudoku.solve_unique_difficulty() * continuous.step_weight) as i32;
+        if opts.step_weight != 0 {
+            let sudoku = msolve::Sudoku::from(sudoku.to_array());
+            score += (if opts.verify_uniqueness {
+                sudoku.solve_unique_difficulty()
+            } else {
+                sudoku.solve_difficulty()
+            } * opts.step_weight) as i32;
         }
-        if continuous.clue_weight != 0 {
-            score -= (sudoku.solved_cell_count() * continuous.clue_weight) as i32;
+        if opts.clue_weight != 0 {
+            score -= (sudoku.solved_cell_count() * opts.clue_weight) as i32;
         }
         score
     }
@@ -137,13 +141,9 @@ mod cli {
                         let _ = output_handle.write_all(b"\n");
                     }
                 }
-                Mode::Difficulty(difficulty) => {
-                    let steps = if difficulty.verify_uniqueness {
-                        sudoku.solve_unique_difficulty()
-                    } else {
-                        sudoku.solve_difficulty()
-                    };
-                    let _ = output_handle.write_all(&steps.to_string().as_bytes());
+                Mode::Difficulty => {
+                    let difficulty = score_sudoku(&sudoku, &opts);
+                    let _ = output_handle.write_all(&difficulty.to_string().as_bytes());
                     let _ = output_handle.write_all(b";");
                     let _ = output_handle.write_all(&sudoku.to_bytes());
                     let _ = output_handle.write_all(b"\n");
@@ -157,17 +157,20 @@ mod cli {
                     let _ = output_handle.write_all(b"\n");
                 }
 
-                Mode::Generate(n) => match n.mode {
+                Mode::Generate(generate) => match generate.mode {
                     GenerateMode::Once => {
-                        let _ = output_handle.write_all(
-                            &sudoku
-                                .generate_from_seed(&mut rng, n.cells_to_remove)
-                                .to_bytes(),
-                        );
+                        let sudoku = sudoku.generate_from_seed(&mut rng, generate.cells_to_remove);
+                        if generate.display_score {
+                            let score = score_sudoku(&sudoku, &opts);
+                            let _ = output_handle.write_all(&score.to_string().as_bytes());
+                            let _ = output_handle.write_all(b";");
+                        }
+
+                        let _ = output_handle.write_all(&sudoku.to_bytes());
                         let _ = output_handle.write_all(b"\n");
                     }
-                    GenerateMode::Continuous(continuous) => {
-                        generation_pool.push((sudoku, score_sudoku(&sudoku, &continuous)));
+                    GenerateMode::Continuous(_) => {
+                        generation_pool.push((sudoku, score_sudoku(&sudoku, &opts)));
                     }
                 },
                 Mode::Info => {
@@ -198,12 +201,13 @@ mod cli {
                         let sudoku = generation_pool[i]
                             .0
                             .generate_from_seed(&mut rng, generate.cells_to_remove);
-                        let score =
-                            score_sudoku(&msolve::Sudoku::from(sudoku.to_array()), &continuous);
+                        let score = score_sudoku(&sudoku, &opts);
                         // Reinitializing as sudoku contains extra information that makes solving quicker
                         generation_pool.push((sudoku, score));
-                        let _ = output_handle.write_all(&score.to_string().as_bytes());
-                        let _ = output_handle.write_all(b";");
+                        if generate.display_score {
+                            let _ = output_handle.write_all(&score.to_string().as_bytes());
+                            let _ = output_handle.write_all(b";");
+                        }
                         let _ = output_handle.write_all(&sudoku.to_bytes());
                         let _ = output_handle.write_all(b"\n");
                     }
@@ -212,10 +216,12 @@ mod cli {
                     generation_pool.truncate(continuous.pool_size);
                     let i = rng.gen_range(0, generation_pool.len());
                     let new = msolve::Sudoku::empty().generate_from_seed(&mut rng, 0);
-                    let score = score_sudoku(&new, &continuous);
+                    let score = score_sudoku(&new, &opts);
                     generation_pool[i] = (new, score);
-                    let _ = output_handle.write_all(&score.to_string().as_bytes());
-                    let _ = output_handle.write_all(b";");
+                    if generate.display_score {
+                        let _ = output_handle.write_all(&score.to_string().as_bytes());
+                        let _ = output_handle.write_all(b";");
+                    }
                     let _ = output_handle.write_all(&new.to_bytes());
                     let _ = output_handle.write_all(b"\n");
                 }
