@@ -92,12 +92,10 @@ mod cli {
             if let GenerateMode::Continuous(continuous) = generate.mode {
                 generation_pool
                     .reserve(continuous.pool_size.get() * continuous.growth_factor.get() + 1);
-                let sudoku = msolve::Sudoku::empty().generate_from_seed(&mut rng, 0);
-                if let Some(score) = score_sudoku(&sudoku, &opts) {
-                    generation_pool.push((sudoku, score));
-                } else {
-                    debug_assert!(false, "Generated sudokus should be valid");
-                }
+                generation_pool.push((
+                    msolve::Sudoku::empty().generate_from_seed(&mut rng, 0),
+                    i32::MIN,
+                ));
             }
         }
         while let Ok(result) = input.read_line(&mut buffer) {
@@ -165,11 +163,7 @@ mod cli {
                         let _ = output_handle.write_all(&sudoku.to_bytes());
                         let _ = output_handle.write_all(b"\n");
                     }
-                    GenerateMode::Continuous(_) => {
-                        if let Some(score) = score_sudoku(&sudoku, &opts) {
-                            generation_pool.push((sudoku, score));
-                        }
-                    }
+                    GenerateMode::Continuous(_) => generation_pool.push((sudoku, i32::MIN)),
                 },
                 Mode::Info => {
                     info[sudoku.count_solutions(2)] += 1;

@@ -609,7 +609,7 @@ impl Sudoku {
         let mut sudoku = Self::from(array);
         sudoku.scan();
         let cell_distribution = rand::distributions::Uniform::new(0, 81);
-        loop {
+        while (sudoku.solved_squares & SOLVED_SUDOKU) != SOLVED_SUDOKU {
             let index = cell_distribution.sample(rng);
             if sudoku.solved_squares & (1 << index) != 0 {
                 continue;
@@ -628,11 +628,8 @@ impl Sudoku {
             match temp.count_solutions(2) {
                 2 => sudoku = temp,
                 1 => {
-                    if let Some((sudoku, _)) = temp.minimise(None) {
-                        return sudoku;
-                    } else {
-                        debug_assert!(false, "Generated sudokus should be valid");
-                    }
+                    sudoku = temp;
+                    break;
                 }
                 0 => sudoku.cells[index] -= 1 << i,
                 _ => {
@@ -640,6 +637,10 @@ impl Sudoku {
                 }
             }
         }
+        return sudoku
+            .minimise(None)
+            .map(|(sudoku, _)| sudoku)
+            .unwrap_or(sudoku);
     }
 
     fn import<T: Iterator<Item = Option<u32>>>(square_iterator: T) -> Self {
