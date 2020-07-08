@@ -92,10 +92,7 @@ mod cli {
             if let GenerateMode::Continuous(continuous) = generate.mode {
                 generation_pool
                     .reserve(continuous.pool_size.get() * continuous.growth_factor.get() + 1);
-                generation_pool.push((
-                    msolve::Sudoku::empty().generate_from_seed(&mut rng, 0),
-                    i32::MIN,
-                ));
+                generation_pool.push((msolve::Sudoku::generate(&mut rng), i32::MIN));
             }
         }
         while let Ok(result) = input.read_line(&mut buffer) {
@@ -199,7 +196,7 @@ mod cli {
                             }
                         }
                     }
-                    let sudoku = msolve::Sudoku::empty().generate_from_seed(&mut rng, 0);
+                    let sudoku = msolve::Sudoku::generate(&mut rng);
                     if let Some(score) = score_sudoku(&sudoku, &opts) {
                         pool_2.push((sudoku, score));
                     } else {
@@ -209,7 +206,7 @@ mod cli {
                     pool_2.sort_unstable_by(|a, b| b.1.cmp(&a.1));
                     pool_2.dedup();
 
-                    for (sudoku, score) in pool_2.iter() {
+                    for (sudoku, score) in pool_2.iter().rev() {
                         if generate.display_score {
                             let _ = output_handle.write_all(&score.to_string().as_bytes());
                             let _ = output_handle.write_all(b";");

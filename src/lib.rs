@@ -582,6 +582,50 @@ impl Sudoku {
         None
     }
 
+    pub fn generate<T>(rng: &mut T) -> Self
+    where
+        T: rand::Rng + rand_core::RngCore,
+    {
+        let mut sudoku = Self::empty();
+        let cell_distribution = rand::distributions::Uniform::new(0, 81);
+        while (sudoku.solved_squares & SOLVED_SUDOKU) != SOLVED_SUDOKU {
+            let index = cell_distribution.sample(rng);
+            if sudoku.solved_squares & (1 << index) != 0 {
+                continue;
+            }
+            let mut temp = sudoku;
+            let mut value = temp.cells[index];
+            debug_assert_ne!(value, 0);
+            let chosen_value_index = rng.gen_range(0, value.count_ones());
+            let mut i = get_last_digit!(value, usize);
+            for _ in 0..chosen_value_index {
+                i = get_last_digit!(value, usize);
+            }
+            temp.cells[index] = 1 << i;
+            temp.apply_number(index);
+            temp.scan();
+            match temp.count_solutions(2) {
+                2 => sudoku = temp,
+                1 => {
+                    sudoku = temp;
+                    break;
+                }
+                0 => sudoku.cells[index] -= 1 << i,
+                _ => {
+                    debug_assert!(false, "More than 2 returned from count_solutions(2)");
+                }
+            }
+        }
+        return sudoku
+            .minimise(None)
+            .map(|(sudoku, _)| sudoku)
+            .unwrap_or(sudoku);
+    }
+
+    pub fn mutate(self) -> Option<Self> {
+        None
+    }
+
     pub fn generate_from_seed<T>(self, rng: &mut T, cells_to_remove: usize) -> Self
     where
         T: rand::Rng + rand_core::RngCore,

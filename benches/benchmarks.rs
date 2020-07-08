@@ -161,9 +161,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     });
     c.bench_function("Generate puzzle", |b| {
         b.iter(|| {
-            criterion::black_box(
-                &msolve::Sudoku::empty().generate_from_seed(&mut rand::thread_rng(), 0),
-            );
+            criterion::black_box(&msolve::Sudoku::generate(&mut rand::thread_rng()));
         })
     });
 }
