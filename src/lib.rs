@@ -518,24 +518,68 @@ impl Sudoku {
     Estimates the difficulty
     */
     #[inline]
-    pub fn difficulty(self, verify_unique: bool, step_weight: usize, clue_weight: usize) -> i32 {
+    pub fn difficulty(
+        self,
+        verify_unique: bool,
+        step_weight: usize,
+        clue_weight: usize,
+    ) -> Option<i32> {
         let mut difficulty = 0;
         if step_weight != 0 {
-            let mut iter = self.iter();
-            iter.next();
-            if verify_unique {
-                iter.next();
+            let mut iter = Self::from(self.to_array()).iter();
+            if iter.next().is_none() || (verify_unique && iter.next().is_some()) {
+                return None;
             }
             difficulty += (iter.step_count * step_weight) as i32
         }
         if clue_weight != 0 {
             difficulty -= (self.solved_cell_count() * clue_weight) as i32;
         }
-        difficulty
+        Some(difficulty)
     }
 
     pub fn solved_cell_count(&self) -> usize {
         (self.solved_squares & SOLVED_SUDOKU).count_ones() as usize
+    }
+
+    pub fn minimise(self, old_score: Option<i32>) -> Option<(Self, i32)> {
+        let mut old: Option<(Self, i32)> = old_score
+            .or_else(|| self.difficulty(true, 1, 1))
+            .map(|old_score| (self, old_score));
+        let mut changed = false;
+        let mut removable: u128 = u128::MAX;
+        while let Some((old_sudoku, old_score)) = old {
+            let mut best_score = old_score;
+            let mut best_sudoku: Option<Self> = None;
+            let mut temp = old_sudoku.solved_squares & SOLVED_SUDOKU & removable;
+            let mut array = old_sudoku.to_array();
+            while temp != 0 {
+                let square = get_last_digit!(temp, usize);
+                let old_value = array[square];
+                debug_assert_ne!(old_value, 0);
+                array[square] = 0;
+                let new = Self::from(&array);
+                new.difficulty(true, 1, 1)
+                    .or_else(|| {
+                        removable -= 1 << square;
+                        // If it cannot be solved after removing this square, then don't try again
+                        None
+                    })
+                    .filter(|new_score| *new_score > best_score)
+                    .map(|new_score| {
+                        best_score = new_score;
+                        best_sudoku = Some(new);
+                        changed = true
+                    });
+                array[square] = old_value;
+            }
+            if best_sudoku.is_none() && changed {
+                debug_assert!(old.is_some());
+                return old;
+            }
+            old = best_sudoku.map(|best_sudoku| (best_sudoku, best_score));
+        }
+        None
     }
 
     pub fn generate_from_seed<T>(self, rng: &mut T, cells_to_remove: usize) -> Self
@@ -583,7 +627,13 @@ impl Sudoku {
             temp.scan();
             match temp.count_solutions(2) {
                 2 => sudoku = temp,
-                1 => return temp,
+                1 => {
+                    if let Some((sudoku, _)) = temp.minimise(None) {
+                        return sudoku;
+                    } else {
+                        debug_assert!(false, "Generated sudokus should be valid");
+                    }
+                }
                 0 => sudoku.cells[index] -= 1 << i,
                 _ => {
                     debug_assert!(false, "More than 2 returned from count_solutions(2)");

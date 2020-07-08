@@ -73,12 +73,8 @@ mod cli {
         growth_factor: std::num::NonZeroUsize,
     }
 
-    fn score_sudoku(sudoku: &msolve::Sudoku, opts: &Opts) -> i32 {
-        msolve::Sudoku::from(sudoku.to_array()).difficulty(
-            opts.verify_uniqueness,
-            opts.step_weight,
-            opts.clue_weight,
-        )
+    fn score_sudoku(sudoku: &msolve::Sudoku, opts: &Opts) -> Option<i32> {
+        sudoku.difficulty(opts.verify_uniqueness, opts.step_weight, opts.clue_weight)
     }
 
     pub fn main() {
@@ -97,8 +93,11 @@ mod cli {
                 generation_pool
                     .reserve(continuous.pool_size.get() * continuous.growth_factor.get() + 1);
                 let sudoku = msolve::Sudoku::empty().generate_from_seed(&mut rng, 0);
-                let score = score_sudoku(&sudoku, &opts);
-                generation_pool.push((sudoku, score));
+                if let Some(score) = score_sudoku(&sudoku, &opts) {
+                    generation_pool.push((sudoku, score));
+                } else {
+                    debug_assert!(false, "Generated sudokus should be valid");
+                }
             }
         }
         while let Ok(result) = input.read_line(&mut buffer) {
@@ -135,11 +134,12 @@ mod cli {
                     }
                 }
                 Mode::Difficulty => {
-                    let difficulty = score_sudoku(&sudoku, &opts);
-                    let _ = output_handle.write_all(&difficulty.to_string().as_bytes());
-                    let _ = output_handle.write_all(b";");
-                    let _ = output_handle.write_all(&sudoku.to_bytes());
-                    let _ = output_handle.write_all(b"\n");
+                    if let Some(difficulty) = score_sudoku(&sudoku, &opts) {
+                        let _ = output_handle.write_all(&difficulty.to_string().as_bytes());
+                        let _ = output_handle.write_all(b";");
+                        let _ = output_handle.write_all(&sudoku.to_bytes());
+                        let _ = output_handle.write_all(b"\n");
+                    }
                 }
 
                 Mode::CountSolutions(n) => {
@@ -154,16 +154,21 @@ mod cli {
                     GenerateMode::Once => {
                         let sudoku = sudoku.generate_from_seed(&mut rng, generate.cells_to_remove);
                         if generate.display_score {
-                            let score = score_sudoku(&sudoku, &opts);
-                            let _ = output_handle.write_all(&score.to_string().as_bytes());
-                            let _ = output_handle.write_all(b";");
+                            if let Some(score) = score_sudoku(&sudoku, &opts) {
+                                let _ = output_handle.write_all(&score.to_string().as_bytes());
+                                let _ = output_handle.write_all(b";");
+                            } else {
+                                debug_assert!(false, "Generated sudokus should be valid");
+                            }
                         }
 
                         let _ = output_handle.write_all(&sudoku.to_bytes());
                         let _ = output_handle.write_all(b"\n");
                     }
                     GenerateMode::Continuous(_) => {
-                        generation_pool.push((sudoku, score_sudoku(&sudoku, &opts)));
+                        if let Some(score) = score_sudoku(&sudoku, &opts) {
+                            generation_pool.push((sudoku, score));
+                        }
                     }
                 },
                 Mode::Info => {
@@ -192,14 +197,20 @@ mod cli {
                         for _ in 0..continuous.growth_factor.get() {
                             let sudoku =
                                 old_sudoku.generate_from_seed(&mut rng, generate.cells_to_remove);
-                            let score = score_sudoku(&sudoku, &opts);
-                            // Reinitializing as sudoku contains extra information that makes solving quicker
-                            pool_2.push((sudoku, score));
+                            if let Some(score) = score_sudoku(&sudoku, &opts) {
+                                // Reinitializing as sudoku contains extra information that makes solving quicker
+                                pool_2.push((sudoku, score));
+                            } else {
+                                debug_assert!(false, "Generated sudokus should be valid");
+                            }
                         }
                     }
                     let sudoku = msolve::Sudoku::empty().generate_from_seed(&mut rng, 0);
-                    let score = score_sudoku(&sudoku, &opts);
-                    pool_2.push((sudoku, score));
+                    if let Some(score) = score_sudoku(&sudoku, &opts) {
+                        pool_2.push((sudoku, score));
+                    } else {
+                        debug_assert!(false, "Generated sudokus should be valid");
+                    }
 
                     pool_2.sort_unstable_by(|a, b| b.1.cmp(&a.1));
                     pool_2.dedup();
