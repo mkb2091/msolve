@@ -53,6 +53,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         ("forum_hardest_1905", true), // http://forum.enjoysudoku.com/the-hardest-sudokus-new-thread-t6539-600.html#p277835
         ("hardest_to_solve", false), // Top 1000 hardest to solve for msolve from forum_hardest_1905
         ("hardest_to_verify", false), // Top 1000 hardest to solve unique for msolve from forum_hardest_1905
+        ("most_difficult", false),    // Top 100 hardest sudokus to verify across all lists and generated ones
         ("serg_benchmark", true),     // http://sites.google.com/site/sergsudoku/benchmark.zip
     ];
 
