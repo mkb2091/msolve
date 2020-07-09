@@ -202,11 +202,6 @@ mod tests {
         true
     }
     #[quickcheck]
-    fn solve_unique_harder_than_solve(input: Sudoku) -> bool {
-        let sudoku = msolve::Sudoku::from(input.data);
-        sudoku.difficulty(true, 1, 1) >= sudoku.difficulty(false, 1, 1)
-    }
-    #[quickcheck]
     fn generate_from_seed_has_single_solution(input: Sudoku, n: u8) -> bool {
         let sudoku = msolve::Sudoku::from(input.data);
         sudoku
@@ -216,5 +211,12 @@ mod tests {
     #[quickcheck]
     fn to_array_returns_inputs_below_10(input: Sudoku) -> bool {
         input.data[..] == msolve::Sudoku::from(&input.data).to_array()[..]
+    }
+
+    #[quickcheck]
+    fn generated_has_single_solution(count: u8, count_steps: bool) -> bool {
+        msolve::Sudoku::generate(rand::thread_rng(), count_steps)
+            .take(count as usize)
+            .all(|(sudoku, _)| sudoku.has_single_solution())
     }
 }

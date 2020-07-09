@@ -1,7 +1,8 @@
 #[cfg(default)]
 extern crate smallvec;
 
-use rand::distributions::Distribution;
+#[cfg(feature = "generate")]
+pub mod gen;
 
 use std::convert::From;
 use std::convert::TryInto;
@@ -19,6 +20,7 @@ const INVALID_SUDOKU: u128 = 1 << 127;
 
 const SOLVED_SUDOKU: u128 = (1 << 81) - 1;
 
+#[macro_export]
 macro_rules! get_last_digit {
     ($x:ident, $value_type:ty) => {{
         let value = $x.trailing_zeros();
@@ -246,6 +248,13 @@ fn generate_masks_from_intersections(isec: [u16; 9], mut only: [u16; 9]) -> ([u1
         !(only[2] | only[5] | only[6] | only[7]),
     ];
     (resultant_mask, only)
+}
+
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub enum DifficultyModes {
+    Steps,
+    Clues,
+    StepsClues,
 }
 
 /**
@@ -518,22 +527,14 @@ impl Sudoku {
     Estimates the difficulty
     */
     #[inline]
-    pub fn difficulty(
-        self,
-        verify_unique: bool,
-        step_weight: usize,
-        clue_weight: usize,
-    ) -> Option<i32> {
-        let mut difficulty = 0;
-        if step_weight != 0 {
+    pub fn difficulty(self, count_steps: bool) -> Option<i32> {
+        let mut difficulty = -(self.solved_cell_count() as i32);
+        if count_steps {
             let mut iter = Self::from(self.to_array()).iter();
-            if iter.next().is_none() || (verify_unique && iter.next().is_some()) {
+            if iter.next().is_none() || iter.next().is_some() {
                 return None;
             }
-            difficulty += (iter.step_count * step_weight) as i32
-        }
-        if clue_weight != 0 {
-            difficulty -= (self.solved_cell_count() * clue_weight) as i32;
+            difficulty += iter.step_count as i32
         }
         Some(difficulty)
     }
@@ -541,150 +542,24 @@ impl Sudoku {
     pub fn solved_cell_count(&self) -> usize {
         (self.solved_squares & SOLVED_SUDOKU).count_ones() as usize
     }
-
-    pub fn minimise(self, old_score: Option<i32>) -> Option<(Self, i32)> {
-        let mut old: Option<(Self, i32)> = old_score
-            .or_else(|| self.difficulty(true, 1, 1))
-            .map(|old_score| (self, old_score));
-        let mut changed = false;
-        let mut removable: u128 = u128::MAX;
-        while let Some((old_sudoku, old_score)) = old {
-            let mut best_score = old_score;
-            let mut best_sudoku: Option<Self> = None;
-            let mut temp = old_sudoku.solved_squares & SOLVED_SUDOKU & removable;
-            let mut array = old_sudoku.to_array();
-            while temp != 0 {
-                let square = get_last_digit!(temp, usize);
-                let old_value = array[square];
-                debug_assert_ne!(old_value, 0);
-                array[square] = 0;
-                let new = Self::from(&array);
-                new.difficulty(true, 1, 1)
-                    .or_else(|| {
-                        removable -= 1 << square;
-                        // If it cannot be solved after removing this square, then don't try again
-                        None
-                    })
-                    .filter(|new_score| *new_score > best_score)
-                    .map(|new_score| {
-                        best_score = new_score;
-                        best_sudoku = Some(new);
-                        changed = true
-                    });
-                array[square] = old_value;
-            }
-            if best_sudoku.is_none() && changed {
-                debug_assert!(old.is_some());
-                return old;
-            }
-            old = best_sudoku.map(|best_sudoku| (best_sudoku, best_score));
-        }
-        None
-    }
-
-    pub fn generate<T>(rng: &mut T) -> Self
+    #[cfg(feature = "generate")]
+    pub fn generate<T>(rng: T, count_steps: bool) -> gen::SudokuGenerator<T>
     where
         T: rand::Rng + rand_core::RngCore,
     {
-        let mut sudoku = Self::empty();
-        let cell_distribution = rand::distributions::Uniform::new(0, 81);
-        while (sudoku.solved_squares & SOLVED_SUDOKU) != SOLVED_SUDOKU {
-            let index = cell_distribution.sample(rng);
-            if sudoku.solved_squares & (1 << index) != 0 {
-                continue;
-            }
-            let mut temp = sudoku;
-            let mut value = temp.cells[index];
-            debug_assert_ne!(value, 0);
-            let chosen_value_index = rng.gen_range(0, value.count_ones());
-            let mut i = get_last_digit!(value, usize);
-            for _ in 0..chosen_value_index {
-                i = get_last_digit!(value, usize);
-            }
-            temp.cells[index] = 1 << i;
-            temp.apply_number(index);
-            temp.scan();
-            match temp.count_solutions(2) {
-                2 => sudoku = temp,
-                1 => {
-                    sudoku = temp;
-                    break;
-                }
-                0 => sudoku.cells[index] -= 1 << i,
-                _ => {
-                    debug_assert!(false, "More than 2 returned from count_solutions(2)");
-                }
-            }
-        }
-        return sudoku
-            .minimise(None)
-            .map(|(sudoku, _)| sudoku)
-            .unwrap_or(sudoku);
+        gen::SudokuGenerator::new(rng, count_steps)
     }
-
-    pub fn mutate(self) -> Option<Self> {
-        None
-    }
-
-    pub fn generate_from_seed<T>(self, rng: &mut T, cells_to_remove: usize) -> Self
+    #[cfg(feature = "generate")]
+    pub fn generate_from_seed<T>(
+        self,
+        rng: &mut T,
+        cells_to_remove: usize,
+        count_steps: bool,
+    ) -> (Self, i32)
     where
         T: rand::Rng + rand_core::RngCore,
     {
-        let mut array = self.to_array();
-        let mut solved_squares = self.solved_squares & SOLVED_SUDOKU;
-        let desired_solved_count = solved_squares
-            .count_ones()
-            .saturating_sub(cells_to_remove as u32);
-        while solved_squares.count_ones() > desired_solved_count
-            || !Self::from(array).has_solution()
-        {
-            let solved_index = rng.gen_range(0, solved_squares.count_ones() as usize);
-            let mut temp = solved_squares;
-            let mut i = get_last_digit!(temp, usize);
-            for _ in 0..solved_index {
-                i = get_last_digit!(temp, usize);
-            }
-            debug_assert_ne!(array[i], 0);
-            array[i] = 0;
-
-            solved_squares -= 1 << i;
-        }
-
-        let mut sudoku = Self::from(array);
-        sudoku.scan();
-        let cell_distribution = rand::distributions::Uniform::new(0, 81);
-        while (sudoku.solved_squares & SOLVED_SUDOKU) != SOLVED_SUDOKU {
-            let index = cell_distribution.sample(rng);
-            if sudoku.solved_squares & (1 << index) != 0 {
-                continue;
-            }
-            let mut temp = sudoku;
-            let mut value = temp.cells[index];
-            debug_assert_ne!(value, 0);
-            let chosen_value_index = rng.gen_range(0, value.count_ones());
-            let mut i = get_last_digit!(value, usize);
-            for _ in 0..chosen_value_index {
-                i = get_last_digit!(value, usize);
-            }
-            temp.cells[index] = 1 << i;
-            temp.apply_number(index);
-            temp.scan();
-            match temp.count_solutions(2) {
-                2 => sudoku = temp,
-                1 => {
-                    sudoku = temp;
-                    break;
-                }
-                0 => sudoku.cells[index] -= 1 << i,
-                _ => {
-                    debug_assert!(false, "More than 2 returned from count_solutions(2)");
-                }
-            }
-        }
-        return sudoku
-            .minimise(None)
-            .map(|(sudoku, _)| sudoku)
-            .unwrap_or(sudoku);
+        gen::generate_from_seed(self, rng, cells_to_remove, count_steps)
     }
 
     fn import<T: Iterator<Item = Option<u32>>>(square_iterator: T) -> Self {

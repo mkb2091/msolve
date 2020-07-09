@@ -159,11 +159,28 @@ fn criterion_benchmark(c: &mut Criterion) {
             criterion::black_box(&msolve::Sudoku::empty().count_solutions(1000));
         })
     });
-    c.bench_function("Generate puzzle", |b| {
-        b.iter(|| {
-            criterion::black_box(&msolve::Sudoku::generate(&mut rand::thread_rng()));
-        })
-    });
+    for count_steps in [true, false].iter() {
+        let string = if *count_steps {
+            "Counting Steps"
+        } else {
+            "Without Counting Steps"
+        };
+        c.bench_function(&format!("Generate first {}", string), |b| {
+            b.iter(|| {
+                criterion::black_box(
+                    &msolve::Sudoku::generate(rand::thread_rng(), *count_steps)
+                        .next()
+                        .unwrap(),
+                );
+            })
+        });
+        let mut generator = msolve::Sudoku::generate(rand::thread_rng(), *count_steps);
+        c.bench_function(&format!("Generate puzzle {}", string), |b| {
+            b.iter(|| {
+                criterion::black_box(&generator.next().unwrap());
+            })
+        });
+    }
 }
 criterion_group!(benches, criterion_benchmark);
 criterion_main!(benches);

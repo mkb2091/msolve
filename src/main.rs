@@ -1,6 +1,3 @@
-mod lib;
-pub use lib::*;
-
 #[cfg(feature = "cli")]
 mod cli {
 
@@ -14,10 +11,8 @@ mod cli {
     struct Opts {
         #[clap(short, long)]
         verify_uniqueness: bool,
-        #[clap(short, long, default_value = "1")]
-        step_weight: usize,
-        #[clap(short, long, default_value = "1")]
-        clue_weight: usize,
+        #[clap(short, long)]
+        count_steps: bool,
         #[clap(subcommand)]
         mode: Mode,
     }
@@ -28,6 +23,7 @@ mod cli {
         Select(Select),
         Difficulty,
         CountSolutions(CountSolutions),
+        #[cfg(feature = "generate")]
         Generate(Generate),
         Info,
     }
@@ -50,7 +46,6 @@ mod cli {
 
     #[derive(Clap, Copy, Clone)]
     struct Generate {
-        cells_to_remove: usize,
         #[clap(subcommand)]
         mode: GenerateMode,
         #[clap(short, long)]
@@ -59,22 +54,22 @@ mod cli {
 
     #[derive(Clap, Copy, Clone)]
     enum GenerateMode {
-        Once,
+        Once(GenerateOnce),
         Continuous(GenerateContinuous),
     }
 
     #[derive(Clap, Copy, Clone)]
+    struct GenerateOnce {
+        cells_to_remove: usize,
+    }
+    #[derive(Clap, Copy, Clone)]
     struct GenerateContinuous {
         #[clap(short, long)]
-        pool_size: std::num::NonZeroUsize,
-        #[clap(short, long, default_value = "0")]
-        iterations: usize,
-        #[clap(short, long, default_value = "2")]
-        growth_factor: std::num::NonZeroUsize,
+        n: Option<std::num::NonZeroUsize>,
     }
 
     fn score_sudoku(sudoku: &msolve::Sudoku, opts: &Opts) -> Option<i32> {
-        sudoku.difficulty(opts.verify_uniqueness, opts.step_weight, opts.clue_weight)
+        sudoku.difficulty(opts.count_steps)
     }
 
     pub fn main() {
@@ -86,13 +81,29 @@ mod cli {
         let stdout = std::io::stdout();
         let mut output_handle = stdout.lock();
         let mut info = [0; 3];
+        #[cfg(feature = "rand")]
         let mut rng = rand::thread_rng();
-        let mut generation_pool = Vec::<(msolve::Sudoku, i32)>::new();
+        #[cfg(feature = "generate")]
         if let Mode::Generate(generate) = opts.mode {
             if let GenerateMode::Continuous(continuous) = generate.mode {
-                generation_pool
-                    .reserve(continuous.pool_size.get() * continuous.growth_factor.get() + 1);
-                generation_pool.push((msolve::Sudoku::generate(&mut rng), i32::MIN));
+                let n = continuous.n.map(|n| n.get()).unwrap_or(0);
+                let mut counter = 0;
+                for (sudoku, score) in
+                    msolve::Sudoku::generate(rand::thread_rng(), opts.count_steps)
+                {
+                    if generate.display_score {
+                        let _ = output_handle.write_all(&score.to_string().as_bytes());
+                        let _ = output_handle.write_all(b";");
+                    }
+                    let _ = output_handle.write_all(&sudoku.to_bytes());
+                    let _ = output_handle.write_all(b"\n");
+                    if n != 0 {
+                        counter += 1;
+                        if counter >= n {
+                            return;
+                        }
+                    }
+                }
             }
         }
         while let Ok(result) = input.read_line(&mut buffer) {
@@ -144,24 +155,25 @@ mod cli {
                     let _ = output_handle.write_all(&sudoku.to_bytes());
                     let _ = output_handle.write_all(b"\n");
                 }
-
-                Mode::Generate(generate) => match generate.mode {
-                    GenerateMode::Once => {
-                        let sudoku = sudoku.generate_from_seed(&mut rng, generate.cells_to_remove);
+                #[cfg(feature = "generate")]
+                Mode::Generate(generate) => {
+                    if let GenerateMode::Once(once) = generate.mode {
+                        let (sudoku, score) = sudoku.generate_from_seed(
+                            &mut rng,
+                            once.cells_to_remove,
+                            opts.count_steps,
+                        );
                         if generate.display_score {
-                            if let Some(score) = score_sudoku(&sudoku, &opts) {
-                                let _ = output_handle.write_all(&score.to_string().as_bytes());
-                                let _ = output_handle.write_all(b";");
-                            } else {
-                                debug_assert!(false, "Generated sudokus should be valid");
-                            }
+                            let _ = output_handle.write_all(&score.to_string().as_bytes());
+                            let _ = output_handle.write_all(b";");
                         }
 
                         let _ = output_handle.write_all(&sudoku.to_bytes());
                         let _ = output_handle.write_all(b"\n");
+                    } else {
+                        unimplemented!()
                     }
-                    GenerateMode::Continuous(_) => generation_pool.push((sudoku, i32::MIN)),
-                },
+                }
                 Mode::Info => {
                     info[sudoku.count_solutions(2)] += 1;
                 }
@@ -176,7 +188,7 @@ mod cli {
             );
         }
 
-        if let Mode::Generate(generate) = opts.mode {
+        /*if let Mode::Generate(generate) = opts.mode {
             if let GenerateMode::Continuous(continuous) = generate.mode {
                 let mut pool_2 = Vec::<(msolve::Sudoku, i32)>::with_capacity(
                     continuous.pool_size.get() * continuous.growth_factor.get() + 1,
@@ -223,7 +235,7 @@ mod cli {
                     pool_2.clear();
                 }
             }
-        }
+        }*/
     }
 }
 
