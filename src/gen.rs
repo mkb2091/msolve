@@ -17,7 +17,7 @@ pub fn minimise(
     while let Some((old_sudoku, old_score)) = old {
         let mut best_score = old_score;
         let mut best_sudoku: Option<Sudoku> = None;
-        let mut temp = old_sudoku.solved_squares & SOLVED_SUDOKU & removable;
+        let mut temp = old_sudoku.solved_squares & consts::SOLVED_SUDOKU & removable;
         let mut array = old_sudoku.to_array();
         while temp != 0 {
             let square = get_last_digit!(temp, usize);
@@ -59,13 +59,13 @@ fn mutate(
         return None;
     }
     let mut best: Option<(Sudoku, SudokuScore)> = None;
-    let mut temp = sudoku.solved_squares & SOLVED_SUDOKU;
+    let mut temp = sudoku.solved_squares & consts::SOLVED_SUDOKU;
     let mut array = sudoku.to_array();
     while temp != 0 {
         let s1 = get_last_digit!(temp, usize);
         let old = array[s1];
         array[s1] = 0;
-        let mut temp2 = !sudoku.solved_squares & SOLVED_SUDOKU;
+        let mut temp2 = !sudoku.solved_squares & consts::SOLVED_SUDOKU;
         while temp2 != 0 {
             let s2 = get_last_digit!(temp2, usize);
             let mut temp3 = sudoku.cells[s2];
@@ -95,7 +95,7 @@ where
 {
     let mut sudoku = Sudoku::empty();
     let cell_distribution = rand::distributions::Uniform::new(0, 81);
-    while (sudoku.solved_squares & SOLVED_SUDOKU) != SOLVED_SUDOKU {
+    while (sudoku.solved_squares & consts::SOLVED_SUDOKU) != consts::SOLVED_SUDOKU {
         let index = cell_distribution.sample(rng);
         if sudoku.solved_squares & (1 << index) != 0 {
             continue;
@@ -144,7 +144,7 @@ where
     T: rand::Rng + rand_core::RngCore,
 {
     let mut array = sudoku.to_array();
-    let mut solved_squares = sudoku.solved_squares & SOLVED_SUDOKU;
+    let mut solved_squares = sudoku.solved_squares & consts::SOLVED_SUDOKU;
     let desired_solved_count = solved_squares
         .count_ones()
         .saturating_sub(cells_to_remove as u32);
@@ -165,7 +165,7 @@ where
     let mut sudoku = Sudoku::from(array);
     sudoku.scan();
     let cell_distribution = rand::distributions::Uniform::new(0, 81);
-    while (sudoku.solved_squares & SOLVED_SUDOKU) != SOLVED_SUDOKU {
+    while (sudoku.solved_squares & consts::SOLVED_SUDOKU) != consts::SOLVED_SUDOKU {
         let index = cell_distribution.sample(rng);
         if sudoku.solved_squares & (1 << index) != 0 {
             continue;

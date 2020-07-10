@@ -4,6 +4,8 @@ extern crate smallvec;
 #[cfg(feature = "generate")]
 pub mod gen;
 
+mod consts;
+
 use std::convert::From;
 use std::convert::TryInto;
 use std::str::FromStr;
@@ -13,13 +15,6 @@ type SudokuBackTrackingVec = smallvec::SmallVec<[Sudoku; 10]>;
 #[cfg(not(feature = "smallvec"))]
 type SudokuBackTrackingVec = Vec<Sudoku>;
 
-/** Max 9 bit number */
-const SUDOKU_MAX: u16 = (1 << 9) - 1;
-
-const INVALID_SUDOKU: u128 = 1 << 127;
-
-const SOLVED_SUDOKU: u128 = (1 << 81) - 1;
-
 #[macro_export]
 macro_rules! get_last_digit {
     ($x:ident, $value_type:ty) => {{
@@ -28,159 +23,6 @@ macro_rules! get_last_digit {
         value as $value_type
     }};
 }
-
-const fn cells_in_house(square: usize) -> [u8; 20] {
-    let column_start = square % 9;
-    let row_start = square - column_start;
-    let box_start = square / 3 % 3 * 3 + square / 27 * 27;
-    let mut squares_to_change: u128 = 0;
-    squares_to_change |= ((1 << 9) - 1) << row_start;
-    squares_to_change |= (1
-        + (1 << 9)
-        + (1 << 18)
-        + (1 << 27)
-        + (1 << 36)
-        + (1 << 45)
-        + (1 << 54)
-        + (1 << 63)
-        + (1 << 72))
-        << column_start;
-    squares_to_change |= (0b111 + (0b111 << 9) + (0b111 << 18)) << box_start;
-    squares_to_change &= !(1 << square);
-    let mut squares_to_change_array = [0; 20];
-    squares_to_change_array[0] = get_last_digit!(squares_to_change, u8);
-    squares_to_change_array[1] = get_last_digit!(squares_to_change, u8);
-    squares_to_change_array[2] = get_last_digit!(squares_to_change, u8);
-    squares_to_change_array[3] = get_last_digit!(squares_to_change, u8);
-    squares_to_change_array[4] = get_last_digit!(squares_to_change, u8);
-    squares_to_change_array[5] = get_last_digit!(squares_to_change, u8);
-    squares_to_change_array[6] = get_last_digit!(squares_to_change, u8);
-    squares_to_change_array[7] = get_last_digit!(squares_to_change, u8);
-    squares_to_change_array[8] = get_last_digit!(squares_to_change, u8);
-    squares_to_change_array[9] = get_last_digit!(squares_to_change, u8);
-    squares_to_change_array[10] = get_last_digit!(squares_to_change, u8);
-    squares_to_change_array[11] = get_last_digit!(squares_to_change, u8);
-    squares_to_change_array[12] = get_last_digit!(squares_to_change, u8);
-    squares_to_change_array[13] = get_last_digit!(squares_to_change, u8);
-    squares_to_change_array[14] = get_last_digit!(squares_to_change, u8);
-    squares_to_change_array[15] = get_last_digit!(squares_to_change, u8);
-    squares_to_change_array[16] = get_last_digit!(squares_to_change, u8);
-    squares_to_change_array[17] = get_last_digit!(squares_to_change, u8);
-    squares_to_change_array[18] = get_last_digit!(squares_to_change, u8);
-    squares_to_change_array[19] = squares_to_change.trailing_zeros() as u8;
-
-    //For when while in const is stablized
-    /*let mut i = 0;
-    while i < 20 {
-        squares_to_change_array[i] = get_last_digit!(squares_to_change, u8);
-        i += 1;
-    }*/
-    squares_to_change_array
-}
-
-const CELLS_TO_CHANGE: [[u8; 20]; 81] = {
-    [
-        cells_in_house(0),
-        cells_in_house(1),
-        cells_in_house(2),
-        cells_in_house(3),
-        cells_in_house(4),
-        cells_in_house(5),
-        cells_in_house(6),
-        cells_in_house(7),
-        cells_in_house(8),
-        cells_in_house(9),
-        cells_in_house(10),
-        cells_in_house(11),
-        cells_in_house(12),
-        cells_in_house(13),
-        cells_in_house(14),
-        cells_in_house(15),
-        cells_in_house(16),
-        cells_in_house(17),
-        cells_in_house(18),
-        cells_in_house(19),
-        cells_in_house(20),
-        cells_in_house(21),
-        cells_in_house(22),
-        cells_in_house(23),
-        cells_in_house(24),
-        cells_in_house(25),
-        cells_in_house(26),
-        cells_in_house(27),
-        cells_in_house(28),
-        cells_in_house(29),
-        cells_in_house(30),
-        cells_in_house(31),
-        cells_in_house(32),
-        cells_in_house(33),
-        cells_in_house(34),
-        cells_in_house(35),
-        cells_in_house(36),
-        cells_in_house(37),
-        cells_in_house(38),
-        cells_in_house(39),
-        cells_in_house(40),
-        cells_in_house(41),
-        cells_in_house(42),
-        cells_in_house(43),
-        cells_in_house(44),
-        cells_in_house(45),
-        cells_in_house(46),
-        cells_in_house(47),
-        cells_in_house(48),
-        cells_in_house(49),
-        cells_in_house(50),
-        cells_in_house(51),
-        cells_in_house(52),
-        cells_in_house(53),
-        cells_in_house(54),
-        cells_in_house(55),
-        cells_in_house(56),
-        cells_in_house(57),
-        cells_in_house(58),
-        cells_in_house(59),
-        cells_in_house(60),
-        cells_in_house(61),
-        cells_in_house(62),
-        cells_in_house(63),
-        cells_in_house(64),
-        cells_in_house(65),
-        cells_in_house(66),
-        cells_in_house(67),
-        cells_in_house(68),
-        cells_in_house(69),
-        cells_in_house(70),
-        cells_in_house(71),
-        cells_in_house(72),
-        cells_in_house(73),
-        cells_in_house(74),
-        cells_in_house(75),
-        cells_in_house(76),
-        cells_in_house(77),
-        cells_in_house(78),
-        cells_in_house(79),
-        cells_in_house(80),
-    ]
-    //For when while in const is stablized
-    /*let mut data = [[0; 20]; 81];
-    let mut i = 0;
-    while i < 81 {
-        data[i] = cells_in_house(i);
-        i += 1;
-    }
-    data*/
-};
-
-/*
-After solving this many squares, do not use pointing pairs
-For top 2465, 33 is best
-For top 2465 unique, 35 is best
-For sudoku17, 41 is best
-For sudoku17 unique, 42 is best
-For empty_n, lower is better, though limited difference between values below 55
-*/
-const SCANNING_CUTOFF: u32 = 40;
 
 /**
 Iterator of the solutions of a sudoku
@@ -194,11 +36,19 @@ impl SolutionIterator {
     #[inline]
     fn new(mut sudoku: Sudoku) -> Self {
         let mut routes = SudokuBackTrackingVec::with_capacity(10);
-        if sudoku.solved_squares < INVALID_SUDOKU
-            && sudoku.scan()
-            && sudoku.cells.iter().all(|x| *x != 0)
-        {
-            routes.push(sudoku);
+        let mut temp = sudoku.solved_squares;
+        let mut valid = true;
+        while temp != 0 {
+            let square = get_last_digit!(temp, usize);
+            if sudoku.cells[square].is_power_of_two() {
+                sudoku.apply_number(square);
+            } else {
+                valid = false;
+                break;
+            }
+        }
+        if valid {
+            routes.push(sudoku)
         }
         Self {
             routes,
@@ -223,40 +73,6 @@ impl Iterator for SolutionIterator {
     }
 }
 
-fn generate_masks_from_intersections(isec: [u16; 9], mut only: [u16; 9]) -> ([u16; 9], [u16; 9]) {
-    only[0] |= isec[0] & !((isec[1] | isec[2]) & (isec[3] | isec[6]));
-    only[1] |= isec[1] & !((isec[0] | isec[2]) & (isec[4] | isec[7]));
-    only[2] |= isec[2] & !((isec[0] | isec[1]) & (isec[5] | isec[8]));
-
-    only[3] |= isec[3] & !((isec[4] | isec[5]) & (isec[0] | isec[6]));
-    only[4] |= isec[4] & !((isec[3] | isec[5]) & (isec[1] | isec[7]));
-    only[5] |= isec[5] & !((isec[3] | isec[4]) & (isec[2] | isec[8]));
-
-    only[6] |= isec[6] & !((isec[7] | isec[8]) & (isec[0] | isec[3]));
-    only[7] |= isec[7] & !((isec[6] | isec[8]) & (isec[1] | isec[4]));
-    only[8] |= isec[8] & !((isec[6] | isec[7]) & (isec[2] | isec[5]));
-
-    let resultant_mask = [
-        !(only[1] | only[2] | only[3] | only[6]),
-        !(only[0] | only[2] | only[4] | only[7]),
-        !(only[0] | only[1] | only[5] | only[8]),
-        !(only[0] | only[4] | only[5] | only[6]),
-        !(only[1] | only[3] | only[5] | only[7]),
-        !(only[2] | only[3] | only[4] | only[8]),
-        !(only[0] | only[3] | only[7] | only[8]),
-        !(only[1] | only[4] | only[6] | only[8]),
-        !(only[2] | only[5] | only[6] | only[7]),
-    ];
-    (resultant_mask, only)
-}
-
-#[derive(Copy, Clone, Eq, PartialEq)]
-pub enum DifficultyModes {
-    Steps,
-    Clues,
-    StepsClues,
-}
-
 /**
 Structure that represents a sudoku
 */
@@ -277,7 +93,7 @@ impl Sudoku {
             unsafe { std::hint::unreachable_unchecked() }
         }
         let not_value = !self.cells[square];
-        for i in &CELLS_TO_CHANGE[square] {
+        for i in &consts::CELLS_TO_CHANGE[square] {
             self.cells[*i as usize] &= not_value;
         }
 
@@ -301,7 +117,7 @@ impl Sudoku {
         debug_assert!(row_start + 8 < 81);
         debug_assert!(column_start + 72 < 81);
         debug_assert!(box_start + 20 < 81);
-        let needed = SUDOKU_MAX
+        let needed = consts::SUDOKU_MAX
             - unsafe {
                 let temp = [20, 19, 18, 11, 10, 9, 2, 1, 0].iter().enumerate().fold(
                     (0, 0, 0),
@@ -327,8 +143,37 @@ impl Sudoku {
     }
 
     fn scan(&mut self) -> bool {
+        fn generate_masks_from_intersections(
+            isec: [u16; 9],
+            mut only: [u16; 9],
+        ) -> ([u16; 9], [u16; 9]) {
+            only[0] |= isec[0] & !((isec[1] | isec[2]) & (isec[3] | isec[6]));
+            only[1] |= isec[1] & !((isec[0] | isec[2]) & (isec[4] | isec[7]));
+            only[2] |= isec[2] & !((isec[0] | isec[1]) & (isec[5] | isec[8]));
+
+            only[3] |= isec[3] & !((isec[4] | isec[5]) & (isec[0] | isec[6]));
+            only[4] |= isec[4] & !((isec[3] | isec[5]) & (isec[1] | isec[7]));
+            only[5] |= isec[5] & !((isec[3] | isec[4]) & (isec[2] | isec[8]));
+
+            only[6] |= isec[6] & !((isec[7] | isec[8]) & (isec[0] | isec[3]));
+            only[7] |= isec[7] & !((isec[6] | isec[8]) & (isec[1] | isec[4]));
+            only[8] |= isec[8] & !((isec[6] | isec[7]) & (isec[2] | isec[5]));
+
+            let resultant_mask = [
+                !(only[1] | only[2] | only[3] | only[6]),
+                !(only[0] | only[2] | only[4] | only[7]),
+                !(only[0] | only[1] | only[5] | only[8]),
+                !(only[0] | only[4] | only[5] | only[6]),
+                !(only[1] | only[3] | only[5] | only[7]),
+                !(only[2] | only[3] | only[4] | only[8]),
+                !(only[0] | only[3] | only[7] | only[8]),
+                !(only[1] | only[4] | only[6] | only[8]),
+                !(only[2] | only[5] | only[6] | only[7]),
+            ];
+            (resultant_mask, only)
+        }
         let mut sudoku = self.cells;
-        let mut sudoku_check = SUDOKU_MAX;
+        let mut sudoku_check = consts::SUDOKU_MAX;
         for floor_number in (0..3).map(|x| x * 27) {
             let mut only = [0; 9];
             let mut intersections = [0_u16; 9]; // Intersection
@@ -343,7 +188,8 @@ impl Sudoku {
             let mut temp_total = 0;
             for (i, (row, only_row)) in resultant_mask.iter().zip(only.iter()).enumerate() {
                 temp_total |= row;
-                let row = row & [SUDOKU_MAX, *only_row][(only_row.count_ones() == 3) as usize];
+                let row =
+                    row & [consts::SUDOKU_MAX, *only_row][(only_row.count_ones() == 3) as usize];
                 sudoku[floor_number + i * 3] &= row;
                 sudoku[floor_number + i * 3 + 1] &= row;
                 sudoku[floor_number + i * 3 + 2] &= row;
@@ -353,7 +199,7 @@ impl Sudoku {
             }
             sudoku_check &= temp_total;
         }
-        if sudoku_check != SUDOKU_MAX {
+        if sudoku_check != consts::SUDOKU_MAX {
             return false;
         }
         for tower_number in (0..3).map(|x| x * 3) {
@@ -379,7 +225,8 @@ impl Sudoku {
                     let only_column = only[i];
                     temp_total |= column;
                     let column = column
-                        & [SUDOKU_MAX, only_column][(only_column.count_ones() == 3) as usize];
+                        & [consts::SUDOKU_MAX, only_column]
+                            [(only_column.count_ones() == 3) as usize];
                     sudoku[tower_number + layer * 27 + column_number] &= column;
                     sudoku[tower_number + layer * 27 + column_number + 9] &= column;
                     sudoku[tower_number + layer * 27 + column_number + 18] &= column;
@@ -391,7 +238,7 @@ impl Sudoku {
             sudoku_check &= temp_total;
         }
         self.cells = sudoku;
-        sudoku_check == SUDOKU_MAX
+        sudoku_check == consts::SUDOKU_MAX
     }
     /**
     Perform a single iteration solving
@@ -427,7 +274,7 @@ impl Sudoku {
             }
         }
         debug_assert!(min.1 <= 9);
-        if self.solved_squares.count_ones() >= SCANNING_CUTOFF || (self.scan()) {
+        if self.solved_squares.count_ones() >= consts::SCANNING_CUTOFF || (self.scan()) {
             let mut value = self.cells[min.0];
             while value != 0 {
                 let i = get_last_digit!(value, u16);
@@ -518,7 +365,7 @@ impl Sudoku {
     #[inline]
     pub const fn empty() -> Self {
         Self {
-            cells: [SUDOKU_MAX; 81],
+            cells: [consts::SUDOKU_MAX; 81],
             solved_squares: 0,
         }
     }
@@ -540,7 +387,7 @@ impl Sudoku {
     }
 
     pub fn solved_cell_count(&self) -> usize {
-        (self.solved_squares & SOLVED_SUDOKU).count_ones() as usize
+        (self.solved_squares & consts::SOLVED_SUDOKU).count_ones() as usize
     }
     #[cfg(feature = "generate")]
     pub fn generate<T>(rng: T, count_steps: bool) -> gen::SudokuGenerator<T>
@@ -573,13 +420,8 @@ impl Sudoku {
                     .map(|x| (i, x))
             })
         {
-            if sudoku.cells[i] & (1 << int) == 0 || sudoku.solved_squares >= INVALID_SUDOKU {
-                sudoku.cells[i] = 1 << int;
-                sudoku.solved_squares |= INVALID_SUDOKU + (1 << i);
-            } else {
-                sudoku.cells[i] = 1 << int;
-                sudoku.apply_number(i);
-            }
+            sudoku.cells[i] = 1 << int;
+            sudoku.solved_squares |= 1 << i;
         }
         sudoku
     }
