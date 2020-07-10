@@ -202,10 +202,11 @@ mod tests {
         true
     }
     #[quickcheck]
-    fn generate_from_seed_has_single_solution(input: Sudoku, n: u8) -> bool {
+    fn generate_from_seed_has_single_solution(input: Sudoku, n: u8, count_steps: bool) -> bool {
         let sudoku = msolve::Sudoku::from(input.data);
         sudoku
-            .generate_from_seed(&mut rand::thread_rng(), n as usize)
+            .generate_from_seed(&mut rand::thread_rng(), n as usize, count_steps)
+            .0
             .has_single_solution()
     }
     #[quickcheck]
