@@ -1,19 +1,16 @@
 #[cfg(default)]
 extern crate smallvec;
 
+mod consts;
+
 #[cfg(feature = "generate")]
 pub mod gen;
 
-mod consts;
+pub mod solution_iterator;
 
 use std::convert::From;
 use std::convert::TryInto;
 use std::str::FromStr;
-
-#[cfg(feature = "smallvec")]
-type SudokuBackTrackingVec = smallvec::SmallVec<[Sudoku; 10]>;
-#[cfg(not(feature = "smallvec"))]
-type SudokuBackTrackingVec = Vec<Sudoku>;
 
 #[macro_export]
 macro_rules! get_last_digit {
@@ -22,55 +19,6 @@ macro_rules! get_last_digit {
         $x -= 1 << value;
         value as $value_type
     }};
-}
-
-/**
-Iterator of the solutions of a sudoku
-*/
-pub struct SolutionIterator {
-    routes: SudokuBackTrackingVec,
-    step_count: usize,
-}
-
-impl SolutionIterator {
-    #[inline]
-    fn new(mut sudoku: Sudoku) -> Self {
-        let mut routes = SudokuBackTrackingVec::with_capacity(10);
-        let mut temp = sudoku.solved_squares;
-        let mut valid = true;
-        while temp != 0 {
-            let square = get_last_digit!(temp, usize);
-            if sudoku.cells[square].is_power_of_two() {
-                sudoku.apply_number(square);
-            } else {
-                valid = false;
-                break;
-            }
-        }
-        if valid {
-            routes.push(sudoku)
-        }
-        Self {
-            routes,
-            step_count: 0,
-        }
-    }
-}
-
-impl Iterator for SolutionIterator {
-    type Item = Sudoku;
-    /**
-    Get the next solution
-    */
-    fn next(&mut self) -> Option<Self::Item> {
-        while let Some(mut state) = self.routes.pop() {
-            self.step_count += 1;
-            if let Ok(result) = state.handle_route(&mut self.routes) {
-                return Some(result);
-            }
-        }
-        None
-    }
 }
 
 /**
@@ -240,52 +188,6 @@ impl Sudoku {
         self.cells = sudoku;
         sudoku_check == consts::SUDOKU_MAX
     }
-    /**
-    Perform a single iteration solving
-    Call hidden_singles for each unsolved cell, and call apply_number for each newly solved cell\
-    Select unsolved cell with least possible values
-    For each possible value, clone the sudoku state, set the cell to the value and add to the state list
-    */
-    fn handle_route(&mut self, routes: &mut SudokuBackTrackingVec) -> Result<Self, ()> {
-        if self.solved_squares.count_ones() == 81 {
-            return Ok(*self);
-        }
-        let mut min: (usize, u32) = (0, std::u32::MAX);
-        let mut temp = !self.solved_squares;
-        loop {
-            let square = get_last_digit!(temp, usize);
-            if square >= 81 {
-                break;
-            }
-            if self.cells[square] == 0 {
-                return Err(());
-            }
-            if self.cells[square].is_power_of_two() || self.hidden_singles(square)? {
-                if self.solved_squares.count_ones() == 80 {
-                    self.solved_squares |= 1 << square;
-                    return Ok(*self);
-                }
-                self.apply_number(square);
-            } else {
-                let possible_values = self.cells[square].count_ones();
-                if possible_values < min.1 {
-                    min = (square, possible_values);
-                }
-            }
-        }
-        debug_assert!(min.1 <= 9);
-        if self.solved_squares.count_ones() >= consts::SCANNING_CUTOFF || (self.scan()) {
-            let mut value = self.cells[min.0];
-            while value != 0 {
-                let i = get_last_digit!(value, u16);
-                let mut new = *self;
-                new.cells[min.0] = 1 << i;
-                new.apply_number(min.0);
-                routes.push(new);
-            }
-        }
-        Err(())
-    }
 
     /**
     Convert the sudoku into a [u8; 81] containing the numerical form of each solved square
@@ -319,8 +221,8 @@ impl Sudoku {
     Returns an iterator over all solutions
     */
     #[inline]
-    pub fn iter(self) -> SolutionIterator {
-        SolutionIterator::new(self)
+    pub fn iter(self) -> solution_iterator::QuickSolutionIterator {
+        solution_iterator::QuickSolutionIterator::new(self)
     }
     /**
     Get the first solution.
@@ -377,13 +279,21 @@ impl Sudoku {
     pub fn difficulty(self, count_steps: bool) -> Option<i32> {
         let mut difficulty = -(self.solved_cell_count() as i32);
         if count_steps {
-            let mut iter = Self::from(self.to_array()).iter();
+            let mut iter =
+                solution_iterator::DifficultySolutionIterator::new(Self::from(self.to_array()));
             if iter.next().is_none() || iter.next().is_some() {
                 return None;
             }
-            difficulty += iter.step_count as i32
+            difficulty += iter.get_difficulty() as i32;
         }
         Some(difficulty)
+    }
+
+    pub fn list_techniques(self) -> Vec<(String, Sudoku)> {
+        let mut iter = solution_iterator::TechniqueRecording::new(self);
+        iter.next();
+        iter.next();
+        iter.get_techniques_used()
     }
 
     pub fn solved_cell_count(&self) -> usize {

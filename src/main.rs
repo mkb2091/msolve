@@ -25,6 +25,7 @@ mod cli {
         CountSolutions(CountSolutions),
         #[cfg(feature = "generate")]
         Generate(Generate),
+        ListTechniques,
         Info,
     }
 
@@ -172,6 +173,12 @@ mod cli {
                         let _ = output_handle.write_all(b"\n");
                     } else {
                         unimplemented!()
+                    }
+                }
+                Mode::ListTechniques => {
+                    for (explanation, state) in sudoku.list_techniques().iter() {
+                        println!("{}\n{:?}\n\n", explanation, state);
+                        std::thread::sleep(std::time::Duration::from_secs(1));
                     }
                 }
                 Mode::Info => {
