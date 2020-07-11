@@ -177,7 +177,7 @@ mod cli {
                 }
                 Mode::ListTechniques => {
                     for (explanation, state) in sudoku.list_techniques().iter() {
-                        println!("{}\n{:?}\n\n", explanation, state);
+                        println!("{}\n{:?}", explanation, state);
                         std::thread::sleep(std::time::Duration::from_secs(1));
                     }
                 }
