@@ -282,6 +282,50 @@ impl Sudoku {
         }
         chars
     }
+
+    pub fn to_pencilmark_bytes(&self) -> [u8; 1605] {
+        const INNER_ROW_LENGTH: usize = ((3 * 3 + 2) + 1) * 3 + 6;
+        const OUTER_ROW_LENGTH: usize = INNER_ROW_LENGTH * 4 + 1;
+        const TOTAL_LENGTH: usize = OUTER_ROW_LENGTH * 9 + INNER_ROW_LENGTH * 2;
+        const FORMAT_ROW: [u8; 85] = *b"---+---+---+  +---+---+---+  +---+---+---\n\n---+---+---+  +---+---+---+  +---+---+---\n";
+        let mut output_grid = [b'!'; TOTAL_LENGTH]; // '!' makes it easier to spot mistakes
+        for row in 0..9 {
+            let row_start = row * OUTER_ROW_LENGTH + row / 3 * (INNER_ROW_LENGTH);
+            for inner_row in 0..3 {
+                let inner_row_start = row_start + inner_row * INNER_ROW_LENGTH;
+                let masks = (
+                    1 << (inner_row * 3),
+                    1 << (inner_row * 3 + 1),
+                    1 << (inner_row * 3 + 2),
+                );
+                let output_digits = [
+                    (b" 1", b" 2", b" 3"),
+                    (b" 4", b" 5", b" 6"),
+                    (b" 7", b" 8", b" 9"),
+                ][inner_row];
+                for column in 0..9 {
+                    let digits = self.cells[row * 9 + column];
+                    let index = inner_row_start + column * 4 + column / 3 * 3;
+                    output_grid[index] = (output_digits.0)[(digits & masks.0 != 0) as usize];
+                    output_grid[index + 1] = (output_digits.1)[(digits & masks.1 != 0) as usize];
+                    output_grid[index + 2] = (output_digits.2)[(digits & masks.2 != 0) as usize];
+                    output_grid[index + 3] = b'|';
+                    output_grid[index + 4] = b' ';
+                    output_grid[index + 5] = b' ';
+                    output_grid[index + 6] = b'|';
+                }
+
+                output_grid[inner_row_start + INNER_ROW_LENGTH - 1] = b'\n';
+            }
+            for (ptr, value) in output_grid[row_start + INNER_ROW_LENGTH * 3..]
+                .iter_mut()
+                .zip(FORMAT_ROW.iter())
+            {
+                *ptr = *value;
+            }
+        }
+        output_grid
+    }
     /**
     Returns an iterator over all solutions
     */
@@ -445,61 +489,5 @@ impl FromStr for Sudoku {
         Ok(Self::import(
             sudoku_str.chars().map(|character| character.to_digit(10)),
         ))
-    }
-}
-
-impl std::fmt::Display for Sudoku {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", std::str::from_utf8(&self.to_bytes()).unwrap())
-    }
-}
-
-impl std::fmt::Debug for Sudoku {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        const INNER_ROW_LENGTH: usize = ((3 * 3 + 2) + 1) * 3 + 6;
-        const OUTER_ROW_LENGTH: usize = INNER_ROW_LENGTH * 4 + 1;
-        const TOTAL_LENGTH: usize = OUTER_ROW_LENGTH * 9 + INNER_ROW_LENGTH * 2;
-        const FORMAT_ROW: [u8; 85] = *b"---+---+---+  +---+---+---+  +---+---+---\n\n---+---+---+  +---+---+---+  +---+---+---\n";
-        let mut output_grid = [b'!'; TOTAL_LENGTH];
-        for row in 0..9 {
-            let row_start = row * OUTER_ROW_LENGTH + row / 3 * (INNER_ROW_LENGTH);
-            for inner_row in 0..3 {
-                let inner_row_start = row_start + inner_row * INNER_ROW_LENGTH;
-                let masks = (
-                    1 << (inner_row * 3),
-                    1 << (inner_row * 3 + 1),
-                    1 << (inner_row * 3 + 2),
-                );
-                let output_digits = [
-                    (b" 1", b" 2", b" 3"),
-                    (b" 4", b" 5", b" 6"),
-                    (b" 7", b" 8", b" 9"),
-                ][inner_row];
-                for column in 0..9 {
-                    let digits = self.cells[row * 9 + column];
-                    let index = inner_row_start + column * 4 + column / 3 * 3;
-                    output_grid[index] = (output_digits.0)[(digits & masks.0 != 0) as usize];
-                    output_grid[index + 1] = (output_digits.1)[(digits & masks.1 != 0) as usize];
-                    output_grid[index + 2] = (output_digits.2)[(digits & masks.2 != 0) as usize];
-                    output_grid[index + 3] = b'|';
-                    output_grid[index + 4] = b' ';
-                    output_grid[index + 5] = b' ';
-                    output_grid[index + 6] = b'|';
-                }
-
-                output_grid[inner_row_start + INNER_ROW_LENGTH - 1] = b'\n';
-            }
-            for (ptr, value) in output_grid[row_start + INNER_ROW_LENGTH * 3..]
-                .iter_mut()
-                .zip(FORMAT_ROW.iter())
-            {
-                *ptr = *value;
-            }
-        }
-        write!(
-            f,
-            "{}",
-            std::str::from_utf8(&output_grid[..TOTAL_LENGTH - INNER_ROW_LENGTH - 1]).unwrap()
-        )
     }
 }

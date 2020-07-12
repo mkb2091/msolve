@@ -177,7 +177,10 @@ mod cli {
                 }
                 Mode::ListTechniques => {
                     for (explanation, state) in sudoku.list_techniques().iter() {
-                        println!("{}\n{:?}", explanation, state);
+                        let _ = output_handle.write_all(&explanation.as_bytes());
+                        let _ = output_handle.write_all(b"\n");
+                        let _ = output_handle.write_all(&state.to_pencilmark_bytes());
+                        let _ = output_handle.write_all(b"\n");
                         std::thread::sleep(std::time::Duration::from_secs(1));
                     }
                 }
