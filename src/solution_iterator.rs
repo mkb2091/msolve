@@ -19,8 +19,25 @@ impl Iterator for {{Name}} {
 }
 
 */
-trait SolutionIterator: Iterator {
-    fn prepare_sudoku(mut sudoku: Sudoku) -> Option<Sudoku> {
+pub trait TechniqueRecording: Default {
+    fn record_step(&mut self, _: &Sudoku) {}
+    fn record_apply_number(&mut self, _: usize, _: &Sudoku) {}
+    fn record_scan(&mut self, _: &Sudoku) {}
+    fn record_hidden_single(&mut self, _: usize, _: &Sudoku) {}
+    type Output;
+    fn get_recording(&self) -> Self::Output;
+}
+
+pub struct SolutionIterator<T: TechniqueRecording> {
+    routes: SudokuBackTrackingVec,
+    recording: T,
+}
+
+impl<T> SolutionIterator<T>
+where
+    T: TechniqueRecording,
+{
+    pub fn new(mut sudoku: Sudoku) -> Self {
         let mut temp = sudoku.solved_squares;
         let mut valid = true;
         while temp != 0 {
@@ -32,24 +49,28 @@ trait SolutionIterator: Iterator {
                 break;
             }
         }
+        let mut routes = SudokuBackTrackingVec::with_capacity(10);
         if valid {
-            Some(sudoku)
-        } else {
-            None
+            routes.push(sudoku);
+        }
+        Self {
+            routes,
+            recording: T::default(),
         }
     }
-    fn pop_next_state(&mut self) -> Option<Sudoku>;
-    fn add_state(&mut self, state: Sudoku);
-    /**
-    Get the next solution
-    Perform a single iteration solving
-    Call hidden_singles for each unsolved cell, and call apply_number for each newly solved cell\
-    Select unsolved cell with least possible values
-    For each possible value, clone the sudoku state, set the cell to the value and add to the state list
-    */
-    fn get_next_solution(&mut self) -> Option<Sudoku> {
-        'outer: while let Some(mut state) = self.pop_next_state() {
-            self.record_step(&state);
+    pub fn get_recording(&self) -> T::Output {
+        self.recording.get_recording()
+    }
+}
+
+impl<T> Iterator for SolutionIterator<T>
+where
+    T: TechniqueRecording,
+{
+    type Item = Sudoku;
+    fn next(&mut self) -> Option<Self::Item> {
+        'outer: while let Some(mut state) = self.routes.pop() {
+            self.recording.record_step(&state);
             if state.solved_squares.count_ones() == 81 {
                 return Some(state);
             }
@@ -67,14 +88,14 @@ trait SolutionIterator: Iterator {
                     || match state.hidden_singles(square).ok() {
                         Some(result) => {
                             if result {
-                                self.record_hidden_single(square, &state);
+                                self.recording.record_hidden_single(square, &state);
                             };
                             result
                         }
                         None => continue 'outer,
                     }
                 {
-                    self.record_apply_number(square, &state);
+                    self.recording.record_apply_number(square, &state);
                     if state.solved_squares.count_ones() == 80 {
                         state.solved_squares |= 1 << square;
                         return Some(state);
@@ -89,7 +110,7 @@ trait SolutionIterator: Iterator {
             }
             debug_assert!(min.1 <= 9);
             if state.solved_squares.count_ones() >= consts::SCANNING_CUTOFF || {
-                self.record_scan(&state);
+                self.recording.record_scan(&state);
                 state.scan()
             } {
                 let mut value = state.cells[min.0];
@@ -97,166 +118,22 @@ trait SolutionIterator: Iterator {
                     let i = get_last_digit!(value, u16);
                     let mut new = state;
                     new.cells[min.0] = 1 << i;
+                    self.recording.record_apply_number(min.0, &state);
                     new.apply_number(min.0);
-                    self.add_state(new);
+                    self.routes.push(new);
                 }
             }
         }
         None
     }
-    fn record_step(&mut self, _: &Sudoku) {}
-    fn record_apply_number(&mut self, _: usize, _: &Sudoku) {}
-    fn record_scan(&mut self, _: &Sudoku) {}
-    fn record_hidden_single(&mut self, _: usize, _: &Sudoku) {}
 }
 
-pub struct QuickSolutionIterator {
-    routes: SudokuBackTrackingVec,
+#[derive(Default)]
+pub struct NoRecording {}
+
+impl TechniqueRecording for NoRecording {
+    type Output = ();
+    fn get_recording(&self) {}
 }
 
-impl QuickSolutionIterator {
-    pub fn new(sudoku: Sudoku) -> Self {
-        let sudoku = Self::prepare_sudoku(sudoku);
-        let mut routes = SudokuBackTrackingVec::with_capacity(10);
-        if let Some(sudoku) = sudoku {
-            routes.push(sudoku)
-        }
-        Self { routes }
-    }
-}
-
-impl SolutionIterator for QuickSolutionIterator {
-    fn pop_next_state(&mut self) -> Option<Sudoku> {
-        self.routes.pop()
-    }
-    fn add_state(&mut self, state: Sudoku) {
-        self.routes.push(state);
-    }
-}
-
-impl Iterator for QuickSolutionIterator {
-    type Item = Sudoku;
-    fn next(&mut self) -> Option<Self::Item> {
-        self.get_next_solution()
-    }
-}
-
-pub(crate) struct DifficultySolutionIterator {
-    routes: SudokuBackTrackingVec,
-    step_count: usize,
-    apply_number_count: usize,
-    scan_count: usize,
-    hidden_single_count: usize,
-}
-
-impl DifficultySolutionIterator {
-    pub fn new(sudoku: Sudoku) -> Self {
-        let sudoku = Self::prepare_sudoku(sudoku);
-        let mut routes = SudokuBackTrackingVec::with_capacity(10);
-        if let Some(sudoku) = sudoku {
-            routes.push(sudoku)
-        }
-        Self {
-            routes,
-            step_count: 0,
-            apply_number_count: 0,
-            scan_count: 0,
-            hidden_single_count: 0,
-        }
-    }
-    pub fn get_difficulty(&self) -> usize {
-        self.step_count + self.apply_number_count + self.scan_count + self.hidden_single_count
-    }
-}
-
-impl SolutionIterator for DifficultySolutionIterator {
-    fn pop_next_state(&mut self) -> Option<Sudoku> {
-        self.routes.pop()
-    }
-    fn add_state(&mut self, state: Sudoku) {
-        self.routes.push(state);
-    }
-    fn record_step(&mut self, _: &Sudoku) {
-        self.step_count += 1;
-    }
-    fn record_apply_number(&mut self, _: usize, _: &Sudoku) {
-        self.apply_number_count += 1;
-    }
-    fn record_scan(&mut self, _: &Sudoku) {
-        self.scan_count += 1;
-    }
-    fn record_hidden_single(&mut self, _: usize, _: &Sudoku) {
-        self.hidden_single_count += 1;
-    }
-}
-
-impl Iterator for DifficultySolutionIterator {
-    type Item = Sudoku;
-    fn next(&mut self) -> Option<Self::Item> {
-        self.get_next_solution()
-    }
-}
-
-pub(crate) struct TechniqueRecording {
-    routes: SudokuBackTrackingVec,
-    techniques: Vec<(String, Sudoku)>,
-}
-
-impl TechniqueRecording {
-    pub fn new(sudoku: Sudoku) -> Self {
-        let sudoku = Self::prepare_sudoku(sudoku);
-        let mut routes = SudokuBackTrackingVec::with_capacity(10);
-        if let Some(sudoku) = sudoku {
-            routes.push(sudoku)
-        }
-        Self {
-            routes,
-            techniques: Vec::new(),
-        }
-    }
-    pub fn get_techniques_used(&self) -> Vec<(String, Sudoku)> {
-        let mut result = self.techniques.clone();
-        result.dedup_by_key(|(_, sudoku)| *sudoku);
-        result
-    }
-}
-
-impl SolutionIterator for TechniqueRecording {
-    fn pop_next_state(&mut self) -> Option<Sudoku> {
-        self.routes.pop()
-    }
-    fn add_state(&mut self, state: Sudoku) {
-        self.routes.push(state);
-    }
-    fn record_step(&mut self, _: &Sudoku) {}
-    fn record_apply_number(&mut self, square: usize, state: &Sudoku) {
-        self.techniques.push((
-            format!(
-                "Found naked single: R{}C{}",
-                (square / 9) + 1,
-                (square % 9) + 1
-            ),
-            *state,
-        ))
-    }
-    fn record_scan(&mut self, state: &Sudoku) {
-        self.techniques.push(("Scanned".to_string(), *state))
-    }
-    fn record_hidden_single(&mut self, square: usize, state: &Sudoku) {
-        self.techniques.push((
-            format!(
-                "Found hidden single: R{}C{}",
-                (square / 9) + 1,
-                (square % 9) + 1
-            ),
-            *state,
-        ))
-    }
-}
-
-impl Iterator for TechniqueRecording {
-    type Item = Sudoku;
-    fn next(&mut self) -> Option<Self::Item> {
-        self.get_next_solution()
-    }
-}
+pub type QuickSolutionIterator = SolutionIterator<NoRecording>;

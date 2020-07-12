@@ -12,6 +12,71 @@ use std::convert::From;
 use std::convert::TryInto;
 use std::str::FromStr;
 
+#[derive(Default)]
+struct DifficultyRecording {
+    step_count: usize,
+    apply_number_count: usize,
+    scan_count: usize,
+    hidden_single_count: usize,
+}
+
+impl solution_iterator::TechniqueRecording for DifficultyRecording {
+    type Output = usize;
+    fn record_step(&mut self, _: &Sudoku) {
+        self.step_count += 1;
+    }
+    fn record_apply_number(&mut self, _: usize, _: &Sudoku) {
+        self.apply_number_count += 1;
+    }
+    fn record_scan(&mut self, _: &Sudoku) {
+        self.scan_count += 1;
+    }
+    fn record_hidden_single(&mut self, _: usize, _: &Sudoku) {
+        self.hidden_single_count += 1;
+    }
+    fn get_recording(&self) -> usize {
+        self.step_count + self.apply_number_count + self.scan_count + self.hidden_single_count
+    }
+}
+
+#[derive(Default)]
+struct FullRecording {
+    techniques: Vec<(String, Sudoku)>,
+}
+
+impl solution_iterator::TechniqueRecording for FullRecording {
+    type Output = Vec<(String, Sudoku)>;
+    fn record_step(&mut self, _: &Sudoku) {}
+    fn record_apply_number(&mut self, square: usize, state: &Sudoku) {
+        self.techniques.push((
+            format!(
+                "Found naked single: R{}C{}",
+                (square / 9) + 1,
+                (square % 9) + 1
+            ),
+            *state,
+        ))
+    }
+    fn record_scan(&mut self, state: &Sudoku) {
+        self.techniques.push(("Scanned".to_string(), *state))
+    }
+    fn record_hidden_single(&mut self, square: usize, state: &Sudoku) {
+        self.techniques.push((
+            format!(
+                "Found hidden single: R{}C{}",
+                (square / 9) + 1,
+                (square % 9) + 1
+            ),
+            *state,
+        ))
+    }
+    fn get_recording(&self) -> Self::Output {
+        let mut result = self.techniques.clone();
+        result.dedup_by_key(|(_, sudoku)| *sudoku);
+        result
+    }
+}
+
 #[macro_export]
 macro_rules! get_last_digit {
     ($x:ident, $value_type:ty) => {{
@@ -279,21 +344,22 @@ impl Sudoku {
     pub fn difficulty(self, count_steps: bool) -> Option<i32> {
         let mut difficulty = -(self.solved_cell_count() as i32);
         if count_steps {
-            let mut iter =
-                solution_iterator::DifficultySolutionIterator::new(Self::from(self.to_array()));
+            let mut iter = solution_iterator::SolutionIterator::<DifficultyRecording>::new(
+                Self::from(self.to_array()),
+            );
             if iter.next().is_none() || iter.next().is_some() {
                 return None;
             }
-            difficulty += iter.get_difficulty() as i32;
+            difficulty += iter.get_recording() as i32;
         }
         Some(difficulty)
     }
 
     pub fn list_techniques(self) -> Vec<(String, Sudoku)> {
-        let mut iter = solution_iterator::TechniqueRecording::new(self);
+        let mut iter = solution_iterator::SolutionIterator::<FullRecording>::new(self);
         iter.next();
         iter.next();
-        iter.get_techniques_used()
+        iter.get_recording()
     }
 
     pub fn solved_cell_count(&self) -> usize {
