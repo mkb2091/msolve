@@ -36,7 +36,7 @@ where
             }
         }
         let mut routes = SudokuBackTrackingVec::with_capacity(10);
-        if valid {
+        if valid && sudoku.scan() {
             routes.push(sudoku);
         }
         Self {
