@@ -5,20 +5,6 @@ type SudokuBackTrackingVec = smallvec::SmallVec<[Sudoku; 10]>;
 #[cfg(not(feature = "smallvec"))]
 type SudokuBackTrackingVec = Vec<Sudoku>;
 
-/**
-
-Trait to iterate through solutions
-
-Additional requirement to implement
-
-impl Iterator for {{Name}} {
-    type Item = Sudoku;
-    fn next(&mut self) -> Option<Self::Item> {
-        self.get_next_solution()
-    }
-}
-
-*/
 pub trait TechniqueRecording: Default {
     fn record_step(&mut self, _: &Sudoku) {}
     fn record_apply_number(&mut self, _: usize, _: &Sudoku) {}
