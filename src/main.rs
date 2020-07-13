@@ -197,55 +197,6 @@ mod cli {
                 info[0], info[1], info[2]
             );
         }
-
-        /*if let Mode::Generate(generate) = opts.mode {
-            if let GenerateMode::Continuous(continuous) = generate.mode {
-                let mut pool_2 = Vec::<(msolve::Sudoku, i32)>::with_capacity(
-                    continuous.pool_size.get() * continuous.growth_factor.get() + 1,
-                );
-                let mut iteration = 1;
-                while iteration != continuous.iterations {
-                    iteration += 1;
-                    for (old_sudoku, _) in generation_pool.iter() {
-                        for _ in 0..continuous.growth_factor.get() {
-                            let sudoku =
-                                old_sudoku.generate_from_seed(&mut rng, generate.cells_to_remove);
-                            if let Some(score) = score_sudoku(&sudoku, &opts) {
-                                // Reinitializing as sudoku contains extra information that makes solving quicker
-                                pool_2.push((sudoku, score));
-                            } else {
-                                debug_assert!(false, "Generated sudokus should be valid");
-                            }
-                        }
-                    }
-                    let sudoku = msolve::Sudoku::generate(&mut rng);
-                    if let Some(score) = score_sudoku(&sudoku, &opts) {
-                        pool_2.push((sudoku, score));
-                    } else {
-                        debug_assert!(false, "Generated sudokus should be valid");
-                    }
-
-                    pool_2.sort_unstable_by(|a, b| b.1.cmp(&a.1));
-                    pool_2.dedup();
-
-                    for (sudoku, score) in pool_2.iter().rev() {
-                        if generate.display_score {
-                            let _ = output_handle.write_all(&score.to_string().as_bytes());
-                            let _ = output_handle.write_all(b";");
-                        }
-                        let _ = output_handle.write_all(&sudoku.to_bytes());
-                        let _ = output_handle.write_all(b"\n");
-                    }
-
-                    pool_2.shrink_to_fit(); // Incase large input
-
-                    pool_2.truncate(continuous.pool_size.get());
-
-                    std::mem::swap(&mut generation_pool, &mut pool_2);
-                    pool_2.clear();
-                }
-            }
-        }*/
     }
 }
 
