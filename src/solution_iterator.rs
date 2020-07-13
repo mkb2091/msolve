@@ -1,8 +1,11 @@
 use crate::{consts, get_last_digit, Sudoku};
 
-#[cfg(feature = "smallvec")]
+#[cfg(all(feature = "alloc", not(feature = "std")))]
+use alloc::vec::Vec;
+
+#[cfg(all(feature = "smallvec", feature = "alloc"))]
 type SudokuBackTrackingVec = smallvec::SmallVec<[Sudoku; 10]>;
-#[cfg(not(feature = "smallvec"))]
+#[cfg(all(not(feature = "smallvec"), feature = "alloc"))]
 type SudokuBackTrackingVec = Vec<Sudoku>;
 
 pub trait TechniqueRecording: Default {
@@ -15,6 +18,7 @@ pub trait TechniqueRecording: Default {
 }
 
 pub struct SolutionIterator<T: TechniqueRecording> {
+    #[cfg(feature = "alloc")]
     routes: SudokuBackTrackingVec,
     recording: T,
 }
@@ -35,11 +39,14 @@ where
                 break;
             }
         }
+        #[cfg(feature = "alloc")]
         let mut routes = SudokuBackTrackingVec::with_capacity(10);
+        #[cfg(feature = "alloc")]
         if valid && sudoku.scan() {
             routes.push(sudoku);
         }
         Self {
+            #[cfg(feature = "alloc")]
             routes,
             recording: T::default(),
         }
@@ -55,12 +62,13 @@ where
 {
     type Item = Sudoku;
     fn next(&mut self) -> Option<Self::Item> {
+        #[cfg(feature = "alloc")]
         'outer: while let Some(mut state) = self.routes.pop() {
             self.recording.record_step(&state);
             if state.solved_squares.count_ones() == 81 {
                 return Some(state);
             }
-            let mut min: (usize, u32) = (0, std::u32::MAX);
+            let mut min: (usize, u32) = (0, u32::MAX);
             let mut temp = !state.solved_squares;
             loop {
                 let square = get_last_digit!(temp, usize);

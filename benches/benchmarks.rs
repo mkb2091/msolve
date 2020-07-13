@@ -160,6 +160,7 @@ fn criterion_benchmark(c: &mut Criterion) {
             criterion::black_box(&msolve::Sudoku::empty().count_solutions(1000));
         })
     });
+    #[cfg(feature = "generate")]
     for count_steps in [true, false].iter() {
         let string = if *count_steps {
             "Counting Steps"

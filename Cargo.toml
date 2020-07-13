@@ -24,9 +24,11 @@ sudoku = { version = "0.7", features = ["unchecked_indexing"]}
 rand = "0.7"
 
 [features]
-default = ["smallvec", "cli", "generate"]
+default = ["smallvec", "cli", "generate", "std"]
 cli = ["clap"]
 generate = ["rand", "rand_core"]
+std = ["alloc"]
+alloc = []
 
 
 [[bench]]

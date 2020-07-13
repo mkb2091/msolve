@@ -1,5 +1,7 @@
 #[cfg(feature = "cli")]
 mod cli {
+    #[cfg(not(feature = "std"))]
+    compile_error!("`std` feature is required for cli");
 
     use std::io::BufRead;
     use std::io::Write;
@@ -45,6 +47,7 @@ mod cli {
         n: usize,
     }
 
+    #[cfg(feature = "generate")]
     #[derive(Clap, Copy, Clone)]
     struct Generate {
         #[clap(subcommand)]
@@ -53,16 +56,20 @@ mod cli {
         display_score: bool,
     }
 
+    #[cfg(feature = "generate")]
     #[derive(Clap, Copy, Clone)]
     enum GenerateMode {
         Once(GenerateOnce),
         Continuous(GenerateContinuous),
     }
 
+    #[cfg(feature = "generate")]
     #[derive(Clap, Copy, Clone)]
     struct GenerateOnce {
         cells_to_remove: usize,
     }
+
+    #[cfg(feature = "generate")]
     #[derive(Clap, Copy, Clone)]
     struct GenerateContinuous {
         #[clap(short, long)]

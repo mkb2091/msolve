@@ -1,16 +1,36 @@
-#[cfg(default)]
-extern crate smallvec;
+#![cfg_attr(not(feature = "std"), no_std)]
+
+#[cfg(all(feature = "alloc", not(feature = "std")))]
+extern crate alloc;
+
+#[cfg(all(feature = "alloc", not(feature = "std")))]
+use alloc::vec::Vec;
+
+#[cfg(all(feature = "alloc", not(feature = "std")))]
+use alloc::string::*;
+
+#[cfg(not(feature = "std"))]
+use core::prelude::v1::*;
 
 mod consts;
 
 #[cfg(feature = "generate")]
 pub mod gen;
 
+#[cfg(all(not(feature = "std"), feature = "rand"))]
+compile_error!("`std` feature is required for rand");
+
+#[cfg(all(not(feature = "alloc"), feature = "smallvec"))]
+compile_error!("`std` feature is required for smallvec");
+
+#[cfg(not(feature = "alloc"))]
+compile_error!("`alloc` feature is currently required");
+
 pub mod solution_iterator;
 
-use std::convert::From;
-use std::convert::TryInto;
-use std::str::FromStr;
+use core::convert::From;
+use core::convert::TryInto;
+use core::str::FromStr;
 
 #[derive(Default)]
 struct DifficultyRecording {
@@ -39,36 +59,32 @@ impl solution_iterator::TechniqueRecording for DifficultyRecording {
     }
 }
 
+#[cfg(feature = "alloc")]
 #[derive(Default)]
 struct FullRecording {
     techniques: Vec<(String, Sudoku)>,
 }
 
+#[cfg(feature = "alloc")]
 impl solution_iterator::TechniqueRecording for FullRecording {
     type Output = Vec<(String, Sudoku)>;
     fn record_step(&mut self, _: &Sudoku) {}
     fn record_apply_number(&mut self, square: usize, state: &Sudoku) {
-        self.techniques.push((
-            format!(
-                "Found naked single: R{}C{}",
-                (square / 9) + 1,
-                (square % 9) + 1
-            ),
-            *state,
-        ))
+        let mut explanation = "Found naked single: R".to_string();
+        explanation.push(b"123456789"[square / 9] as char);
+        explanation.push('C');
+        explanation.push(b"123456789"[square % 9] as char);
+        self.techniques.push((explanation, *state))
     }
     fn record_scan(&mut self, state: &Sudoku) {
         self.techniques.push(("Scanned".to_string(), *state))
     }
     fn record_hidden_single(&mut self, square: usize, state: &Sudoku) {
-        self.techniques.push((
-            format!(
-                "Found hidden single: R{}C{}",
-                (square / 9) + 1,
-                (square % 9) + 1
-            ),
-            *state,
-        ))
+        let mut explanation = "Found hidden single: R".to_string();
+        explanation.push(b"123456789"[square / 9] as char);
+        explanation.push('C');
+        explanation.push(b"123456789"[square % 9] as char);
+        self.techniques.push((explanation, *state))
     }
     fn get_recording(&self) -> Self::Output {
         let mut result = self.techniques.clone();
@@ -103,7 +119,7 @@ impl Sudoku {
     fn apply_number(&mut self, square: usize) {
         debug_assert!(square < 81);
         if square >= 81 {
-            unsafe { std::hint::unreachable_unchecked() }
+            unsafe { core::hint::unreachable_unchecked() }
         }
         let not_value = !self.cells[square];
         for i in &consts::CELLS_TO_CHANGE[square] {
@@ -120,7 +136,7 @@ impl Sudoku {
     fn hidden_singles(&mut self, square: usize) -> Result<bool, ()> {
         debug_assert!(square < 81);
         if square >= 81 {
-            unsafe { std::hint::unreachable_unchecked() }
+            unsafe { core::hint::unreachable_unchecked() }
         }
         let value = self.cells[square];
         self.cells[square] = 0;
@@ -399,6 +415,7 @@ impl Sudoku {
         Some(difficulty)
     }
 
+    #[cfg(feature = "alloc")]
     pub fn list_techniques(self) -> Vec<(String, Sudoku)> {
         let mut iter = solution_iterator::SolutionIterator::<FullRecording>::new(self);
         iter.next();
@@ -470,12 +487,16 @@ impl<T: TryInto<u32> + Copy> From<[T; 81]> for Sudoku {
         Self::from(&sudoku_array[..])
     }
 }
+
+#[cfg(feature = "alloc")]
 impl<T: TryInto<u32> + Copy> From<Vec<T>> for Sudoku {
     #[inline]
     fn from(sudoku_array: Vec<T>) -> Self {
         Self::from(&sudoku_array[..])
     }
 }
+
+#[cfg(feature = "alloc")]
 impl<T: TryInto<u32> + Copy> From<&Vec<T>> for Sudoku {
     #[inline]
     fn from(sudoku_array: &Vec<T>) -> Self {
@@ -484,7 +505,7 @@ impl<T: TryInto<u32> + Copy> From<&Vec<T>> for Sudoku {
 }
 
 impl FromStr for Sudoku {
-    type Err = std::convert::Infallible;
+    type Err = core::convert::Infallible;
     fn from_str(sudoku_str: &str) -> Result<Self, Self::Err> {
         Ok(Self::import(
             sudoku_str.chars().map(|character| character.to_digit(10)),

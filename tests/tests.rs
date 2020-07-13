@@ -202,6 +202,12 @@ mod tests {
         true
     }
     #[quickcheck]
+    fn to_array_returns_inputs_below_10(input: Sudoku) -> bool {
+        input.data[..] == msolve::Sudoku::from(&input.data).to_array()[..]
+    }
+
+    #[cfg(feature = "generate")]
+    #[quickcheck]
     fn generate_from_seed_has_single_solution(input: Sudoku, n: u8, count_steps: bool) -> bool {
         let sudoku = msolve::Sudoku::from(input.data);
         sudoku
@@ -209,11 +215,8 @@ mod tests {
             .0
             .has_single_solution()
     }
-    #[quickcheck]
-    fn to_array_returns_inputs_below_10(input: Sudoku) -> bool {
-        input.data[..] == msolve::Sudoku::from(&input.data).to_array()[..]
-    }
 
+    #[cfg(feature = "generate")]
     #[quickcheck]
     fn generated_has_single_solution(count: u8, count_steps: bool) -> bool {
         msolve::Sudoku::generate(rand::thread_rng(), count_steps)
