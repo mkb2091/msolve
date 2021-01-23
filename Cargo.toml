@@ -11,7 +11,7 @@ readme = "README.md"
 
 [dependencies]
 smallvec = {version = "1.4.0", optional = true}
-rand = {version = "0.7", optional = true}
+rand = {version = "0.8", optional = true}
 rand_core = {version = "0.5", optional = true}
 clap = {version = "3.0.0-beta.1", optional = true, default-features = false, features = ["std", "derive", "suggestions"]}
 
@@ -21,7 +21,7 @@ criterion = "0.3"
 quickcheck = {version = "0.9", default-features = false}
 quickcheck_macros = "0.9"
 sudoku = { version = "0.7", features = ["unchecked_indexing"]}
-rand = "0.7"
+rand = "0.8"
 
 [features]
 default = ["smallvec", "cli", "generate", "std"]
